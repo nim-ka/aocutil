@@ -29,6 +29,8 @@ class DLLNode {
 	}
 }
 
+window.DLLNode = DLLNode
+
 class DLL {
 	constructor(a = []) {
 		this.h = new DLLNode()
@@ -169,4 +171,6 @@ class DLL {
 	toJSON() { return this.toArray() }
 	toString() { return this.toArray().toString() }
 }
+
+window.DLL = DLL
 

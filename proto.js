@@ -100,7 +100,7 @@ class PointArray extends Array {
 	}
 }
 
-PtArray = PointArray
+window.PtArray = window.PointArray = PointArray
 
 Object.defineProperty(Array.prototype, "pt", {
 	get: function() {

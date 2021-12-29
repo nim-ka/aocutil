@@ -58,3 +58,5 @@ class BinHeap {
 	}
 }
 
+window.BinHeap = BinHeap
+

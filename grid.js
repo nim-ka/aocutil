@@ -176,3 +176,5 @@ class Grid {
 	print(sep = "\t", ...pts) { console.log(this.toString(sep, pts)) }
 }
 
+window.Grid = Grid
+

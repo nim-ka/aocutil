@@ -40,6 +40,8 @@ class DLLNode {
 	}
 }
 
+window.DLLNode = DLLNode
+
 class DLL {
 	constructor(a = []) {
 		this.h = new DLLNode()
@@ -181,6 +183,8 @@ class DLL {
 	toString() { return this.toArray().toString() }
 }
 
+window.DLL = DLL
+
 class Point {
 	constructor(x, y) {
 		this.x = x
@@ -240,7 +244,7 @@ class Point {
 	toString() { return this.x + "," + this.y }
 }
 
-Pt = Point
+window.Pt = window.Point = Point
 
 class Grid {
 	constructor(w, h, fill = 0) {
@@ -420,6 +424,8 @@ class Grid {
 	print(sep = "\t", ...pts) { console.log(this.toString(sep, pts)) }
 }
 
+window.Grid = Grid
+
 class BinHeap {
 	constructor(cond = (p, c) => p < c) {
 		this.cond = cond
@@ -480,12 +486,16 @@ class BinHeap {
 	}
 }
 
+window.BinHeap = BinHeap
+
 class Cxn {
 	constructor(dest, weight = 1) {
 		this.dest = dest
 		this.weight = weight
 	}
 }
+
+window.Cxn = Cxn
 
 class SearchData {
 	constructor(id, dist = Infinity, last = undefined, custom = {}) {
@@ -518,6 +528,8 @@ class SearchData {
 		return false
 	}
 }
+
+window.SearchData = SearchData
 
 class Node {
 	static GLOBAL_ID = 0
@@ -611,6 +623,8 @@ class Node {
 		console.warn("Node.dijkstra: Could not find a path")
 	}
 }
+
+window.Node = Node
 
 Object.defineProperty(Object.prototype, "copyDeep", {
 	value: function() {
@@ -714,7 +728,7 @@ class PointArray extends Array {
 	}
 }
 
-PtArray = PointArray
+window.PtArray = window.PointArray = PointArray
 
 Object.defineProperty(Array.prototype, "pt", {
 	get: function() {
@@ -765,7 +779,7 @@ Object.defineProperties(PointArray.prototype, {
 	}
 })
 
-utils = {
+window.utils = {
 	fetch: (url) => fetch(url).then(e => e.text()),
 	fetchEval: (url) => utils.fetch(url).then(e => eval(e)),
 	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
