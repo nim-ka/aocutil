@@ -29,8 +29,6 @@ class DLLNode {
 	}
 }
 
-window.DLLNode = DLLNode
-
 class DLL {
 	constructor(a = []) {
 		this.h = new DLLNode()
