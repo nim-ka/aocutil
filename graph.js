@@ -5,8 +5,6 @@ class Cxn {
 	}
 }
 
-window.Cxn = Cxn
-
 class SearchData {
 	constructor(id, dist = Infinity, last = undefined, custom = {}) {
 		this.id = id
@@ -38,8 +36,6 @@ class SearchData {
 		return false
 	}
 }
-
-window.SearchData = SearchData
 
 class Node {
 	static GLOBAL_ID = 0
@@ -133,6 +129,4 @@ class Node {
 		console.warn("Node.dijkstra: Could not find a path")
 	}
 }
-
-window.Node = Node
 

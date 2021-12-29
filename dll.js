@@ -170,5 +170,3 @@ class DLL {
 	toString() { return this.toArray().toString() }
 }
 
-window.DLL = DLL
-

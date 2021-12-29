@@ -57,5 +57,5 @@ class Point {
 	toString() { return this.x + "," + this.y }
 }
 
-window.Pt = window.Point = Point
+Pt = Point
 
