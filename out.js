@@ -601,6 +601,8 @@ class Node {
 	}
 }
 
+let warned = false
+
 Object.defineProperty(Object.prototype, "copyDeep", {
 	value: function() {
 		return JSON.parse(JSON.stringify(this))
@@ -686,9 +688,9 @@ Object.defineProperties(Array.prototype, {
 	},
 	pushUniq: {
 		value: function(...vals) {
-			if (!this.warned) {
+			if (!warned) {
 				console.warn("You should probably use a Set")
-				this.warned = true
+				warned = true
 			}
 			
 			return this.push(...vals.uniq().sub(this))
