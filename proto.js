@@ -116,7 +116,7 @@ Object.defineProperty(Array.prototype, "pt", {
 Object.defineProperties(PointArray.prototype, {
 	sort: {
 		value: function(func = (a, b) => a.readingOrderCompare(b)) {
-			this.sort(func)
+			return this.sort(func)
 		}
 	},
 	includes: {
