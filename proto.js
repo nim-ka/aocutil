@@ -97,7 +97,10 @@ Object.defineProperties(Array.prototype, {
 
 class PointArray extends Array {
 	static convert(arr) {
-		arr.__proto__ = PointArray.prototype
+		if (!(arr instanceof PointArray)) {
+			arr.__proto__ = PointArray.prototype
+		}
+		
 		return arr
 	}
 }
