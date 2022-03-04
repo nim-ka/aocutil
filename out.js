@@ -201,7 +201,10 @@ class Point {
 
 	getUnfilteredAdjNeighbors() { return [this.u(), this.l(), this.r(), this.d()] }
 	getUnfilteredDiagNeighbors() { return [this.ul(), this.ur(), this.dl(), this.dr()] }
-	getUnfilteredAllNeighbors() { return [...this.getUnfilteredAdjNeighbors(), ...this.getUnfilteredDiagNeighbors()] }
+	getUnfilteredAllNeighbors() { return [this.ul(), this.u(), this.ur(), this.l(), this.r(), this.dl(), this.d(), this.dr()] }
+	getUnfilteredAdjNeighborsIncSelf() { return [this.u(), this.l(), this, this.r(), this.d()] }
+	getUnfilteredDiagNeighborsIncSelf() { return [this.ul(), this.ur(), this, this.dl(), this.dr()] }
+	getUnfilteredAllNeighborsIncSelf() { return [this.ul(), this.u(), this.ur(), this.l(), this, this.r(), this.dl(), this.d(), this.dr()] }
 
 	add(pt) { return new Point(this.x + pt.x, this.y + pt.y) }
 	addMut(pt) {
@@ -683,7 +686,7 @@ Object.defineProperties(Array.prototype, {
 	},
 	uniq: {
 		value: function() {
-			return this.filter((e, i) => this.lastIndexOf(e) == i)
+			return this.filter((e, i) => this.indexOf(e) == i)
 		}
 	},
 	pushUniq: {
@@ -700,7 +703,10 @@ Object.defineProperties(Array.prototype, {
 
 class PointArray extends Array {
 	static convert(arr) {
-		arr.__proto__ = PointArray.prototype
+		if (!(arr instanceof PointArray)) {
+			arr.__proto__ = PointArray.prototype
+		}
+		
 		return arr
 	}
 }
@@ -716,7 +722,7 @@ Object.defineProperty(Array.prototype, "pt", {
 Object.defineProperties(PointArray.prototype, {
 	sort: {
 		value: function(func = (a, b) => a.readingOrderCompare(b)) {
-			this.sort(func)
+			return Array.prototype.sort.apply(this, func)
 		}
 	},
 	includes: {
@@ -746,7 +752,7 @@ Object.defineProperties(PointArray.prototype, {
 	},
 	uniq: {
 		value: function() {
-			return this.filter((e, i) => this.pt.lastIndexOf(e) == i)
+			return this.filter((e, i) => this.pt.indexOf(e) == i)
 		}
 	},
 	pushUniq: {

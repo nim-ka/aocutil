@@ -29,7 +29,10 @@ class Point {
 
 	getUnfilteredAdjNeighbors() { return [this.u(), this.l(), this.r(), this.d()] }
 	getUnfilteredDiagNeighbors() { return [this.ul(), this.ur(), this.dl(), this.dr()] }
-	getUnfilteredAllNeighbors() { return [...this.getUnfilteredAdjNeighbors(), ...this.getUnfilteredDiagNeighbors()] }
+	getUnfilteredAllNeighbors() { return [this.ul(), this.u(), this.ur(), this.l(), this.r(), this.dl(), this.d(), this.dr()] }
+	getUnfilteredAdjNeighborsIncSelf() { return [this.u(), this.l(), this, this.r(), this.d()] }
+	getUnfilteredDiagNeighborsIncSelf() { return [this.ul(), this.ur(), this, this.dl(), this.dr()] }
+	getUnfilteredAllNeighborsIncSelf() { return [this.ul(), this.u(), this.ur(), this.l(), this, this.r(), this.dl(), this.d(), this.dr()] }
 
 	add(pt) { return new Point(this.x + pt.x, this.y + pt.y) }
 	addMut(pt) {
