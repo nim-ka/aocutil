@@ -80,7 +80,7 @@ Object.defineProperties(Array.prototype, {
 	},
 	uniq: {
 		value: function() {
-			return this.filter((e, i) => this.lastIndexOf(e) == i)
+			return this.filter((e, i) => this.indexOf(e) == i)
 		}
 	},
 	pushUniq: {
@@ -116,7 +116,7 @@ Object.defineProperty(Array.prototype, "pt", {
 Object.defineProperties(PointArray.prototype, {
 	sort: {
 		value: function(func = (a, b) => a.readingOrderCompare(b)) {
-			return this.sort(func)
+			return Array.prototype.sort.apply(this, func)
 		}
 	},
 	includes: {
@@ -146,7 +146,7 @@ Object.defineProperties(PointArray.prototype, {
 	},
 	uniq: {
 		value: function() {
-			return this.filter((e, i) => this.pt.lastIndexOf(e) == i)
+			return this.filter((e, i) => this.pt.indexOf(e) == i)
 		}
 	},
 	pushUniq: {
