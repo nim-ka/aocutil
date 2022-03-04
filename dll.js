@@ -10,7 +10,7 @@ class DLLNode {
 		this.next = next
 	}
 
-	adv(n) {
+	adv(n = 1) {
 		let node = this == this.skip ? this.next : this
 
 		if (n < 0) {
