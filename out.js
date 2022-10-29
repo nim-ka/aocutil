@@ -262,10 +262,10 @@ class Grid {
 		return this.mapMut((_, pt) => arr[pt.y][pt.x])
 	}
 
-	fillFromStr(str, sep = "") { return this.fillFromArr(str.split("\n").map((line) => line.split(sep)) }
+	fillFromStr(str, sep = "") { return this.fillFromArr(str.split("\n").map((line) => line.split(sep))) }
 
 	static fromArr(arr) { return new Grid(arr[0].length, arr.length).fillFromArr(arr) }
-	static fromStr(str, sep = "") { return Grid.fromArr(str.split("\n").map((line) => line.split(sep)) }
+	static fromStr(str, sep = "") { return Grid.fromArr(str.split("\n").map((line) => line.split(sep))) }
 
 	get(pt) {
 		if (this.contains(pt)) {
@@ -412,7 +412,7 @@ class Grid {
 		]
 	}
 
-	toGraph(neighbors = "getAdjNeighbors", cxn = (node, cxnNode) => node.addCxn(cxnNode, cxnNode.val)) {
+	graphify(neighbors = "getAdjNeighbors", cxn = (node, cxnNode) => node.addCxn(cxnNode, cxnNode.val)) {
 		this.mapMut((e) => new Node(e))
 		this.forEach((e, pt) => this[neighbors](pt).forEach((pt) => cxn(e, this.get(pt))))
 		return
@@ -617,9 +617,22 @@ class Node {
 
 let warned = false
 
-Object.defineProperty(Object.prototype, "copyDeep", {
-	value: function() {
-		return JSON.parse(JSON.stringify(this))
+Object.defineProperties(Object.prototype, {
+	copyDeep: {
+		value: function() {
+			return JSON.parse(JSON.stringify(this))
+		}
+	},
+	num: {
+		value: function() {
+			if (this.map) {
+				return this.map((e) => +e)
+			} else if (this.mapMut) {
+				return this.mapMut((e) => +e)
+			} else {
+				console.error("Object.prototype.num: No suitable map method found")
+			}
+		}
 	}
 })
 
@@ -670,7 +683,7 @@ Object.defineProperties(Array.prototype, {
 					return i
 				}
 			}
-			
+
 			return -1
 		}
 	},
@@ -706,7 +719,7 @@ Object.defineProperties(Array.prototype, {
 				console.warn("You should probably use a Set")
 				warned = true
 			}
-			
+
 			return this.push(...vals.uniq().sub(this))
 		}
 	}
@@ -717,7 +730,7 @@ class PointArray extends Array {
 		if (!(arr instanceof PointArray)) {
 			arr.__proto__ = PointArray.prototype
 		}
-		
+
 		return arr
 	}
 }
