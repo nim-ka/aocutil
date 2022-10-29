@@ -62,7 +62,7 @@ class Node {
 		return path
 	}
 
-	dijkstra(dests) {
+	dijkstraTo(dests) {
 		if (!Array.isArray(dests)) {
 			dests = [dests]
 		}
@@ -120,13 +120,13 @@ class Node {
 				}
 			})
 
-			if (i++ % 1000 == 0) {
+			if (++i % 1000 == 0) {
 				console.log(heap.data.length)
 			}
 		}
 
 		console.timeEnd("search")
-		console.warn("Node.dijkstra: Could not find a path")
+		console.warn("Node.dijkstraTo: Could not find a path")
 	}
 }
 

@@ -262,12 +262,10 @@ class Grid {
 		return this.mapMut((_, pt) => arr[pt.y][pt.x])
 	}
 
-	fillFromStr(str) { return this.fillFromArr(str.split("\n")) }
+	fillFromStr(str, sep = "") { return this.fillFromArr(str.split("\n").map((line) => line.split(sep)) }
 
-	static fromStr(str) {
-		let arr = str.split("\n")
-		return new Grid(arr[0].length, arr.length).fillFromArr(arr)
-	}
+	static fromArr(arr) { return new Grid(arr[0].length, arr.length).fillFromArr(arr) }
+	static fromStr(str, sep = "") { return Grid.fromArr(str.split("\n").map((line) => line.split(sep)) }
 
 	get(pt) {
 		if (this.contains(pt)) {
@@ -335,7 +333,7 @@ class Grid {
 	static BFS_STOP = 1
 	static BFS_END = 2
 
-	bfs(pt, func, limit = 1000) {
+	bfs(pt, func, neighbors = "getAdjNeighborsThat", getlimit = 1000) {
 		let visited = [].pt
 		let toVisit = [pt].pt
 		let count = 0
@@ -352,7 +350,7 @@ class Grid {
 				let result = func(this.get(toVisit[i]), toVisit[i], this, visited);
 
 				if (result == Grid.BFS_CONTINUE) {
-					newToVisit.pushUniq(...this.getAdjNeighborsThat(toVisit[i], (pt) => !pt.isIn(visited)).map((pt) => (pt.path = [...toVisit[i].path, pt], pt)))
+					newToVisit.pushUniq(...this[neighbors](toVisit[i], (pt) => !pt.isIn(visited)).map((pt) => (pt.path = [...toVisit[i].path, pt], pt)))
 				}
 
 				if (result == Grid.BFS_END) {
@@ -412,6 +410,12 @@ class Grid {
 			this.copy().reflectY(),
 			this.copy().transpose()
 		]
+	}
+
+	toGraph(neighbors = "getAdjNeighbors", cxn = (node, cxnNode) => node.addCxn(cxnNode, cxnNode.val)) {
+		this.mapMut((e) => new Node(e))
+		this.forEach((e, pt) => this[neighbors](pt).forEach((pt) => cxn(e, this.get(pt))))
+		return
 	}
 
 	copy() { return new Grid(this.width, this.height).mapMut((_, pt) => this.get(pt).copyDeep()) }
@@ -543,7 +547,7 @@ class Node {
 		return path
 	}
 
-	dijkstra(dests) {
+	dijkstraTo(dests) {
 		if (!Array.isArray(dests)) {
 			dests = [dests]
 		}
@@ -601,13 +605,13 @@ class Node {
 				}
 			})
 
-			if (i++ % 1000 == 0) {
+			if (++i % 1000 == 0) {
 				console.log(heap.data.length)
 			}
 		}
 
 		console.timeEnd("search")
-		console.warn("Node.dijkstra: Could not find a path")
+		console.warn("Node.dijkstraTo: Could not find a path")
 	}
 }
 
