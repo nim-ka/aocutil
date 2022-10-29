@@ -1,8 +1,21 @@
 let warned = false
 
-Object.defineProperty(Object.prototype, "copyDeep", {
-	value: function() {
-		return JSON.parse(JSON.stringify(this))
+Object.defineProperties(Object.prototype, {
+	copyDeep: {
+		value: function() {
+			return JSON.parse(JSON.stringify(this))
+		}
+	},
+	num: {
+		value: function() {
+			if (this.map) {
+				return this.map((e) => +e)
+			} else if (this.mapMut) {
+				return this.mapMut((e) => +e)
+			} else {
+				console.error("Object.prototype.num: No suitable map method found")
+			}
+		}
 	}
 })
 
@@ -53,7 +66,7 @@ Object.defineProperties(Array.prototype, {
 					return i
 				}
 			}
-			
+
 			return -1
 		}
 	},
@@ -89,7 +102,7 @@ Object.defineProperties(Array.prototype, {
 				console.warn("You should probably use a Set")
 				warned = true
 			}
-			
+
 			return this.push(...vals.uniq().sub(this))
 		}
 	}
@@ -100,7 +113,7 @@ class PointArray extends Array {
 		if (!(arr instanceof PointArray)) {
 			arr.__proto__ = PointArray.prototype
 		}
-		
+
 		return arr
 	}
 }
