@@ -26,7 +26,7 @@ class Grid {
 		return this.mapMut((_, pt) => arr[pt.y][pt.x])
 	}
 
-	fillFromStr(str, sep = "") { return this.fillFromArr(str.split("\n").map((line) => line.split(sep)) }
+	fillFromStr(str, sep = "") { return this.fillFromArr(str.split("\n").map((line) => line.split(sep))) }
 
 	static fromArr(arr) { return new Grid(arr[0].length, arr.length).fillFromArr(arr) }
 	static fromStr(str, sep = "") { return Grid.fromArr(str.split("\n").map((line) => line.split(sep)) }
