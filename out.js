@@ -798,4 +798,3 @@ utils = {
 	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill))
 }
 
-console.log(P(0, 0))
