@@ -36,8 +36,8 @@ Object.defineProperties(Array.prototype, {
 		}
 	},
 	sum: {
-		value: function() {
-			return this.reduce((a, b) => a + b)
+		value: function(val) {
+			return this.reduce((a, b) => a + b, val)
 		}
 	},
 	flatDeep: {

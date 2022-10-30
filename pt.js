@@ -53,7 +53,7 @@ class Point {
 
 	squaredDist(pt) { return this.sub(pt).squaredMag() }
 	dist(pt) { return this.sub(pt).mag() }
-	
+
 	readingOrderCompare(pt) { return this.y < pt.y ? -1 : this.y > pt.y ? 1 : this.x < pt.x ? -1 : this.x > pt.x ? 1 : 0 }
 
 	copy() { return new Point(this.x, this.y) }
@@ -61,4 +61,9 @@ class Point {
 }
 
 Pt = Point
+
+function P(...args) {
+	return new Point(...args)
+}
+
 

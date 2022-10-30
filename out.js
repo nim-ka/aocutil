@@ -225,7 +225,7 @@ class Point {
 
 	squaredDist(pt) { return this.sub(pt).squaredMag() }
 	dist(pt) { return this.sub(pt).mag() }
-	
+
 	readingOrderCompare(pt) { return this.y < pt.y ? -1 : this.y > pt.y ? 1 : this.x < pt.x ? -1 : this.x > pt.x ? 1 : 0 }
 
 	copy() { return new Point(this.x, this.y) }
@@ -233,6 +233,11 @@ class Point {
 }
 
 Pt = Point
+
+function P(...args) {
+	return new Point(...args)
+}
+
 
 class Grid {
 	constructor(w, h, fill = 0) {
@@ -653,8 +658,8 @@ Object.defineProperties(Array.prototype, {
 		}
 	},
 	sum: {
-		value: function() {
-			return this.reduce((a, b) => a + b)
+		value: function(val) {
+			return this.reduce((a, b) => a + b, val)
 		}
 	},
 	flatDeep: {
@@ -793,3 +798,4 @@ utils = {
 	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill))
 }
 
+console.log(P(0, 0))
