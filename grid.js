@@ -1,4 +1,4 @@
-class Grid {
+Grid = class Grid {
 	constructor(w, h, fill = 0) {
 		this.width = w
 		this.height = h

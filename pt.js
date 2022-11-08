@@ -1,4 +1,4 @@
-class Point {
+Pt = Point = class Point {
 	constructor(x, y) {
 		this.x = x
 		this.y = y
@@ -60,9 +60,7 @@ class Point {
 	toString() { return this.x + "," + this.y }
 }
 
-Pt = Point
-
-function P(...args) {
+P = function P(...args) {
 	return new Point(...args)
 }
 

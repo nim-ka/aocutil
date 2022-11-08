@@ -1,4 +1,4 @@
-class BinHeap {
+BinHeap = class BinHeap {
 	constructor(cond = (p, c) => p < c) {
 		this.cond = cond
 		this.data = []

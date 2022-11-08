@@ -2,7 +2,7 @@
 // - copy method
 // - remove range method
 
-class DLLNode {
+DLLNode = class DLLNode {
 	constructor(val, skip = this, prev = this, next = this) {
 		this.val = val
 		this.skip = skip
@@ -29,7 +29,7 @@ class DLLNode {
 	}
 }
 
-class DLL {
+DLL = class DLL {
 	constructor(a = []) {
 		this.h = new DLLNode()
 		this.length = 0;

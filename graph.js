@@ -1,11 +1,11 @@
-class Cxn {
+Cxn = class Cxn {
 	constructor(dest, weight = 1) {
 		this.dest = dest
 		this.weight = weight
 	}
 }
 
-class SearchData {
+SearchData = class SearchData {
 	constructor(id, dist = Infinity, last = undefined, custom = {}) {
 		this.id = id
 		this.dist = dist
@@ -37,7 +37,7 @@ class SearchData {
 	}
 }
 
-class Node {
+Node = class Node {
 	static GLOBAL_ID = 0
 
 	constructor(val) {
