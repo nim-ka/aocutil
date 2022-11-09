@@ -60,6 +60,8 @@ Pt = Point = class Point {
 	toString() { return this.x + "," + this.y }
 }
 
+Point.NONE = new Point(null, null)
+
 P = function P(...args) {
 	return new Point(...args)
 }

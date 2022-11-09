@@ -71,10 +71,43 @@ Grid = class Grid {
 		}
 	}
 
-	findAll(func) {
+	getRows() {
+		return this.data.copy()
+	}
+
+	getColumns() {
+		return this.data.transpose()
+	}
+
+	findIndex(func) {
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				if (func(this.get(pt), pt, this)) {
+					return pt
+				}
+			}
+		}
+
+		return Point.NONE
+	}
+
+	find(func) {
+		return this.get(this.findIndex(func))
+	}
+
+	findAllIndices(func) {
 		let points = []
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
 		return points
+	}
+
+	findAll(func) {
+		return this.findAllIndices(func).map((pt) => this.get(pt))
+	}
+
+	indexOf(val) {
+		return this.findIndex((e) => e == val)
 	}
 
 	contains(pt) { return pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }

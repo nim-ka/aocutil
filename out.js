@@ -232,6 +232,8 @@ Pt = Point = class Point {
 	toString() { return this.x + "," + this.y }
 }
 
+Point.NONE = new Point(null, null)
+
 P = function P(...args) {
 	return new Point(...args)
 }
@@ -310,10 +312,43 @@ Grid = class Grid {
 		}
 	}
 
-	findAll(func) {
+	getRows() {
+		return this.data.copy()
+	}
+
+	getColumns() {
+		return this.data.transpose()
+	}
+
+	findIndex(func) {
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				if (func(this.get(pt), pt, this)) {
+					return pt
+				}
+			}
+		}
+
+		return Point.NONE
+	}
+
+	find(func) {
+		return this.get(this.findIndex(func))
+	}
+
+	findAllIndices(func) {
 		let points = []
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
 		return points
+	}
+
+	findAll(func) {
+		return this.findAllIndices(func).map((pt) => this.get(pt))
+	}
+
+	indexOf(val) {
+		return this.findIndex((e) => e == val)
 	}
 
 	contains(pt) { return pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }
@@ -674,6 +709,28 @@ load = function load() {
 			},
 			configurable: true
 		},
+		truthy: {
+			value: function() {
+				return this.filter((e) => e)
+			},
+			configurable: true
+		},
+		splitOnElement: {
+			value: function(sep) {
+				let arr = [[]]
+
+				for (let i = 0; i < this.length; i++) {
+					if (this[i] == sep) {
+						arr.push([])
+					} else {
+						arr[arr.length - 1].push(this[i])
+					}
+				}
+
+				return arr
+			},
+			configurable: true
+		},
 		copy: {
 			value: function() {
 				return this.slice()
@@ -687,7 +744,7 @@ load = function load() {
 			configurable: true
 		},
 		sum: {
-			value: function(val) {
+			value: function(val = 0) {
 				return this.reduce((a, b) => a + b, val)
 			},
 			configurable: true
@@ -776,15 +833,17 @@ load = function load() {
 		},
 		minIndex: {
 			value: function(fn = (e) => e, tiebreak) {
-				let min = Infinity
+				let minval = Infinity
+				let min
 				let idx
 
 				for (let i = 0; i < this.length; i++) {
 					let val = fn(this[i])
 
-					if (min > val ||
-						(min == val && tiebreak && tiebreak(min, val, idx, i) > 0)) {
-						min = val
+					if (minval > val ||
+						(minval == val && tiebreak && tiebreak(min, this[i], idx, i) > 0)) {
+						minval = val
+						min = this[i]
 						idx = i
 					}
 				}
@@ -801,15 +860,17 @@ load = function load() {
 		},
 		maxIndex: {
 			value: function(fn = (e) => e, tiebreak) {
-				let max = -Infinity
+				let maxval = -Infinity
+				let max
 				let idx
 
 				for (let i = 0; i < this.length; i++) {
 					let val = fn(this[i])
 
-					if (max < val ||
-						(max == val && tiebreak && tiebreak(max, val, idx, i) > 0)) {
-						max = val
+					if (maxval < val ||
+						(maxval == val && tiebreak && tiebreak(max, this[i], idx, i) > 0)) {
+						maxval = val
+						max = this[i]
 						idx = i
 					}
 				}
@@ -851,6 +912,22 @@ load = function load() {
 	})
 
 	Object.defineProperties(PointArray.prototype, {
+		splitOnElement: {
+			value: function(sep) {
+				let arr = [[]]
+
+				for (let i = 0; i < this.length; i++) {
+					if (this[i].equals(sep)) {
+						arr.push([])
+					} else {
+						arr[arr.length - 1].push(this[i])
+					}
+				}
+
+				return arr
+			},
+			configurable: true
+		},
 		sort: {
 			value: function(func = (a, b) => a.readingOrderCompare(b)) {
 				return Array.prototype.sort.apply(this, func)

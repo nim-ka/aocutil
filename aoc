@@ -1,0 +1,2 @@
+#!/bin/bash
+NODE_INSPECT_RESUME_ON_START=1 node inspect out.js

@@ -54,6 +54,28 @@ load = function load() {
 			},
 			configurable: true
 		},
+		truthy: {
+			value: function() {
+				return this.filter((e) => e)
+			},
+			configurable: true
+		},
+		splitOnElement: {
+			value: function(sep) {
+				let arr = [[]]
+
+				for (let i = 0; i < this.length; i++) {
+					if (this[i] == sep) {
+						arr.push([])
+					} else {
+						arr[arr.length - 1].push(this[i])
+					}
+				}
+
+				return arr
+			},
+			configurable: true
+		},
 		copy: {
 			value: function() {
 				return this.slice()
@@ -67,7 +89,7 @@ load = function load() {
 			configurable: true
 		},
 		sum: {
-			value: function(val) {
+			value: function(val = 0) {
 				return this.reduce((a, b) => a + b, val)
 			},
 			configurable: true
@@ -156,15 +178,17 @@ load = function load() {
 		},
 		minIndex: {
 			value: function(fn = (e) => e, tiebreak) {
-				let min = Infinity
+				let minval = Infinity
+				let min
 				let idx
 
 				for (let i = 0; i < this.length; i++) {
 					let val = fn(this[i])
 
-					if (min > val ||
-						(min == val && tiebreak && tiebreak(min, val, idx, i) > 0)) {
-						min = val
+					if (minval > val ||
+						(minval == val && tiebreak && tiebreak(min, this[i], idx, i) > 0)) {
+						minval = val
+						min = this[i]
 						idx = i
 					}
 				}
@@ -181,15 +205,17 @@ load = function load() {
 		},
 		maxIndex: {
 			value: function(fn = (e) => e, tiebreak) {
-				let max = -Infinity
+				let maxval = -Infinity
+				let max
 				let idx
 
 				for (let i = 0; i < this.length; i++) {
 					let val = fn(this[i])
 
-					if (max < val ||
-						(max == val && tiebreak && tiebreak(max, val, idx, i) > 0)) {
-						max = val
+					if (maxval < val ||
+						(maxval == val && tiebreak && tiebreak(max, this[i], idx, i) > 0)) {
+						maxval = val
+						max = this[i]
 						idx = i
 					}
 				}
@@ -231,6 +257,22 @@ load = function load() {
 	})
 
 	Object.defineProperties(PointArray.prototype, {
+		splitOnElement: {
+			value: function(sep) {
+				let arr = [[]]
+
+				for (let i = 0; i < this.length; i++) {
+					if (this[i].equals(sep)) {
+						arr.push([])
+					} else {
+						arr[arr.length - 1].push(this[i])
+					}
+				}
+
+				return arr
+			},
+			configurable: true
+		},
 		sort: {
 			value: function(func = (a, b) => a.readingOrderCompare(b)) {
 				return Array.prototype.sort.apply(this, func)
