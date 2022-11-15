@@ -164,7 +164,7 @@ Grid = class Grid {
 			console.warn("Limit reached. Aborted.")
 		}
 
-		return end || visited[visited.length - 1]
+		return end || visited
 	}
 
 	transpose() {
