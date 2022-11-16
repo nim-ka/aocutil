@@ -6,6 +6,14 @@ PtArray = PointArray = class PointArray extends Array {
 
 		return arr
 	}
+
+	static revert(arr) {
+		if (arr.__proto__ != Array.prototype) {
+			arr.__proto__ = Array.prototype
+		}
+
+		return arr
+	}
 }
 
 let warned = false
@@ -236,6 +244,17 @@ load = function load() {
 			},
 			configurable: true
 		},
+		medianNumeric: {
+			value: function() {
+				let sorted = this.copy().sort((a, b) => a - b)
+
+				if (sorted.length % 2) {
+					return sorted[(sorted.length - 1) / 2]
+				} else {
+					return (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+				}
+			},
+		},
 		freqs: {
 			value: function() {
 				return this.uniq().map((e) => [e, this.count(e)])
@@ -257,6 +276,18 @@ load = function load() {
 	})
 
 	Object.defineProperties(PointArray.prototype, {
+		arr: {
+			get: function() {
+				return PointArray.revert(this)
+			},
+			configurable: true
+		},
+		map: {
+			value: function(...args) {
+				return this.arr.map(...args)
+			},
+			configurable: true
+		},
 		splitOnElement: {
 			value: function(sep) {
 				let arr = [[]]

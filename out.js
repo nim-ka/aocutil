@@ -338,7 +338,7 @@ Grid = class Grid {
 	}
 
 	findAllIndices(func) {
-		let points = []
+		let points = [].pt
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
 		return points
 	}
@@ -371,7 +371,7 @@ Grid = class Grid {
 	static BFS_STOP = 1
 	static BFS_END = 2
 
-	bfs(pt, func, neighbors = "getAdjNeighborsThat", getlimit = 1000) {
+	bfs(pt, func, neighbors = "getAdjNeighborsThat", limit = 1000) {
 		let visited = [].pt
 		let toVisit = [pt].pt
 		let count = 0
@@ -385,14 +385,16 @@ Grid = class Grid {
 			toVisit.sort()
 
 			for (let i = 0; i < toVisit.length; i++) {
-				let result = func(this.get(toVisit[i]), toVisit[i], this, visited);
+				let v = toVisit[i]
 
-				if (result == Grid.BFS_CONTINUE) {
-					newToVisit.pushUniq(...this[neighbors](toVisit[i], (pt) => !pt.isIn(visited)).map((pt) => (pt.path = [...toVisit[i].path, pt], pt)))
+				v.result = func(this.get(v), v, this, visited)
+
+				if (v.result == Grid.BFS_CONTINUE) {
+					newToVisit.pushUniq(...this[neighbors](v, (pt) => !pt.isIn(visited)).map((pt) => (pt.path = [...v.path, pt], pt)))
 				}
 
-				if (result == Grid.BFS_END) {
-					end = toVisit[i]
+				if (v.result == Grid.BFS_END) {
+					end = v
 					break out
 				}
 			}
@@ -661,6 +663,14 @@ PtArray = PointArray = class PointArray extends Array {
 
 		return arr
 	}
+
+	static revert(arr) {
+		if (arr.__proto__ != Array.prototype) {
+			arr.__proto__ = Array.prototype
+		}
+
+		return arr
+	}
 }
 
 let warned = false
@@ -891,6 +901,17 @@ load = function load() {
 			},
 			configurable: true
 		},
+		medianNumeric: {
+			value: function() {
+				let sorted = this.copy().sort((a, b) => a - b)
+
+				if (sorted.length % 2) {
+					return sorted[(sorted.length - 1) / 2]
+				} else {
+					return (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+				}
+			},
+		},
 		freqs: {
 			value: function() {
 				return this.uniq().map((e) => [e, this.count(e)])
@@ -912,6 +933,18 @@ load = function load() {
 	})
 
 	Object.defineProperties(PointArray.prototype, {
+		arr: {
+			get: function() {
+				return PointArray.revert(this)
+			},
+			configurable: true
+		},
+		map: {
+			value: function(...args) {
+				return this.arr.map(...args)
+			},
+			configurable: true
+		},
 		splitOnElement: {
 			value: function(sep) {
 				let arr = [[]]
