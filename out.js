@@ -199,12 +199,12 @@ Pt = Point = class Point {
 	dl() { return this.downleft() }
 	dr() { return this.downright() }
 
-	getUnfilteredAdjNeighbors() { return [this.u(), this.l(), this.r(), this.d()] }
-	getUnfilteredDiagNeighbors() { return [this.ul(), this.ur(), this.dl(), this.dr()] }
-	getUnfilteredAllNeighbors() { return [this.ul(), this.u(), this.ur(), this.l(), this.r(), this.dl(), this.d(), this.dr()] }
-	getUnfilteredAdjNeighborsIncSelf() { return [this.u(), this.l(), this, this.r(), this.d()] }
-	getUnfilteredDiagNeighborsIncSelf() { return [this.ul(), this.ur(), this, this.dl(), this.dr()] }
-	getUnfilteredAllNeighborsIncSelf() { return [this.ul(), this.u(), this.ur(), this.l(), this, this.r(), this.dl(), this.d(), this.dr()] }
+	getUnfilteredAdjNeighbors() { return new PointArray(this.u(), this.l(), this.r(), this.d()) }
+	getUnfilteredDiagNeighbors() { return new PointArray(this.ul(), this.ur(), this.dl(), this.dr()) }
+	getUnfilteredAllNeighbors() { return new PointArray(this.ul(), this.u(), this.ur(), this.l(), this.r(), this.dl(), this.d(), this.dr()) }
+	getUnfilteredAdjNeighborsIncSelf() { return new PointArray(this.u(), this.l(), this, this.r(), this.d()) }
+	getUnfilteredDiagNeighborsIncSelf() { return new PointArray(this.ul(), this.ur(), this, this.dl(), this.dr()) }
+	getUnfilteredAllNeighborsIncSelf() { return new PointArray(this.ul(), this.u(), this.ur(), this.l(), this, this.r(), this.dl(), this.d(), this.dr()) }
 
 	add(pt) { return new Point(this.x + pt.x, this.y + pt.y) }
 	addMut(pt) {
@@ -321,6 +321,8 @@ Grid = class Grid {
 	}
 
 	findIndex(func) {
+		func = typeof func == "function" ? func : (e) => e == func
+
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
 				let pt = new Point(x, y)
@@ -338,13 +340,20 @@ Grid = class Grid {
 	}
 
 	findAllIndices(func) {
+		func = typeof func == "function" ? func : (e) => e == func
+
 		let points = [].pt
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
+
 		return points
 	}
 
 	findAll(func) {
 		return this.findAllIndices(func).map((pt) => this.get(pt))
+	}
+
+	count(func) {
+		return this.findAllIndices(func).length
 	}
 
 	indexOf(val) {

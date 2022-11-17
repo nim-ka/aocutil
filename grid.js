@@ -80,6 +80,8 @@ Grid = class Grid {
 	}
 
 	findIndex(func) {
+		func = typeof func == "function" ? func : (e) => e == func
+
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
 				let pt = new Point(x, y)
@@ -97,13 +99,20 @@ Grid = class Grid {
 	}
 
 	findAllIndices(func) {
+		func = typeof func == "function" ? func : (e) => e == func
+
 		let points = [].pt
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
+
 		return points
 	}
 
 	findAll(func) {
 		return this.findAllIndices(func).map((pt) => this.get(pt))
+	}
+
+	count(func) {
+		return this.findAllIndices(func).length
 	}
 
 	indexOf(val) {
