@@ -13,3 +13,7 @@ function day7(input, part2) {
 
     return costs.min()
 }
+
+if (typeof window == "undefined") {
+    module.exports = day7
+}

@@ -171,12 +171,15 @@ DLL = class DLL {
 }
 
 Pt = Point = class Point {
-	constructor(x, y) {
+	constructor(x, y, z) {
+		this.is3D = z != undefined
 		this.x = x
 		this.y = y
+		this.z = z
 	}
 
-	equals(pt) { return this.x == pt.x && this.y == pt.y }
+	equals(pt) { return this.x == pt.x && this.y == pt.y && (!this.is3D || this.z == pt.z) }
+
 	isIn(arr) { return this.indexIn(arr) != -1 }
 	indexIn(arr) { return arr.findIndex((pt) => this.equals(pt)) }
 	lastIndexIn(arr) { return arr.findLastIndex((pt) => this.equals(pt)) }
@@ -189,6 +192,8 @@ Pt = Point = class Point {
 	upright() { return new Point(this.x + 1, this.y - 1) }
 	downleft() { return new Point(this.x - 1, this.y + 1) }
 	downright() { return new Point(this.x + 1, this.y + 1) }
+	above() { return new Point(this.x, this.y, this.z - 1) }
+	below() { return new Point(this.x, this.y, this.z + 1) }
 
 	u() { return this.up() }
 	d() { return this.down() }
@@ -199,37 +204,167 @@ Pt = Point = class Point {
 	dl() { return this.downleft() }
 	dr() { return this.downright() }
 
-	getUnfilteredAdjNeighbors() { return new PointArray(this.u(), this.l(), this.r(), this.d()) }
-	getUnfilteredDiagNeighbors() { return new PointArray(this.ul(), this.ur(), this.dl(), this.dr()) }
-	getUnfilteredAllNeighbors() { return new PointArray(this.ul(), this.u(), this.ur(), this.l(), this.r(), this.dl(), this.d(), this.dr()) }
-	getUnfilteredAdjNeighborsIncSelf() { return new PointArray(this.u(), this.l(), this, this.r(), this.d()) }
-	getUnfilteredDiagNeighborsIncSelf() { return new PointArray(this.ul(), this.ur(), this, this.dl(), this.dr()) }
-	getUnfilteredAllNeighborsIncSelf() { return new PointArray(this.ul(), this.u(), this.ur(), this.l(), this, this.r(), this.dl(), this.d(), this.dr()) }
+	getUnfilteredAdjNeighborsIncSelf() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.u(),
+				this.l(),
+				this.copy(),
+				this.r(),
+				this.d())
+		} else {
+			return new PointArray(
+				this.above(),
+				this.u(),
+				this.l(),
+				this.copy(),
+				this.r(),
+				this.d(),
+				this.below())
+		}
+	}
 
-	add(pt) { return new Point(this.x + pt.x, this.y + pt.y) }
+	getUnfilteredWingNeighborsIncSelf() {
+		if (!this.is3D) {
+			console.error("Can't get wing neighbors of 2D point")
+		}
+
+		return new PointArray(
+			this.u().above(),
+			this.l().above(),
+			this.r().above(),
+			this.d().above(),
+			this.ul(),
+			this.ur(),
+			this.copy(),
+			this.dl(),
+			this.dr(),
+			this.u().below(),
+			this.l().below(),
+			this.r().below(),
+			this.d().below())
+	}
+
+	getUnfilteredDiagNeighborsIncSelf() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.ul(),
+				this.ur(),
+				this.copy(),
+				this.dl(),
+				this.dr())
+		} else {
+			return new PointArray(
+				this.ul().above(),
+				this.ur().above(),
+				this.dl().above(),
+				this.dr().above(),
+				this.copy(),
+				this.ul().below(),
+				this.ur().below(),
+				this.dl().below(),
+				this.dr().below())
+		}
+	}
+
+	getUnfilteredAllNeighborsIncSelf() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.ul(),
+				this.u(),
+				this.ur(),
+				this.l(),
+				this.copy(),
+				this.r(),
+				this.dl(),
+				this.d(),
+				this.dr())
+		} else {
+			return new PointArray(
+				this.ul().above(),
+				this.u().above(),
+				this.ur().above(),
+				this.l().above(),
+				this.above(),
+				this.r().above(),
+				this.dl().above(),
+				this.d().above(),
+				this.dr().above(),
+				this.ul(),
+				this.u(),
+				this.ur(),
+				this.l(),
+				this.copy(),
+				this.r(),
+				this.dl(),
+				this.d(),
+				this.dr(),
+				this.ul().below(),
+				this.u().below(),
+				this.ur().below(),
+				this.l().below(),
+				this.below(),
+				this.r().below(),
+				this.dl().below(),
+				this.d().below(),
+				this.dr().below())
+		}
+	}
+
+	getUnfilteredAdjNeighbors() { return this.getUnfilteredAdjNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
+	getUnfilteredDiagNeighbors() { return this.getUnfilteredDiagNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
+	getUnfilteredAllNeighbors() { return this.getUnfilteredAllNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
+
+	add(pt) { return new Point(this.x + pt.x, this.y + pt.y, this.is3D ? this.z + pt.z : undefined) }
 	addMut(pt) {
 		this.x += pt.x
 		this.y += pt.y
+
+		if (this.is3D) {
+			this.z += pt.z
+		}
+
 		return this
 	}
 
-	sub(pt) { return new Point(this.x - pt.x, this.y - pt.y) }
+	sub(pt) { return new Point(this.x - pt.x, this.y - pt.y, this.is3D ? this.z - pt.z : undefined) }
 	subMut(pt) {
 		this.x -= pt.x
 		this.y -= pt.y
+
+		if (this.is3D) {
+			this.z -= pt.z
+		}
+
 		return this
 	}
 
-	squaredMag() { return this.x * this.x + this.y * this.y }
+	squaredMag() { return this.x * this.x + this.y * this.y + (this.is3D ? this.z * this.z : 0) }
 	mag() { return Math.sqrt(this.squaredMag()) }
 
 	squaredDist(pt) { return this.sub(pt).squaredMag() }
 	dist(pt) { return this.sub(pt).mag() }
 
-	readingOrderCompare(pt) { return this.y < pt.y ? -1 : this.y > pt.y ? 1 : this.x < pt.x ? -1 : this.x > pt.x ? 1 : 0 }
+	readingOrderCompare(pt) {
+		if (this.is3D && this.z < pt.z) {
+			return -1
+		} else if (this.is3D && this.z > pt.z) {
+			return 1
+		} else if (this.y < pt.y) {
+			return -1
+		} else if (this.y > pt.y) {
+			return 1
+		} else if (this.x < pt.x) {
+			return -1
+		} else if (this.x > pt.x) {
+			return 1
+		} else {
+			return 0
+		}
+	}
 
-	copy() { return new Point(this.x, this.y) }
-	toString() { return this.x + "," + this.y }
+	copy() { return new Point(this.x, this.y, this.z) }
+	toString() { return this.x + "," + this.y + (this.is3D ? "," + this.z : "") }
 }
 
 Point.NONE = new Point(null, null)
@@ -342,7 +477,7 @@ Grid = class Grid {
 	findAllIndices(func) {
 		func = typeof func == "function" ? func : (e) => e == func
 
-		let points = [].pt
+		let points = new PointArray()
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
 
 		return points
@@ -360,7 +495,7 @@ Grid = class Grid {
 		return this.findIndex((e) => e == val)
 	}
 
-	contains(pt) { return pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }
+	contains(pt) { return !pt.is3D && pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }
 
 	getAdjNeighbors(pt) { return pt.getUnfilteredAdjNeighbors().filter((pt) => this.contains(pt)) }
 	getAdjNeighborsIncSelf(pt) { return pt.getUnfilteredAdjNeighborsIncSelf().filter((pt) => this.contains(pt)) }
@@ -381,15 +516,15 @@ Grid = class Grid {
 	static BFS_END = 2
 
 	bfs(pt, func, neighbors = "getAdjNeighborsThat", limit = 1000) {
-		let visited = [].pt
-		let toVisit = [pt].pt
+		let visited = new PointArray()
+		let toVisit = new PointArray(pt)
 		let count = 0
 		let end
 
-		toVisit[0].path = [pt]
+		toVisit[0].path = new PointArray(pt)
 
 		out: while (toVisit.length > 0 && count++ < limit) {
-			let newToVisit = [].pt
+			let newToVisit = new PointArray()
 
 			toVisit.sort()
 
@@ -1048,6 +1183,41 @@ utils = {
 	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill))
 }
 
+if (typeof window == "undefined" && process.argv[2] == "test") {
+	const fs = require("fs")
+
+	const year = "2021"
+
+	for (let i = 1; i <= 18; i++) {
+		const func = require(`./${year}/${i}.js`)
+		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8")
+		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")
+
+		let res = func(input, false)
+
+		console.log(`${year} day ${i} part 1: Got ${res}, expected ${answers[0]}`)
+
+		if (res == answers[0]) {
+			console.log(`${year} day ${i} part 1: SUCCESS`)
+		} else {
+			console.error(`${year} day ${i} part 1: FAIL`)
+			process.exit(1)
+		}
+
+		if (i != 25) {
+			res = func(input, true)
+
+			console.log(`${year} day ${i} part 2: Got ${res}, expected ${answers[1]}`)
+
+			if (res == answers[1]) {
+				console.log(`${year} day ${i} part 2: SUCCESS`)
+			} else {
+				console.error(`${year} day ${i} part 2: FAIL`)
+				process.exit(1)
+			}
+		}
+	}
+}
 if (typeof window == "undefined") {
 	debugger
 }

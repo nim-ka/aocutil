@@ -19,3 +19,7 @@ function day3(input, part2) {
         return parseInt(oxy[0].join``, 2) * parseInt(co2[0].join``, 2)
     }
 }
+
+if (typeof window == "undefined") {
+    module.exports = day3
+}

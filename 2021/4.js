@@ -32,3 +32,7 @@ function day4(input, part2) {
 
     return score
 }
+
+if (typeof window == "undefined") {
+    module.exports = day4
+}

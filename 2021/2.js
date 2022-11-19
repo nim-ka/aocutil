@@ -13,3 +13,7 @@ function day2(input, part2) {
 
     return x * y
 }
+
+if (typeof window == "undefined") {
+    module.exports = day2
+}

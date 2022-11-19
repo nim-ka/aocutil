@@ -13,3 +13,7 @@ function day15(input, part2) {
 
     return end.searchData.dist
 }
+
+if (typeof window == "undefined") {
+    module.exports = day15
+}

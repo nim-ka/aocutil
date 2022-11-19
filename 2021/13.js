@@ -25,3 +25,7 @@ function day13(input, part2) {
 
     return new Grid(points.max((e) => e.x).x + 1, points.max((e) => e.y).y + 1).mapMut((_, pt) => pt.isIn(points) ? "#" : " ").toString("")
 }
+
+if (typeof window == "undefined") {
+    module.exports = day13
+}

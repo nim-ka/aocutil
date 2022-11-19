@@ -32,3 +32,7 @@ function day11(input, part2) {
 
     return part2 ? steps : totalFlashes
 }
+
+if (typeof window == "undefined") {
+    module.exports = day11
+}

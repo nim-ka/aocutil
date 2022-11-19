@@ -21,13 +21,13 @@ class SnailfishNumber {
                 return true
             }
         }
-        
+
         if (this.right instanceof SnailfishNumber) {
             if (this.right.explode(depth + 1)) {
                 return true
             }
         }
-        
+
         if (!(this.left instanceof SnailfishNumber) && !(this.right instanceof SnailfishNumber) && depth >= 4) {
             let lastNode = this
             let node = this.parent
@@ -141,4 +141,8 @@ function day18(input, part2) {
         let pairs = lines.flatMap((e) => lines.filter((f) => e != f).map((f) => [e, f].map((e) => SnailfishNumber.fromArr(JSON.parse(e)))))
         return pairs.map((e) => e[0].add(e[1]).magnitude()).max()
     }
+}
+
+if (typeof window == "undefined") {
+    module.exports = day18
 }

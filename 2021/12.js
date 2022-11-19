@@ -40,3 +40,7 @@ function day12(input, part2) {
 
     return count
 }
+
+if (typeof window == "undefined") {
+    module.exports = day12
+}

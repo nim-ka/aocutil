@@ -26,3 +26,7 @@ function day10(input, part2) {
         return results.filter((e) => Array.isArray(e)).map((e) => e.reduce((a, b) => a * 5 + scores2[b], 0)).medianNumeric()
     }
 }
+
+if (typeof window == "undefined") {
+    module.exports = day10
+}

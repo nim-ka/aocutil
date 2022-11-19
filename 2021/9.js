@@ -13,3 +13,7 @@ function day9(input, part2) {
 
     return sizes[0] * sizes[1] * sizes[2]
 }
+
+if (typeof window == "undefined") {
+    module.exports = day9
+}

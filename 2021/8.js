@@ -30,3 +30,7 @@ function day8(input, part2) {
 
     return sum
 }
+
+if (typeof window == "undefined") {
+    module.exports = day8
+}

@@ -29,3 +29,7 @@ function day5(input, part2) {
 
     return Object.values(dict).filter((e) => e > 1).length
 }
+
+if (typeof window == "undefined") {
+    module.exports = day5
+}

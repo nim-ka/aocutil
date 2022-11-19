@@ -35,3 +35,7 @@ function day14(input, part2) {
 
     return letters.max() - letters.min()
 }
+
+if (typeof window == "undefined") {
+    module.exports = day14
+}

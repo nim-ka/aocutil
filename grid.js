@@ -101,7 +101,7 @@ Grid = class Grid {
 	findAllIndices(func) {
 		func = typeof func == "function" ? func : (e) => e == func
 
-		let points = [].pt
+		let points = new PointArray()
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
 
 		return points
@@ -119,7 +119,7 @@ Grid = class Grid {
 		return this.findIndex((e) => e == val)
 	}
 
-	contains(pt) { return pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }
+	contains(pt) { return !pt.is3D && pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }
 
 	getAdjNeighbors(pt) { return pt.getUnfilteredAdjNeighbors().filter((pt) => this.contains(pt)) }
 	getAdjNeighborsIncSelf(pt) { return pt.getUnfilteredAdjNeighborsIncSelf().filter((pt) => this.contains(pt)) }
@@ -140,15 +140,15 @@ Grid = class Grid {
 	static BFS_END = 2
 
 	bfs(pt, func, neighbors = "getAdjNeighborsThat", limit = 1000) {
-		let visited = [].pt
-		let toVisit = [pt].pt
+		let visited = new PointArray()
+		let toVisit = new PointArray(pt)
 		let count = 0
 		let end
 
-		toVisit[0].path = [pt]
+		toVisit[0].path = new PointArray(pt)
 
 		out: while (toVisit.length > 0 && count++ < limit) {
-			let newToVisit = [].pt
+			let newToVisit = new PointArray()
 
 			toVisit.sort()
 

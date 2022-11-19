@@ -10,3 +10,7 @@ function day6(input, part2) {
 
     return counts.sum()
 }
+
+if (typeof window == "undefined") {
+    module.exports = day6
+}

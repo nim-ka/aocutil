@@ -36,3 +36,7 @@ function day17(input, part2) {
         return vels.length
     }
 }
+
+if (typeof window == "undefined") {
+    module.exports = day17
+}

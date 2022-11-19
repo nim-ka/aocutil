@@ -138,3 +138,7 @@ function day16(input, part2) {
     let bits = input.split("").flatMap((e) => parseInt(e, 16).toString(2).padStart(4, "0").split("").num())
     return new Packet(bits)[part2 ? "getValue" : "getVersionSum"]()
 }
+
+if (typeof window == "undefined") {
+    module.exports = day16
+}
