@@ -31,7 +31,7 @@ function day14(input, part2) {
 
     counts = Object.keys(counts).map((key) => [key.split(""), counts[key]])
 
-    let letters = counts.map((e) => e[0]).flat().uniq().map((letter) => (counts.filter((e) => e[0].includes(letter)).map((e) => e[0].count(letter) * e[1]).sum() + (letter == init[0] || letter == init[init.length - 1])) / 2)
+    let letters = counts.flatMap((e) => e[0]).uniq().map((letter) => (counts.filter((e) => e[0].includes(letter)).map((e) => e[0].count(letter) * e[1]).sum() + (letter == init[0] || letter == init[init.length - 1])) / 2)
 
     return letters.max() - letters.min()
 }

@@ -102,6 +102,18 @@ load = function load() {
 			},
 			configurable: true
 		},
+		prod: {
+			value: function(val = 1) {
+				return this.reduce((a, b) => a * b, val)
+			},
+			configurable: true
+		},
+		cartProduct: {
+			value: function(that) {
+				return this.flatMap((e) => that.map((f) => [e, f]))
+			},
+			configurable: true
+		},
 		flatDeep: {
 			value: function() {
 				return this.flat(Infinity)
