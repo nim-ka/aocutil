@@ -62,6 +62,8 @@ class Transform {
     }
 }
 
+// this sucks on another level but hey it works ?
+// obviously i should make the initial search recursive instead of looping through all combinations but ghghghhghghg
 function day19(input, part2) {
     let lines = input.split("\n")
 
@@ -87,13 +89,9 @@ function day19(input, part2) {
         let scan = scans[i]
 
         for (let j = 0; j < scan.length; j++) {
-            if (scan[j].link) {
-                continue
-            }
-
             let scanRel = scan.map((e) => e.sub(scan[j]))
 
-            out: for (let k = i + 1; k < scans.length; k++) {
+            for (let k = i + 1; k < scans.length; k++) {
                 if (transforms[i][k]) {
                     continue
                 }
@@ -102,7 +100,7 @@ function day19(input, part2) {
                     continue
                 }
 
-                for (let t2 = 0; t2 < 24; t2++) {
+                out: for (let t2 = 0; t2 < 24; t2++) {
                     let scan2 = scans[k].map((e) => rotate(e, t2))
 
                     for (let l = 0; l < scan2.length; l++) {
@@ -113,15 +111,20 @@ function day19(input, part2) {
                         if (overlaps.length >= 12) {
                             console.log([i, j, k, l, t2])
 
-                            tree[i].push(k)
-                            tree[k].push(i)
+                            for (let overlap of overlaps) {
+                                scan[scanRel.indexOf(overlap)].linked = k
+                                scan2[scanRel2.indexOf(overlap)].linked = i
+                            }
+
+                            tree[i].pushUniq(k, ...tree[k])
+                            tree[k].pushUniq(i, ...tree[i])
 
                             if (tree[0].includes(i)) {
-                                tree[0].pushUniq(k)
+                                tree[0].pushUniq(...tree[i])
                             }
 
                             if (tree[0].includes(k)) {
-                                tree[0].pushUniq(i)
+                                tree[0].pushUniq(...tree[k])
                             }
 
                             transforms[i][k] = new Transform(scan2[l].sub(scan[j]), inverseRotations[t2])
@@ -137,7 +140,6 @@ function day19(input, part2) {
         }
     }
 
-    // this sucks on another level but hey it works ?
     Array(transforms.length).fill().forEach((_, i) => {
         (function recurse(i) {
             for (let j = 0; j < transforms[i].length; j++) {
@@ -152,8 +154,6 @@ function day19(input, part2) {
 
                     transforms[i][k] = transforms[i][j].compose(transforms[j][k])
                     transforms[k][i] = transforms[i][k].invert()
-
-                    console.log(`filled in ${i}<->${k} from ${i}<->${j}<->${k}`)
 
                     recurse(j)
                 }
