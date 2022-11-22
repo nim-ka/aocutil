@@ -108,7 +108,7 @@ Grid = class Grid {
 	}
 
 	findAll(func) {
-		return this.findAllIndices(func).map((pt) => this.get(pt))
+		return this.findAllIndices(func).mapArr((pt) => this.get(pt))
 	}
 
 	count(func) {

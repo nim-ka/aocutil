@@ -167,6 +167,21 @@ Pt = Point = class Point {
 		return this
 	}
 
+	mult(n) { return new Point(this.x * n, this.y * n, this.is3D ? this.z * n : undefined) }
+	multMut(n) {
+		this.x *= n
+		this.y *= n
+
+		if (this.is3D) {
+			this.z *= n
+		}
+
+		return this
+	}
+
+	neg(n) { return this.mult(-1) }
+	negMut(n) { return this.multMut(-1) }
+
 	squaredMag() { return this.x * this.x + this.y * this.y + (this.is3D ? this.z * this.z : 0) }
 	mag() { return Math.sqrt(this.squaredMag()) }
 

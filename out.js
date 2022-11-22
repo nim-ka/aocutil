@@ -339,6 +339,21 @@ Pt = Point = class Point {
 		return this
 	}
 
+	mult(n) { return new Point(this.x * n, this.y * n, this.is3D ? this.z * n : undefined) }
+	multMut(n) {
+		this.x *= n
+		this.y *= n
+
+		if (this.is3D) {
+			this.z *= n
+		}
+
+		return this
+	}
+
+	neg(n) { return this.mult(-1) }
+	negMut(n) { return this.multMut(-1) }
+
 	squaredMag() { return this.x * this.x + this.y * this.y + (this.is3D ? this.z * this.z : 0) }
 	mag() { return Math.sqrt(this.squaredMag()) }
 
@@ -484,7 +499,7 @@ Grid = class Grid {
 	}
 
 	findAll(func) {
-		return this.findAllIndices(func).map((pt) => this.get(pt))
+		return this.findAllIndices(func).mapArr((pt) => this.get(pt))
 	}
 
 	count(func) {
@@ -897,6 +912,18 @@ load = function load() {
 			},
 			configurable: true
 		},
+		mapArr: {
+			value: function(fn) {
+				const mapped = new Array(this.length)
+
+				for (let i = 0; i < this.length; i++) {
+					mapped[i] = fn(this[i], i, this)
+				}
+
+				return mapped
+			},
+			configurable: true
+		},
 		sum: {
 			value: function(val = 0) {
 				return this.reduce((a, b) => a + b, val)
@@ -923,7 +950,7 @@ load = function load() {
 		},
 		transpose: {
 			value: function() {
-				return Array(this[0].length).fill().map((_, i) => this.map(e => e[i]))
+				return this[0].map((_, i) => this.map(e => e[i]))
 			},
 			configurable: true
 		},
@@ -955,7 +982,7 @@ load = function load() {
 			},
 			configurable: true
 		},
-		rotate: {
+		rotateLeft: {
 			value: function(n) {
 				let k = (this.length + n) % this.length
 				return [...this.slice(k), ...this.slice(0, k)]
@@ -1095,25 +1122,54 @@ load = function load() {
 			},
 			configurable: true
 		},
-		map: {
-			value: function(...args) {
-				return this.arr.map(...args)
-			},
-			configurable: true
-		},
 		splitOnElement: {
 			value: function(sep) {
-				let arr = [[]]
+				let arr = [new PointArray()]
 
 				for (let i = 0; i < this.length; i++) {
 					if (this[i].equals(sep)) {
-						arr.push([])
+						arr.push(new PointArray())
 					} else {
 						arr[arr.length - 1].push(this[i])
 					}
 				}
 
 				return arr
+			},
+			configurable: true
+		},
+		map: {
+			value: function(fn) {
+				const mapped = new PointArray(this.length)
+
+				for (let i = 0; i < this.length; i++) {
+					mapped[i] = fn(this[i], i, this)
+				}
+
+				return mapped
+			},
+			configurable: true
+		},
+		cartProduct: {
+			value: function(that) {
+				return this.flatMap((e) => that.map((f) => new PointArray(e, f)))
+			},
+			configurable: true
+		},
+		interleave: {
+			value: function(that = new PointArray()) {
+				return new PointArray(this, that).transpose().flat()
+			},
+			configurable: true
+		},
+		rotateLeft: {
+			value: function(n) {
+				if (this.length == 1) {
+					return this.copy()
+				}
+
+				let k = (this.length + n) % this.length
+				return new PointArray(...this.slice(k), ...this.slice(0, k))
 			},
 			configurable: true
 		},
@@ -1188,7 +1244,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 
 	const year = "2021"
 
-	for (let i = 1; i <= 18; i++) {
+	for (let i = +process.argv[3] || 1; i <= 19; i++) {
 		const func = require(`./${year}/${i}.js`)
 		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8")
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")
