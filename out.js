@@ -761,6 +761,8 @@ Node = class Node {
 		let visited = {}
 		let toVisit = [this]
 
+		let i = 0
+
 		while (toVisit.length) {
 			let toVisitNew = []
 
@@ -776,13 +778,16 @@ Node = class Node {
 			})
 
 			toVisit = toVisitNew
-			console.log(toVisit.length)
+
+			if (++i % 100 == 0) {
+				console.log(toVisit.length)
+			}
 		}
 
 		console.timeEnd("heap gen")
 		console.time("search")
 
-		let i = 0
+		i = 0
 
 		while (heap.data.length) {
 			let min = heap.extract()

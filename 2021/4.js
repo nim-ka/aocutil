@@ -1,8 +1,8 @@
 function day4(input, part2) {
-    input = input.split("\n")
+    let lines = input.split("\n")
 
-    let seq = input.shift().split(",").num()
-    let grids = input.splitOnElement("").filter((e) => e.length).map((grid) => Grid.fromStr(grid.map((line) => line.replace(/^ /, "")).join("\n"), /\s+/).mapMut((e) => [+e, false]))
+    let seq = lines.shift().split(",").num()
+    let grids = lines.splitOnElement("").filter((e) => e.length).map((grid) => Grid.fromStr(grid.map((line) => line.replace(/^ /, "")).join("\n"), /\s+/).mapMut((e) => [+e, false]))
 
     let score
 

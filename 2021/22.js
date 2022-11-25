@@ -30,7 +30,7 @@ class Cuboid {
 }
 
 function day20(input, part2) {
-    let lines = input.split`\n`
+    let lines = input.split("\n")
 
     let cuboids = []
 

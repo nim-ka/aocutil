@@ -1,8 +1,12 @@
-function day14(input, part2) {
-    input = input.split("\n").splitOnElement("")
+function getNum(letter) {
+    return letter.charCodeAt(0) - "A".charCodeAt(0)
+}
 
-    let init = input[0][0].split("")
-    let rules = input[1].map((e) => e.split(" -> "))
+function day14(input, part2) {
+    let lines = input.split("\n").splitOnElement("")
+
+    let init = lines[0][0].split("")
+    let rules = lines[1].map((e) => e.split(" -> "))
 
     let counts = {}
 
@@ -29,11 +33,19 @@ function day14(input, part2) {
         }
     }
 
-    counts = Object.keys(counts).map((key) => [key.split(""), counts[key]])
+    // this double counts all letters except the first and last so we add one to those and / 2 at end
+    let letters = Array(26).fill(0)
+    letters[getNum(init[0])]++
+    letters[getNum(init[init.length - 1])]++
 
-    let letters = counts.flatMap((e) => e[0]).uniq().map((letter) => (counts.filter((e) => e[0].includes(letter)).map((e) => e[0].count(letter) * e[1]).sum() + (letter == init[0] || letter == init[init.length - 1])) / 2)
+    for (let pair in counts) {
+        letters[getNum(pair[0])] += counts[pair]
+        letters[getNum(pair[1])] += counts[pair]
+    }
 
-    return letters.max() - letters.min()
+    letters = letters.truthy()
+
+    return (letters.max() - letters.min()) / 2
 }
 
 if (typeof window == "undefined") {

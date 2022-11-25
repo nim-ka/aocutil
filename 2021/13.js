@@ -1,8 +1,8 @@
 function day13(input, part2) {
-    input = input.split("\n").splitOnElement("")
+    let lines = input.split("\n").splitOnElement("")
 
-    let points = input[0].map((e) => new Point(...e.split(",").num())).pt
-    let instructions = input[1].map((e) => e.split(" ").last.split("=")).map((e) => [e[0], +e[1]])
+    let points = lines[0].map((e) => new Point(...e.split(",").num())).pt
+    let instructions = lines[1].map((e) => e.split(" ").last.split("=")).map((e) => [e[0], +e[1]])
 
     for (let instruction of instructions) {
         let pos = instruction[1]

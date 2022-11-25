@@ -3,13 +3,17 @@ function day2(input, part2) {
     let y = 0
     let a = 0
 
-    input.split`\n`.forEach((e) => {
+    for (let line of input.split("\n")) {
         if (!part2) {
-            eval(e.replace("forward", "x +=").replace("up", "y -=").replace("down", "y +="))
+            eval(line.replace("forward", "x +=")
+                .replace("up", "y -=")
+                .replace("down", "y +="))
         } else {
-            eval(e.replace(/forward (.+)/, "x += $1; y += a * $1").replace("up", "a -=").replace("down", "a +="))
+            eval(line.replace(/forward (.+)/, "x += $1; y += a * $1")
+                .replace("up", "a -=")
+                .replace("down", "a +="))
         }
-    })
+    }
 
     return x * y
 }
