@@ -1244,7 +1244,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 
 	const year = "2021"
 
-	for (let i = +process.argv[3] || 1; i <= 23; i++) {
+	for (let i = +process.argv[3] || 1; i <= 25; i++) {
 		const func = require(`./${year}/${i}.js`)
 		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8")
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")
