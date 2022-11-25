@@ -62,8 +62,6 @@ class Transform {
     }
 }
 
-// this sucks on another level but hey it works ?
-// obviously i should make the initial search recursive instead of looping through all combinations but ghghghhghghg
 function day19(input, part2) {
     let lines = input.split("\n")
 
@@ -83,83 +81,75 @@ function day19(input, part2) {
         return a
     })
 
-    let tree = Array(scans.length).fill().map((_, i) => [i])
-
-    for (let i = 0; i < scans.length - 1; i++) {
+    let recurse = function(i) {
         let scan = scans[i]
+        let sharedCount = 0
 
-        for (let j = 0; j < scan.length; j++) {
+        scan.checked = true
+
+        for (let j = 0; j < scan.length - 11 - sharedCount; j++) {
             let scanRel = scan.map((e) => e.sub(scan[j]))
+            let shared = false
 
-            for (let k = i + 1; k < scans.length; k++) {
-                if (transforms[i][k]) {
+            for (let k = 0; k < scans.length; k++) {
+                if (scans[k].checked) {
                     continue
                 }
 
-                if (tree[0].includes(i) && tree[0].includes(k)) {
-                    continue
-                }
-
-                out: for (let t2 = 0; t2 < 24; t2++) {
-                    let scan2 = scans[k].map((e) => rotate(e, t2))
+                out: for (let t = 0; t < 24; t++) {
+                    let scan2 = scans[k].map((e) => rotate(e, t))
 
                     for (let l = 0; l < scan2.length; l++) {
                         let scanRel2 = scan2.map((e) => e.sub(scan2[l]))
 
-                        let overlaps = scanRel.int(scanRel2)
+                        let count = 0
 
-                        if (overlaps.length >= 12) {
-                            console.log([i, j, k, l, t2])
-
-                            for (let overlap of overlaps) {
-                                scan[scanRel.indexOf(overlap)].linked = k
-                                scan2[scanRel2.indexOf(overlap)].linked = i
+                        for (let m = 0; m < scanRel.length; m++) {
+                            if (m > scanRel.length - 12 + count) {
+                                break
                             }
 
-                            tree[i].pushUniq(k, ...tree[k])
-                            tree[k].pushUniq(i, ...tree[i])
-
-                            if (tree[0].includes(i)) {
-                                tree[0].pushUniq(...tree[i])
+                            for (let pt of scanRel2) {
+                                if (scanRel[m].equals(pt)) {
+                                    count++
+                                }
                             }
+                        }
 
-                            if (tree[0].includes(k)) {
-                                tree[0].pushUniq(...tree[k])
-                            }
-
-                            transforms[i][k] = new Transform(scan2[l].sub(scan[j]), inverseRotations[t2])
+                        if (count >= 12) {
+                            transforms[i][k] = new Transform(scan2[l].sub(scan[j]), inverseRotations[t])
                             transforms[k][i] = transforms[i][k].invert()
 
+                            for (let m = 0; m < transforms.length; m++) {
+                                if (m != i && transforms[m][i] && !transforms[m][k]) {
+                                    transforms[m][k] = transforms[m][i].compose(transforms[i][k])
+                                    transforms[k][m] = transforms[m][k].invert()
+                                }
+
+                                if (m != k && transforms[m][k] && !transforms[m][i]) {
+                                    transforms[m][i] = transforms[m][k].compose(transforms[k][i])
+                                    transforms[i][m] = transforms[m][i].invert()
+                                }
+                            }
+
+                            console.log(`linked ${i}<->${k}\t(${i} point ${j} == ${k} point ${l} with rotation ${t})`)
+
+                            recurse(k)
+
+                            shared = true
                             break out
                         }
                     }
                 }
             }
 
-            console.log(i, j)
+            if (shared) {
+                sharedCount++
+            }
         }
     }
 
-    Array(transforms.length).fill().forEach((_, i) => {
-        (function recurse(i) {
-            for (let j = 0; j < transforms[i].length; j++) {
-                if (i == j || !transforms[i][j]) {
-                    continue
-                }
-
-                for (let k = 0; k < transforms[j].length; k++) {
-                    if (transforms[i][k] || !transforms[j][k]) {
-                        continue
-                    }
-
-                    transforms[i][k] = transforms[i][j].compose(transforms[j][k])
-                    transforms[k][i] = transforms[i][k].invert()
-
-                    recurse(j)
-                }
-            }
-        })(i)
-    })
+    recurse(0)
 
     if (!part2) {
         let beacons = new PointArray()
