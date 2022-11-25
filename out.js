@@ -1242,6 +1242,21 @@ utils = {
 if (typeof window == "undefined" && process.argv[2] == "test") {
 	const fs = require("fs")
 
+	function test(name, answer, func, ...args) {
+		console.time(name)
+		let res = func(...args)
+		console.timeEnd(name)
+
+		console.log(`${name}: Got ${res}, expected ${answer}`)
+
+		if (res == answer) {
+			console.log(`${name}: SUCCESS`)
+		} else {
+			console.error(`${name}: FAIL`)
+			process.exit(1)
+		}
+	}
+
 	const year = "2021"
 
 	for (let i = +process.argv[3] || 1; i <= 25; i++) {
@@ -1249,28 +1264,11 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8")
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")
 
-		let res = func(input, false)
-
-		console.log(`${year} day ${i} part 1: Got ${res}, expected ${answers[0]}`)
-
-		if (res == answers[0]) {
-			console.log(`${year} day ${i} part 1: SUCCESS`)
-		} else {
-			console.error(`${year} day ${i} part 1: FAIL`)
-			process.exit(1)
-		}
-
 		if (i != 25) {
-			res = func(input, true)
-
-			console.log(`${year} day ${i} part 2: Got ${res}, expected ${answers[1]}`)
-
-			if (res == answers[1]) {
-				console.log(`${year} day ${i} part 2: SUCCESS`)
-			} else {
-				console.error(`${year} day ${i} part 2: FAIL`)
-				process.exit(1)
-			}
+			test(`${year} day ${i} part 1`, answers[0], func, input, false)
+			test(`${year} day ${i} part 2`, answers[1], func, input, true)
+		} else {
+			test(`${year} day ${i}`, answers[0], func, input)
 		}
 	}
 }
