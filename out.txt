@@ -1,79 +1,79 @@
-2021 day 1 part 1: 0.623ms
+2021 day 1 part 1: 0.676ms
 2021 day 1 part 1: Got 1292, expected 1292
 2021 day 1 part 1: SUCCESS
-2021 day 1 part 2: 0.469ms
+2021 day 1 part 2: 0.528ms
 2021 day 1 part 2: Got 1262, expected 1262
 2021 day 1 part 2: SUCCESS
-2021 day 2 part 1: 2.939ms
+2021 day 2 part 1: 3.227ms
 2021 day 2 part 1: Got 1813801, expected 1813801
 2021 day 2 part 1: SUCCESS
-2021 day 2 part 2: 2.712ms
+2021 day 2 part 2: 2.964ms
 2021 day 2 part 2: Got 1960569556, expected 1960569556
 2021 day 2 part 2: SUCCESS
-2021 day 3 part 1: 16.919ms
+2021 day 3 part 1: 18.032ms
 2021 day 3 part 1: Got 3882564, expected 3882564
 2021 day 3 part 1: SUCCESS
-2021 day 3 part 2: 7.571ms
+2021 day 3 part 2: 8.503ms
 2021 day 3 part 2: Got 3385170, expected 3385170
 2021 day 3 part 2: SUCCESS
-2021 day 4 part 1: 23.89ms
+2021 day 4 part 1: 23.852ms
 2021 day 4 part 1: Got 54275, expected 54275
 2021 day 4 part 1: SUCCESS
-2021 day 4 part 2: 14.49ms
+2021 day 4 part 2: 12.691ms
 2021 day 4 part 2: Got 13158, expected 13158
 2021 day 4 part 2: SUCCESS
-2021 day 5 part 1: 355.85ms
+2021 day 5 part 1: 391.71ms
 2021 day 5 part 1: Got 6856, expected 6856
 2021 day 5 part 1: SUCCESS
-2021 day 5 part 2: 579.865ms
+2021 day 5 part 2: 632.048ms
 2021 day 5 part 2: Got 20666, expected 20666
 2021 day 5 part 2: SUCCESS
-2021 day 6 part 1: 0.241ms
+2021 day 6 part 1: 0.284ms
 2021 day 6 part 1: Got 353274, expected 353274
 2021 day 6 part 1: SUCCESS
-2021 day 6 part 2: 0.173ms
+2021 day 6 part 2: 0.188ms
 2021 day 6 part 2: Got 1609314870967, expected 1609314870967
 2021 day 6 part 2: SUCCESS
-2021 day 7 part 1: 98.256ms
+2021 day 7 part 1: 100.926ms
 2021 day 7 part 1: Got 347011, expected 347011
 2021 day 7 part 1: SUCCESS
-2021 day 7 part 2: 79.237ms
+2021 day 7 part 2: 105.171ms
 2021 day 7 part 2: Got 98363777, expected 98363777
 2021 day 7 part 2: SUCCESS
-2021 day 8 part 1: 4.101ms
+2021 day 8 part 1: 6.436ms
 2021 day 8 part 1: Got 525, expected 525
 2021 day 8 part 1: SUCCESS
-2021 day 8 part 2: 8.222ms
+2021 day 8 part 2: 14.37ms
 2021 day 8 part 2: Got 1083859, expected 1083859
 2021 day 8 part 2: SUCCESS
-2021 day 9 part 1: 64.667ms
+2021 day 9 part 1: 70.799ms
 2021 day 9 part 1: Got 585, expected 585
 2021 day 9 part 1: SUCCESS
-2021 day 9 part 2: 255.377ms
+2021 day 9 part 2: 280.214ms
 2021 day 9 part 2: Got 827904, expected 827904
 2021 day 9 part 2: SUCCESS
-2021 day 10 part 1: 2.287ms
+2021 day 10 part 1: 6.514ms
 2021 day 10 part 1: Got 469755, expected 469755
 2021 day 10 part 1: SUCCESS
-2021 day 10 part 2: 1.807ms
+2021 day 10 part 2: 2.933ms
 2021 day 10 part 2: Got 2762335572, expected 2762335572
 2021 day 10 part 2: SUCCESS
-2021 day 11 part 1: 25.301ms
+2021 day 11 part 1: 22.393ms
 2021 day 11 part 1: Got 1691, expected 1691
 2021 day 11 part 1: SUCCESS
-2021 day 11 part 2: 34.194ms
+2021 day 11 part 2: 31.511ms
 2021 day 11 part 2: Got 216, expected 216
 2021 day 11 part 2: SUCCESS
-2021 day 12 part 1: 61.654ms
+2021 day 12 part 1: 30.518ms
 2021 day 12 part 1: Got 4241, expected 4241
 2021 day 12 part 1: SUCCESS
-2021 day 12 part 2: 1.937s
+2021 day 12 part 2: 802.008ms
 2021 day 12 part 2: Got 122134, expected 122134
 2021 day 12 part 2: SUCCESS
-2021 day 13 part 1: 23.127ms
+2021 day 13 part 1: 22.782ms
 2021 day 13 part 1: Got 695, expected 695
 2021 day 13 part 1: SUCCESS
-2021 day 13 part 2: 75.756ms
+2021 day 13 part 2: 76.13ms
 2021 day 13 part 2: Got  ##    ## ####  ##  #    #  # ###    ##
 #  #    #    # #  # #    #  # #  #    #
 #       #   #  #    #    #  # #  #    #
@@ -86,14 +86,14 @@
 #  # #  # #    #  # #    #  # #    #  #
  ###  ##  ####  ### ####  ##  #     ## 
 2021 day 13 part 2: SUCCESS
-2021 day 14 part 1: 1.744ms
+2021 day 14 part 1: 1.787ms
 2021 day 14 part 1: Got 2068, expected 2068
 2021 day 14 part 1: SUCCESS
-2021 day 14 part 2: 3.931ms
+2021 day 14 part 2: 4.071ms
 2021 day 14 part 2: Got 2158894777814, expected 2158894777814
 2021 day 14 part 2: SUCCESS
 99
-heap gen: 35.453ms
+heap gen: 36.683ms
 9000
 8000
 7000
@@ -103,8 +103,8 @@ heap gen: 35.453ms
 3000
 2000
 1000
-search: 76.922ms
-2021 day 15 part 1: 187.406ms
+search: 78.713ms
+2021 day 15 part 1: 235.476ms
 2021 day 15 part 1: Got 498, expected 498
 2021 day 15 part 1: SUCCESS
 101
@@ -116,7 +116,7 @@ search: 76.922ms
 299
 199
 99
-heap gen: 475.846ms
+heap gen: 681.953ms
 249000
 248000
 247000
@@ -366,26 +366,26 @@ heap gen: 475.846ms
 3000
 2000
 1000
-search: 16.333s
-2021 day 15 part 2: 18.610s
+search: 17.139s
+2021 day 15 part 2: 19.590s
 2021 day 15 part 2: Got 2901, expected 2901
 2021 day 15 part 2: SUCCESS
-2021 day 16 part 1: 32.713ms
+2021 day 16 part 1: 45.673ms
 2021 day 16 part 1: Got 1038, expected 1038
 2021 day 16 part 1: SUCCESS
-2021 day 16 part 2: 15.813ms
+2021 day 16 part 2: 18.143ms
 2021 day 16 part 2: Got 246761930504, expected 246761930504
 2021 day 16 part 2: SUCCESS
-2021 day 17 part 1: 64.78ms
+2021 day 17 part 1: 75.612ms
 2021 day 17 part 1: Got 4656, expected 4656
 2021 day 17 part 1: SUCCESS
-2021 day 17 part 2: 51.169ms
+2021 day 17 part 2: 64.137ms
 2021 day 17 part 2: Got 1908, expected 1908
 2021 day 17 part 2: SUCCESS
-2021 day 18 part 1: 24.803ms
+2021 day 18 part 1: 27.594ms
 2021 day 18 part 1: Got 3494, expected 3494
 2021 day 18 part 1: SUCCESS
-2021 day 18 part 2: 231.749ms
+2021 day 18 part 2: 260.408ms
 2021 day 18 part 2: Got 4712, expected 4712
 2021 day 18 part 2: SUCCESS
 linked 0<->5	(0 point 0 == 5 point 9 with rotation 8)
@@ -423,7 +423,7 @@ linked 35<->9	(35 point 0 == 9 point 11 with rotation 9)
 linked 9<->25	(9 point 0 == 25 point 18 with rotation 5)
 linked 25<->29	(25 point 0 == 29 point 7 with rotation 23)
 linked 29<->21	(29 point 0 == 21 point 6 with rotation 3)
-2021 day 19 part 1: 37.977s
+2021 day 19 part 1: 39.537s
 2021 day 19 part 1: Got 447, expected 447
 2021 day 19 part 1: SUCCESS
 linked 0<->5	(0 point 0 == 5 point 9 with rotation 8)
@@ -461,25 +461,25 @@ linked 35<->9	(35 point 0 == 9 point 11 with rotation 9)
 linked 9<->25	(9 point 0 == 25 point 18 with rotation 5)
 linked 25<->29	(25 point 0 == 29 point 7 with rotation 23)
 linked 29<->21	(29 point 0 == 21 point 6 with rotation 3)
-2021 day 19 part 2: 37.324s
+2021 day 19 part 2: 37.936s
 2021 day 19 part 2: Got 15672, expected 15672
 2021 day 19 part 2: SUCCESS
-2021 day 20 part 1: 80.186ms
+2021 day 20 part 1: 79.639ms
 2021 day 20 part 1: Got 4873, expected 4873
 2021 day 20 part 1: SUCCESS
-2021 day 20 part 2: 1.900s
+2021 day 20 part 2: 2.031s
 2021 day 20 part 2: Got 16394, expected 16394
 2021 day 20 part 2: SUCCESS
-2021 day 21 part 1: 0.533ms
+2021 day 21 part 1: 0.554ms
 2021 day 21 part 1: Got 597600, expected 597600
 2021 day 21 part 1: SUCCESS
-2021 day 21 part 2: 317.957ms
+2021 day 21 part 2: 336.981ms
 2021 day 21 part 2: Got 634769613696613, expected 634769613696613
 2021 day 21 part 2: SUCCESS
-2021 day 22 part 1: 37.65ms
+2021 day 22 part 1: 37.315ms
 2021 day 22 part 1: Got 589411, expected 589411
 2021 day 22 part 1: SUCCESS
-2021 day 22 part 2: 124.157ms
+2021 day 22 part 2: 117.885ms
 2021 day 22 part 2: Got 1130514303649907, expected 1130514303649907
 2021 day 22 part 2: SUCCESS
 iteration 0 heap size 28 min energy 0
@@ -489,7 +489,7 @@ iteration 30000 heap size 14414 min energy 7695
 iteration 40000 heap size 15108 min energy 8555
 iteration 50000 heap size 14881 min energy 9425
 iteration 60000 heap size 12860 min energy 10003
-2021 day 23 part 1: 2.511s
+2021 day 23 part 1: 2.730s
 2021 day 23 part 1: Got 10607, expected 10607
 2021 day 23 part 1: SUCCESS
 iteration 0 heap size 28 min energy 0
@@ -501,15 +501,15 @@ iteration 50000 heap size 11889 min energy 9313
 iteration 60000 heap size 11552 min energy 10455
 iteration 70000 heap size 7414 min energy 12084
 iteration 80000 heap size 3371 min energy 14557
-2021 day 23 part 2: 2.536s
+2021 day 23 part 2: 2.763s
 2021 day 23 part 2: Got 59071, expected 59071
 2021 day 23 part 2: SUCCESS
-2021 day 24 part 1: 0.392ms
+2021 day 24 part 1: 0.294ms
 2021 day 24 part 1: Got 99691891979938, expected 99691891979938
 2021 day 24 part 1: SUCCESS
-2021 day 24 part 2: 0.25ms
+2021 day 24 part 2: 0.258ms
 2021 day 24 part 2: Got 27141191213911, expected 27141191213911
 2021 day 24 part 2: SUCCESS
-2021 day 25: 2.243s
+2021 day 25: 2.289s
 2021 day 25: Got 534, expected 534
 2021 day 25: SUCCESS
