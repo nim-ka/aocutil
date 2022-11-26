@@ -5,7 +5,8 @@ function day5(input, part2) {
         lines = lines.filter((e) => e[0].x == e[1].x || e[0].y == e[1].y)
     }
 
-    let dict = {}
+    let visitedOnce = new Set()
+    let visitedTwice = new Set()
 
     for (let line of lines) {
         let xrange = utils.signAgnosticInclusiveRange(line[0].x, line[1].x)
@@ -20,14 +21,17 @@ function day5(input, part2) {
         }
 
         for (let i = 0; i < xrange.length; i++) {
-            let x = xrange[i]
-            let y = yrange[i]
+            let mask = (xrange[i] << 10) | yrange[i]
 
-            dict[[x, y]] = (dict[[x, y]] || 0) + 1
+            if (visitedOnce.has(mask)) {
+                visitedTwice.add(mask)
+            } else {
+                visitedOnce.add(mask)
+            }
         }
     }
 
-    return Object.values(dict).filter((e) => e > 1).length
+    return visitedTwice.size
 }
 
 if (typeof window == "undefined") {
