@@ -1,17 +1,52 @@
+function encodePoint(pt) {
+    return (pt.x << 9) | pt.y
+}
+
+function decodePoint(num) {
+    return new Point((num >> 9) & 0b111111111, num & 0b111111111)
+}
+
 function day15(input, part2) {
-    let g = Grid.fromStr(input).num()
+    let grid = Grid.fromStr(input).num()
 
     if (part2) {
-        g = new Grid(g.width * 5, g.height * 5).mapMut((e, pt) => ((g.get(new Pt(pt.x % g.width, pt.y % g.height)) + (pt.x / g.width | 0) + (pt.y / g.height | 0) - 1) % 9) + 1)
+        grid = new Grid(grid.width * 5, grid.height * 5)
+            .mapMut((e, pt) => grid.get(new Pt(pt.x % grid.width, pt.y % grid.height)) + (pt.x / grid.width | 0) + (pt.y / grid.height | 0))
+            .mapMut((e) => ((e - 1) % 9) + 1)
     }
 
-    g.graphify()
+    let start = encodePoint(new Point(0, 0))
 
-    let start = g.get(new Pt(0, 0))
-    let end = g.get(new Pt(g.width - 1, g.height - 1))
-    start.dijkstraTo(end)
+    let visited = {}
+    visited[start] = true
 
-    return end.searchData.dist
+    let heap = new BinHeap((a, b) => a.risk < b.risk)
+    heap.insert({ pt: start, risk: 0 })
+
+    while (true) {
+        let top = heap.extract()
+        let decoded = decodePoint(top.pt)
+
+        if (decoded.x == grid.width - 1 && decoded.y == grid.height - 1) {
+            return top.risk
+        }
+
+        for (let pt of grid.getAdjNeighbors(decoded)) {
+            let encoded = encodePoint(pt)
+            let risk = top.risk + grid.get(pt)
+
+            if (encoded in visited) {
+                let idx = heap.data.findIndex((e) => e.pt == encoded)
+                if (idx > -1 && risk < heap.data[idx].risk) {
+                    heap.data[idx].risk = risk
+                    heap.up(idx)
+                }
+            } else {
+                visited[encoded] = true
+                heap.insert({ pt: encoded, risk: risk })
+            }
+        }
+    }
 }
 
 if (typeof window == "undefined") {
