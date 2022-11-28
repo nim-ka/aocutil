@@ -1180,7 +1180,7 @@ load = function load() {
 		},
 		sort: {
 			value: function(func = (a, b) => a.readingOrderCompare(b)) {
-				return Array.prototype.sort.apply(this, func)
+				return Array.prototype.sort.apply(this, [func])
 			},
 			configurable: true
 		},
