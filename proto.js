@@ -47,6 +47,15 @@ load = function load() {
 			},
 			configurable: true
 		},
+		first: {
+			get: function() {
+				return this[0]
+			},
+			set: function(val) {
+				this[0] = val
+			},
+			configurable: true
+		},
 		last: {
 			get: function() {
 				return this[this.length - 1]
