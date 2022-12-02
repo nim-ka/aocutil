@@ -1204,6 +1204,17 @@ load = function load() {
 			},
 			configurable: true
 		},
+		rotateRight: {
+			value: function rotateRight(n) {
+				if (this.length == 1) {
+					return this.copy()
+				}
+
+				let k = (this.length - n) % this.length
+				return new PointArray(...this.slice(k), ...this.slice(0, k))
+			},
+			configurable: true
+		},
 		sort: {
 			value: function sort(func = (a, b) => a.readingOrderCompare(b)) {
 				return Array.prototype.sort.apply(this, [func])
