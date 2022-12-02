@@ -842,13 +842,13 @@ let warned = false
 load = function load() {
 	Object.defineProperties(Object.prototype, {
 		copyDeep: {
-			value: function() {
+			value: function copyDeep() {
 				return JSON.parse(JSON.stringify(this))
 			},
 			configurable: true
 		},
 		num: {
-			value: function() {
+			value: function num() {
 				if (this.map) {
 					return this.map((e) => +e)
 				} else if (this.mapMut) {
@@ -878,19 +878,19 @@ load = function load() {
 			configurable: true
 		},
 		dll: {
-			value: function() {
+			value: function dll() {
 				return new DLL(this)
 			},
 			configurable: true
 		},
 		truthy: {
-			value: function() {
+			value: function truthy() {
 				return this.filter((e) => e)
 			},
 			configurable: true
 		},
 		splitOnElement: {
-			value: function(sep) {
+			value: function splitOnElement(sep) {
 				let arr = [[]]
 
 				for (let i = 0; i < this.length; i++) {
@@ -906,19 +906,19 @@ load = function load() {
 			configurable: true
 		},
 		copy: {
-			value: function() {
+			value: function copy() {
 				return this.slice()
 			},
 			configurable: true
 		},
 		copyDeep: {
-			value: function() {
+			value: function copyDeep() {
 				return JSON.parse(JSON.stringify(this))
 			},
 			configurable: true
 		},
 		mapArr: {
-			value: function(fn) {
+			value: function mapArr(fn) {
 				const mapped = new Array(this.length)
 
 				for (let i = 0; i < this.length; i++) {
@@ -930,37 +930,49 @@ load = function load() {
 			configurable: true
 		},
 		sum: {
-			value: function(val = 0) {
+			value: function sum(val = 0) {
 				return this.reduce((a, b) => a + b, val)
 			},
 			configurable: true
 		},
 		prod: {
-			value: function(val = 1) {
+			value: function prod(val = 1) {
 				return this.reduce((a, b) => a * b, val)
 			},
 			configurable: true
 		},
 		cartProduct: {
-			value: function(that) {
+			value: function cartProduct(that) {
 				return this.flatMap((e) => that.map((f) => [e, f]))
 			},
 			configurable: true
 		},
+		pairs: {
+			value: function pairs() {
+				return this.cartProduct(this)
+			},
+			configurable: true
+		},
+		pairsExcl: {
+			value: function pairsExcl() {
+				return this.flatMap((e, i) => this.filter((_, j) => i != j).map((f) => [e, f]))
+			},
+			configurable: true
+		},
 		flatDeep: {
-			value: function() {
+			value: function flatDeep() {
 				return this.flat(Infinity)
 			},
 			configurable: true
 		},
 		transpose: {
-			value: function() {
+			value: function transpose() {
 				return this[0].map((_, i) => this.map(e => e[i]))
 			},
 			configurable: true
 		},
 		findLast: {
-			value: function(func) {
+			value: function findLast(func) {
 				for (let i = this.length - 1; i >= 0; i--) {
 					if (func(this[i], i, this)) {
 						return this[i]
@@ -970,7 +982,7 @@ load = function load() {
 			configurable: true
 		},
 		findLastIndex: {
-			value: function(func) {
+			value: function findLastIndex(func) {
 				for (let i = this.length - 1; i >= 0; i--) {
 					if (func(this[i], i, this)) {
 						return i
@@ -982,38 +994,45 @@ load = function load() {
 			configurable: true
 		},
 		interleave: {
-			value: function(that) {
+			value: function interleave(that) {
 				return [this, that].transpose().flat()
 			},
 			configurable: true
 		},
 		rotateLeft: {
-			value: function(n) {
+			value: function rotateLeft(n) {
 				let k = (this.length + n) % this.length
 				return [...this.slice(k), ...this.slice(0, k)]
 			},
 			configurable: true
 		},
+		rotateRight: {
+			value: function rotateRight(n) {
+				let k = (this.length - n) % this.length
+				return [...this.slice(k), ...this.slice(0, k)]
+			},
+			configurable: true
+		},
 		sub: {
-			value: function(that) {
+			value: function sub(that) {
 				return this.filter(e => !that.includes(e))
 			},
 			configurable: true
 		},
 		int: {
-			value: function(that) {
+			value: function int(that) {
 				return this.filter(e => that.includes(e))
 			},
 			configurable: true
 		},
 		uniq: {
-			value: function() {
+			value: function uniq() {
 				return this.filter((e, i) => this.indexOf(e) == i)
 			},
 			configurable: true
 		},
 		pushUniq: {
-			value: function(...vals) {
+			value: function pushUniq(...vals) {
 				if (!warned) {
 					console.warn("You should probably use a Set")
 					warned = true
@@ -1024,13 +1043,13 @@ load = function load() {
 			configurable: true
 		},
 		count: {
-			value: function(fn) {
+			value: function count(fn) {
 				return this.filter(typeof fn == "function" ? fn : (e) => e == fn).length
 			},
 			configurable: true
 		},
 		minIndex: {
-			value: function(fn = (e) => e, tiebreak) {
+			value: function minIndex(fn = (e) => e, tiebreak) {
 				let minval = Infinity
 				let min
 				let idx
@@ -1051,13 +1070,13 @@ load = function load() {
 			configurable: true
 		},
 		min: {
-			value: function(fn, tiebreak) {
+			value: function min(fn, tiebreak) {
 				return this[this.minIndex(fn, tiebreak)]
 			},
 			configurable: true
 		},
 		maxIndex: {
-			value: function(fn = (e) => e, tiebreak) {
+			value: function maxIndex(fn = (e) => e, tiebreak) {
 				let maxval = -Infinity
 				let max
 				let idx
@@ -1078,19 +1097,19 @@ load = function load() {
 			configurable: true
 		},
 		max: {
-			value: function(fn, tiebreak) {
+			value: function max(fn, tiebreak) {
 				return this[this.maxIndex(fn, tiebreak)]
 			},
 			configurable: true
 		},
 		mean: {
-			value: function() {
+			value: function mean() {
 				return this.sum() / this.length
 			},
 			configurable: true
 		},
 		medianNumeric: {
-			value: function() {
+			value: function medianNumeric() {
 				let sorted = this.copy().sort((a, b) => a - b)
 
 				if (sorted.length % 2) {
@@ -1099,21 +1118,22 @@ load = function load() {
 					return (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
 				}
 			},
+			configurable: true
 		},
 		freqs: {
-			value: function() {
+			value: function freqs() {
 				return this.uniq().map((e) => [e, this.count(e)])
 			},
 			configurable: true
 		},
 		mode: {
-			value: function(tiebreak) {
+			value: function mode(tiebreak) {
 				return this.freqs().max((e) => e[1], (a, b, ai, bi) => tiebreak(a[0], b[0]))[0]
 			},
 			configurable: true
 		},
 		antimode: {
-			value: function(tiebreak) {
+			value: function antimode(tiebreak) {
 				return this.freqs().min((e) => e[1], (a, b, ai, bi) => tiebreak(a[0], b[0]))[0]
 			},
 			configurable: true
@@ -1128,7 +1148,7 @@ load = function load() {
 			configurable: true
 		},
 		splitOnElement: {
-			value: function(sep) {
+			value: function splitOnElement(sep) {
 				let arr = [new PointArray()]
 
 				for (let i = 0; i < this.length; i++) {
@@ -1144,7 +1164,7 @@ load = function load() {
 			configurable: true
 		},
 		map: {
-			value: function(fn) {
+			value: function map(fn) {
 				const mapped = new PointArray(this.length)
 
 				for (let i = 0; i < this.length; i++) {
@@ -1156,19 +1176,25 @@ load = function load() {
 			configurable: true
 		},
 		cartProduct: {
-			value: function(that) {
+			value: function cartProduct(that) {
 				return this.flatMap((e) => that.map((f) => new PointArray(e, f)))
 			},
 			configurable: true
 		},
+		pairsExcl: {
+			value: function pairsExcl() {
+				return this.flatMap((e, i) => this.filter((_, j) => i != j).map((f) => new PointArray(e, f)))
+			},
+			configurable: true
+		},
 		interleave: {
-			value: function(that = new PointArray()) {
+			value: function interleave(that = new PointArray()) {
 				return new PointArray(this, that).transpose().flat()
 			},
 			configurable: true
 		},
 		rotateLeft: {
-			value: function(n) {
+			value: function rotateLeft(n) {
 				if (this.length == 1) {
 					return this.copy()
 				}
@@ -1179,55 +1205,55 @@ load = function load() {
 			configurable: true
 		},
 		sort: {
-			value: function(func = (a, b) => a.readingOrderCompare(b)) {
+			value: function sort(func = (a, b) => a.readingOrderCompare(b)) {
 				return Array.prototype.sort.apply(this, [func])
 			},
 			configurable: true
 		},
 		includes: {
-			value: function(pt) {
+			value: function includes(pt) {
 				return pt.isIn(this)
 			},
 			configurable: true
 		},
 		indexOf: {
-			value: function(pt) {
+			value: function indexOf(pt) {
 				return pt.indexIn(this)
 			},
 			configurable: true
 		},
 		lastIndexOf: {
-			value: function(pt) {
+			value: function lastIndexOf(pt) {
 				return pt.lastIndexIn(this)
 			},
 			configurable: true
 		},
 		sub: {
-			value: function(that) {
+			value: function sub(that) {
 				return this.filter(e => !that.pt.includes(e))
 			},
 			configurable: true
 		},
 		int: {
-			value: function(that) {
+			value: function int(that) {
 				return this.filter(e => that.pt.includes(e))
 			},
 			configurable: true
 		},
 		uniq: {
-			value: function() {
+			value: function uniq() {
 				return this.filter((e, i) => this.pt.indexOf(e) == i)
 			},
 			configurable: true
 		},
 		pushUniq: {
-			value: function(...vals) {
+			value: function pushUniq(...vals) {
 				return this.push(...vals.pt.uniq().pt.sub(this))
 			},
 			configurable: true
 		},
 		count: {
-			value: function(fn) {
+			value: function count(fn) {
 				return this.filter(typeof fn == "function" ? fn : (e) => e.equals(fn)).length
 			},
 			configurable: true
@@ -1243,6 +1269,9 @@ utils = {
 	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
 	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill))
 }
+
+utils.range = utils.signAgnosticInclusiveRange
+
 
 if (typeof window == "undefined" && process.argv[2] == "test") {
 	const fs = require("fs")
