@@ -929,6 +929,18 @@ load = function load() {
 			},
 			configurable: true
 		},
+		sortNumAsc: {
+			value: function sortNumAsc() {
+				return this.sort((a, b) => a - b)
+			},
+			configurable: true
+		},
+		sortNumDesc: {
+			value: function sortNumAsc() {
+				return this.sort((a, b) => b - a)
+			},
+			configurable: true
+		},
 		sum: {
 			value: function sum(val = 0) {
 				return this.reduce((a, b) => a + b, val)
