@@ -889,6 +889,22 @@ load = function load() {
 			},
 			configurable: true
 		},
+		splitEvery: {
+			value: function splitEvery(n) {
+				let arr = [[]]
+
+				for (let i = 0; i < this.length; i++) {
+					if (arr[arr.length - 1].length >= n) {
+						arr.push([this[i]])
+					} else {
+						arr[arr.length - 1].push(this[i])
+					}
+				}
+
+				return arr
+			},
+			configurable: true
+		},
 		splitOnElement: {
 			value: function splitOnElement(sep) {
 				let arr = [[]]
@@ -1156,6 +1172,22 @@ load = function load() {
 		arr: {
 			get: function() {
 				return PointArray.revert(this)
+			},
+			configurable: true
+		},
+		splitEvery: {
+			value: function splitEvery(n) {
+				let arr = [new PointArray()]
+
+				for (let i = 0; i < this.length; i++) {
+					if (arr[arr.length - 1].length >= n) {
+						arr.push(new PointArray(this[i]))
+					} else {
+						arr[arr.length - 1].push(this[i])
+					}
+				}
+
+				return arr
 			},
 			configurable: true
 		},
