@@ -8,6 +8,19 @@ Pt = Point = class Point {
 
 	equals(pt) { return this.x == pt.x && this.y == pt.y && (!this.is3D || this.z == pt.z) }
 
+	encode(width) { return this.x | (this.y << width) }
+	encode3D(width) { return this.x | (this.y << width) | (this.z << (width * 2)) }
+
+	static decode(width, num) {
+		let mask = (1 << width) - 1
+		return new Point(num & mask, num >> width)
+	}
+
+	static decode3D(width, num) {
+		let mask = (1 << width) - 1
+		return new Point(num & mask, (num >> width) & mask, num >> (width * 2))
+	}
+
 	isIn(arr) { return this.indexIn(arr) != -1 }
 	indexIn(arr) { return arr.findIndex((pt) => this.equals(pt)) }
 	lastIndexIn(arr) { return arr.findLastIndex((pt) => this.equals(pt)) }

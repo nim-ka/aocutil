@@ -10,6 +10,7 @@ Grid = class Grid {
 		return this
 	}
 
+	map(func) { return new Grid(this.width, this.height).mapMut((e, pt) => func(this.get(pt), pt, this)) }
 	mapMut(func) { return this.forEach((e, pt, grid) => grid.set(pt, func(e, pt, grid))) }
 
 	fill(n) { return this.mapMut(() => n) }
@@ -226,7 +227,7 @@ Grid = class Grid {
 		return
 	}
 
-	copy() { return new Grid(this.width, this.height).mapMut((_, pt) => this.get(pt).copyDeep()) }
+	copy() { return this.map((e) => e) }
 	toString(sep = "\t", ...pts) { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? "P" : e).join(sep)).join("\n") }
 	print(sep = "\t", ...pts) { console.log(this.toString(sep, pts)) }
 }

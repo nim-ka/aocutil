@@ -1,27 +1,20 @@
-// TODO:
-// - copy method
-// - remove range method
-
 DLLNode = class DLLNode {
-	constructor(val, skip = this, prev = this, next = this) {
+	constructor(val, prev = this, next = this) {
 		this.val = val
-		this.skip = skip
 		this.prev = prev
 		this.next = next
 	}
 
 	adv(n = 1) {
-		let node = this == this.skip ? this.next : this
+		let node = this
 
 		if (n < 0) {
 			while (n++) {
 				node = node.prev
-				if (node == this.skip) node = node.prev
 			}
 		} else {
 			while (n--) {
 				node = node.next
-				if (node == this.skip) node = node.next
 			}
 		}
 
@@ -30,11 +23,11 @@ DLLNode = class DLLNode {
 }
 
 DLL = class DLL {
-	constructor(a = []) {
-		this.h = new DLLNode()
-		this.length = 0;
+	constructor(...a) {
+		this.h = undefined
+		this.length = 0
 
-		a.forEach((e, i, a) => this.insEnd(e))
+		this.push(...a)
 	}
 
 	insNodeAheadNode(old, node) {
@@ -55,15 +48,37 @@ DLL = class DLL {
 		return this.length += dll.length
 	}
 
-	insAheadNode(old, val) {
-		let node = new DLLNode(val, this.h, old, old.next)
-		old.next = node
-		old.next.next.prev = node
-		return ++this.length
+	insValAheadNode(old, val) { return this.insNodeAheadNode(old, new DLLNode(val)) }
+
+	insNodeStart(node) {
+		if (this.h) {
+			this.insNodeBehindNode(this.h, node)
+			this.h = node
+			return this.length
+		} else {
+			this.h = node
+			return ++this.length
+		}
 	}
 
-	insStart(val) { return this.insAheadNode(this.h, val) }
-	unshift(val) { return this.insStart(val) }
+	insDLLStart(dll) {
+		if (this.h) {
+			this.insDLLBehindNode(this.h, dll)
+			this.h = dll.h
+			return this.length
+		} else {
+			this.h = dll.h
+			return this.length = dll.length
+		}
+	}
+
+	insValStart(val) { return this.insNodeStart(new DLLNode(val)) }
+
+	unshift(...vals) {
+		let ret
+		vals.reverse().forEach((val) => ret = this.insValStart(val))
+		return ret
+	}
 
 	insNodeBehindNode(old, node) {
 		node.prev = old.prev
@@ -83,42 +98,90 @@ DLL = class DLL {
 		return this.length += dll.length
 	}
 
-	insBehindNode(old, val) {
-		let node = new DLLNode(val, this.h, old.prev, old)
+	insValBehindNode(old, val) {
+		let node = new DLLNode(val, old.prev, old)
 		old.prev = node
 		old.prev.prev.next = node
 		return ++this.length
 	}
 
-	insEnd(val) { return this.insBehindNode(this.h, val) }
+	insNodeEnd(node) {
+		if (this.h) {
+			return this.insNodeBehindNode(this.h, node)
+		} else {
+			this.h = node
+			return ++this.length
+		}
+	}
+
+	insDLLEnd(dll) {
+		if (this.h) {
+			return this.insDLLBehindNode(this.h, dll)
+		} else {
+			this.h = dll.h
+			return this.length = dll.length
+		}
+	}
+
+	insValEnd(val) { return this.insNodeEnd(new DLLNode(val)) }
 
 	push(...vals) {
 		let ret
-		vals.forEach((val) => ret = this.insEnd(val))
+		vals.forEach((val) => ret = this.insValEnd(val))
 		return ret
 	}
 
-	insNode(idx, node) { return this.insNodeBehindNode(this.getNode(idx), node) }
-	insDLL(idx, dll) { return this.insDLLBehindNode(this.getNode(idx), dll) }
-	ins(idx, val) { return this.insBehindNode(this.getNode(idx), val) }
-	insNodeAhead(idx, node) { return this.insNodeAheadNode(this.getNode(idx), node) }
-	insDLLAhead(idx, dll) { return this.insDLLAheadNode(this.getNode(idx), dll) }
-	insAhead(idx, val) { return this.insAheadNode(this.getNode(idx), val) }
+	insNodeBehindIdx(idx, node) { return this.insNodeBehindNode(this.getNode(idx), node) }
+	insDLLBehindIdx(idx, dll) { return this.insDLLBehindNode(this.getNode(idx), dll) }
+	insValBehindIdx(idx, val) { return this.insValBehindNode(this.getNode(idx), val) }
+	insNodeAheadIdx(idx, node) { return this.insNodeAheadNode(this.getNode(idx), node) }
+	insDLLAheadIdx(idx, dll) { return this.insDLLAheadNode(this.getNode(idx), dll) }
+	insValAheadIdx(idx, val) { return this.insValAheadNode(this.getNode(idx), val) }
 
 	removeNode(node) {
 		let tmp = node.next
 		node.prev.next = node.next
 		tmp.prev = node.prev
 		this.length--
+
+		if (node == this.h) {
+			this.h = this.h.next
+		}
+
+		if (this.length == 0) {
+			this.h = undefined
+		}
+
 		return node
 	}
 
-	remove(idx) { return this.removeNode(this.getNode(idx)).val }
+	removeIdx(idx) { return this.removeNode(this.getNode(idx)).val }
+
+	shift() { return this.removeIdx(0) }
+	pop() { return this.removeIdx(-1) }
+
+	removeNodeRange(start, end) {
+		let result = new DLL()
+
+		while (start != end) {
+			let next = start.next
+			result.insNodeEnd(this.removeNode(start))
+			start = next
+		}
+
+		return result
+	}
+
+	removeIdxRange(startIdx, endIdx) { return this.removeNodeRange(this.getNode(startIdx), this.getNode(endIdx)) }
 
 	getNode(idx) { return this.h.adv(idx) }
 	get(idx) { return this.getNode(idx).val }
 
 	reverse() {
+		if (!this.h) {
+			return this
+		}
+
 		let node = this.h
 
 		do {
@@ -132,41 +195,54 @@ DLL = class DLL {
 		return this
 	}
 
-	rotate(rot) {
-		let tmp = this.h.next
-		this.removeNode(this.h)
-		this.insBehindNodeNode(tmp.adv(-rot), this.h)
+	rotateForward(rot) {
+		this.h = this.h.adv(rot)
+		return this
 	}
 
-	forEachNode(f) {
-		let i = 0, node = this.h.next;
+	rotateBackward(rot) {
+		this.h = this.h.adv(-rot)
+		return this
+	}
 
-		while (node != this.h) {
-			f(node, i++)
-			node = node.next
+	forEach(f) {
+		if (!this.h) {
+			return this
 		}
+
+		let i = 0, node = this.h
+
+		do {
+			f(node.val, node, i++, this)
+			node = node.next
+		} while (node != this.h)
 
 		return this
 	}
 
-	forEach(f) { return this.forEachNode((node, idx) => f(node.val, idx)) }
-	mapMut(f) { return this.forEachNode((node, idx) => node.val = f(node.val, idx)) }
+	mapMut(f) { return this.forEach((val, node, idx, dll) => node.val = f(val, node, idx, dll)) }
+	map(f) { return this.copy().mapMut(f) }
 
 	includes(val) {
 		let res = false
-		this.forEach((e) => res |= e == val)
+		this.forEach((e) => res ||= e == val)
 		return res
 	}
 
 	toArray() {
 		let arr = new Array(this.length)
-
-		this.forEach((el, idx) => arr[idx] = el)
-
+		this.forEach((el, _, idx) => arr[idx] = el)
 		return arr
 	}
 
 	toJSON() { return this.toArray() }
 	toString() { return this.toArray().toString() }
+
+	copy() {
+		let that = new DLL()
+		this.forEach((e) => that.push(e))
+		return that
+	}
 }
+
 
