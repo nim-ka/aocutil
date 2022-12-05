@@ -524,6 +524,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		arr: {
+			value: function arr() {
+				return Array.from(this)
+			},
+			configurable: true
+		},
 		push: {
 			value: function push(...vals) {
 				for (let val of vals) {
