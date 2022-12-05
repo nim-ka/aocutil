@@ -52,6 +52,8 @@ load = function load() {
 						arr[arr.length - 1] += char
 					}
 				}
+
+				return arr
 			},
 			configurable: true
 		}
