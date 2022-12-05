@@ -18,7 +18,18 @@ PtArray = PointArray = class PointArray extends Array {
 
 let warned = false
 
+S = function S(...args) {
+	return new Set(args)
+}
+
 load = function load() {
+	Object.defineProperty(globalThis, "input", {
+		get: function input() {
+			return document.body.innerText.trim()
+		},
+		configurable: true
+	})
+
 	Object.defineProperties(Object.prototype, {
 		copyDeep: {
 			value: function copyDeep() {
@@ -44,6 +55,12 @@ load = function load() {
 		pt: {
 			get: function() {
 				return PointArray.convert(this)
+			},
+			configurable: true
+		},
+		set: {
+			value: function set() {
+				return new Set(this)
 			},
 			configurable: true
 		},
@@ -145,6 +162,12 @@ load = function load() {
 		prod: {
 			value: function prod(val = 1) {
 				return this.reduce((a, b) => a * b, val)
+			},
+			configurable: true
+		},
+		mult: {
+			value: function mult(...args) {
+				return this.prod(...args)
 			},
 			configurable: true
 		},
@@ -335,13 +358,13 @@ load = function load() {
 		},
 		mode: {
 			value: function mode(tiebreak) {
-				return this.freqs().max((e) => e[1], (a, b, ai, bi) => tiebreak(a[0], b[0]))[0]
+				return this.freqs().max((e) => e[1], tiebreak ? (a, b, ai, bi) => tiebreak(a[0], b[0]) : undefined)[0]
 			},
 			configurable: true
 		},
 		antimode: {
 			value: function antimode(tiebreak) {
-				return this.freqs().min((e) => e[1], (a, b, ai, bi) => tiebreak(a[0], b[0]))[0]
+				return this.freqs().min((e) => e[1], tiebreak ? (a, b, ai, bi) => tiebreak(a[0], b[0]) : undefined)[0]
 			},
 			configurable: true
 		}
@@ -489,6 +512,207 @@ load = function load() {
 		count: {
 			value: function count(fn) {
 				return this.filter(typeof fn == "function" ? fn : (e) => e.equals(fn)).length
+			},
+			configurable: true
+		}
+	})
+
+	Object.defineProperties(Set.prototype, {
+		length: {
+			get: function() {
+				return this.size
+			},
+			configurable: true
+		},
+		push: {
+			value: function push(...vals) {
+				for (let val of vals) {
+					this.add(val)
+				}
+
+				return this
+			},
+			configurable: true
+		},
+		empty: {
+			value: function empty() {
+				return this.clear()
+			},
+			configurable: true
+		},
+		remove: {
+			value: function remove(val) {
+				return this.delete(val)
+			},
+			configurable: true
+		},
+		includes: {
+			value: function includes(val) {
+				return this.has(val)
+			},
+			configurable: true
+		},
+		copy: {
+			value: function copy() {
+				let set = new Set()
+
+				for (let val of this) {
+					set.add(val)
+				}
+
+				return set
+			},
+			configurable: true
+		},
+		unionMut: {
+			value: function unionMut(that) {
+				for (let val of that) {
+					this.add(val)
+				}
+
+				return this
+			},
+			configurable: true
+		},
+		union: {
+			value: function union(that) {
+				let set = new Set()
+
+				for (let val of this) {
+					set.add(val)
+				}
+
+				for (let val of that) {
+					set.add(val)
+				}
+
+				return set
+			},
+			configurable: true
+		},
+		subMut: {
+			value: function subMut(that) {
+				for (let val of that) {
+					this.delete(val)
+				}
+
+				return this
+			},
+			configurable: true
+		},
+		sub: {
+			value: function sub(that) {
+				let set = new Set()
+
+				for (let val of this) {
+					if (!that.has(val)) {
+						set.add(val)
+					}
+				}
+
+				return set
+			},
+			configurable: true
+		},
+		intMut: {
+			value: function intMut(that) {
+				for (let val of this) {
+					if (!that.has(val)) {
+						this.delete(val)
+					}
+				}
+
+				return this
+			},
+			configurable: true
+		},
+		int: {
+			value: function int(that) {
+				let set = new Set()
+
+				for (let val of this) {
+					if (that.has(val)) {
+						set.add(val)
+					}
+				}
+
+				return set
+			},
+			configurable: true
+		},
+		symDiffMut: {
+			value: function symDiffMut(that) {
+				for (let val of that) {
+					if (this.has(val)) {
+						this.delete(val)
+					} else {
+						this.add(val)
+					}
+				}
+
+				return this
+			},
+			configurable: true
+		},
+		symDiff: {
+			value: function symDiff(that) {
+				let set = new Set()
+
+				for (let val of this) {
+					if (!that.has(val)) {
+						set.add(val)
+					}
+				}
+
+				for (let val of that) {
+					if (!this.has(val)) {
+						set.add(val)
+					}
+				}
+
+				return set
+			},
+			configurable: true
+		},
+		isSupersetOf: {
+			value: function isSupersetOf(that) {
+				for (let val of that) {
+					if (!this.has(val)) {
+						return false
+					}
+				}
+
+				return true
+			},
+			configurable: true
+		},
+		isSubsetOf: {
+			value: function isSubsetOf(that) {
+				for (let val of this) {
+					if (!that.has(val)) {
+						return false
+					}
+				}
+
+				return true
+			},
+			configurable: true
+		},
+		equals: {
+			value: function equals(that) {
+				return this.isSupersetOf(that) && this.isSubsetOf(that)
+			},
+			configurable: true
+		},
+		isProperSupersetOf: {
+			value: function isProperSupersetOf(that) {
+				return this.isSupersetOf(that) && !this.isSubsetOf(that)
+			},
+			configurable: true
+		},
+		isProperSubsetOf: {
+			value: function isProperSubsetOf(that) {
+				return this.isSubsetOf(that) && !this.isSupersetOf(that)
 			},
 			configurable: true
 		}
