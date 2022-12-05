@@ -933,12 +933,39 @@ S = function S(...args) {
 	return new Set(args)
 }
 
+chr = function chr(n) {
+	return String.fromCharCode(n)
+}
+
 load = function load() {
 	Object.defineProperty(globalThis, "input", {
 		get: function input() {
 			return document.body.innerText.trim()
 		},
 		configurable: true
+	})
+
+	Object.defineProperties(String.prototype, {
+		ord: {
+			value: function ord(n) {
+				return this.charCodeAt(n)
+			},
+			configurable: true
+		},
+		splitEvery: {
+			value: function splitEvery(n) {
+				let arr = [""]
+
+				for (let char of this) {
+					if (arr[arr.length - 1].length >= n) {
+						arr.push(char)
+					} else {
+						arr[arr.length - 1] += char
+					}
+				}
+			},
+			configurable: true
+		}
 	})
 
 	Object.defineProperties(Object.prototype, {
