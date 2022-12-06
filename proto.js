@@ -34,7 +34,52 @@ load = function load() {
 		configurable: true
 	})
 
+	Object.defineProperties(Number.prototype, {
+		gcd: {
+			value: function gcd(...args) {
+				return utils.gcd(this, ...args)
+			},
+			configurable: true
+		},
+		lcm: {
+			value: function lcm(...args) {
+				return utils.lcm(this, ...args)
+			},
+			configurable: true
+		},
+		isPrime: {
+			value: function isPrime() {
+				return utils.isPrime(this)
+			},
+			configurable: true
+		},
+		primeFactors: {
+			value: function primeFactors() {
+				return utils.primeFactors(this)
+			},
+			configurable: true
+		},
+		factors: {
+			value: function factors() {
+				return utils.factors(this)
+			},
+			configurable: true
+		}
+	})
+
 	Object.defineProperties(String.prototype, {
+		lower: {
+			value: function lower() {
+				return this.toLowerCase()
+			},
+			configurable: true
+		},
+		upper: {
+			value: function upper() {
+				return this.toUpperCase()
+			},
+			configurable: true
+		},
 		ord: {
 			value: function ord(n) {
 				return this.charCodeAt(n)
@@ -45,15 +90,59 @@ load = function load() {
 			value: function splitEvery(n) {
 				let arr = [""]
 
-				for (let char of this) {
+				for (let i = 0; i < this.length; i++) {
 					if (arr[arr.length - 1].length >= n) {
-						arr.push(char)
+						arr.push(this[i])
 					} else {
-						arr[arr.length - 1] += char
+						arr[arr.length - 1] += this[i]
 					}
 				}
 
 				return arr
+			},
+			configurable: true
+		},
+		splitOn: {
+			value: function splitOn(sep) {
+				let func
+
+				if (sep instanceof RegExp) {
+					func = (el) => sep.test(el)
+				} else if (sep instanceof Function) {
+					func = sep
+				} else {
+					func = (el) => el == sep
+				}
+
+				let arr = [""]
+
+				for (let i = 0; i < this.length; i++) {
+					if (func(this[i])) {
+						arr.push("")
+					} else {
+						arr[arr.length - 1] += this[i]
+					}
+				}
+
+				return arr
+			},
+			configurable: true
+		},
+		posints: {
+			value: function posints() {
+				return this.match(/\d+/g).num()
+			},
+			configurable: true
+		},
+		ints: {
+			value: function ints() {
+				return this.match(/-?\d+/g).num()
+			},
+			configurable: true
+		},
+		nums: {
+			value: function nums() {
+				return this.match(/-?\d+(\.\d+)?/g).num()
 			},
 			configurable: true
 		}
@@ -130,12 +219,22 @@ load = function load() {
 			},
 			configurable: true
 		},
-		splitOnElement: {
-			value: function splitOnElement(sep) {
+		splitOn: {
+			value: function splitOn(sep) {
+				let func
+
+				if (sep instanceof RegExp) {
+					func = (el) => sep.test(el)
+				} else if (sep instanceof Function) {
+					func = sep
+				} else {
+					func = (el) => el == sep
+				}
+
 				let arr = [[]]
 
 				for (let i = 0; i < this.length; i++) {
-					if (this[i] == sep) {
+					if (func(this[i])) {
 						arr.push([])
 					} else {
 						arr[arr.length - 1].push(this[i])
@@ -143,6 +242,12 @@ load = function load() {
 				}
 
 				return arr
+			},
+			configurable: true
+		},
+		splitOnElement: {
+			value: function splitOnElement(sep) {
+				return this.splitOn((e) => e == sep)
 			},
 			configurable: true
 		},
