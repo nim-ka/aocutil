@@ -15,38 +15,14 @@ function day15(input, part2) {
             .mapMut((e) => ((e - 1) % 9) + 1)
     }
 
-    let start = encodePoint(new Point(0, 0))
+    grid.graphify()
 
-    let visited = {}
-    visited[start] = true
+    let start = grid.get(new Point(0, 0))
+    let end = grid.get(new Point(grid.width - 1, grid.height - 1))
 
-    let heap = new BinHeap((a, b) => a.risk < b.risk)
-    heap.insert({ pt: start, risk: 0 })
+    start.dijkstraTo(end)
 
-    while (true) {
-        let top = heap.extract()
-        let decoded = decodePoint(top.pt)
-
-        if (decoded.x == grid.width - 1 && decoded.y == grid.height - 1) {
-            return top.risk
-        }
-
-        for (let pt of grid.getAdjNeighbors(decoded)) {
-            let encoded = encodePoint(pt)
-            let risk = top.risk + grid.get(pt)
-
-            if (encoded in visited) {
-                let idx = heap.data.findIndex((e) => e.pt == encoded)
-                if (idx > -1 && risk < heap.data[idx].risk) {
-                    heap.data[idx].risk = risk
-                    heap.up(idx)
-                }
-            } else {
-                visited[encoded] = true
-                heap.insert({ pt: encoded, risk: risk })
-            }
-        }
-    }
+    return end.searchData.dist
 }
 
 if (typeof window == "undefined") {
