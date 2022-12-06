@@ -56,5 +56,38 @@ BinHeap = class BinHeap {
 			this.down(largest)
 		}
 	}
+
+	indexOf(el) {
+		return this.data.indexOf(el)
+	}
+
+	findIndex(func) {
+		return this.data.findIndex(func)
+	}
+
+	extractIdx(idx) {
+		let oldVal = this.data[idx]
+
+		if (this.data.length > 1) {
+			this.update(idx, this.data.pop())
+		} else if (idx == 0) {
+			this.data = []
+		}
+
+		return oldVal
+	}
+
+	update(idx, newVal) {
+		let oldVal = this.data[idx]
+		this.data[idx] = newVal
+
+		if (this.cond(oldVal, newVal)) {
+			this.down(idx)
+		} else {
+			this.up(idx)
+		}
+
+		return oldVal
+	}
 }
 

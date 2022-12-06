@@ -770,6 +770,39 @@ BinHeap = class BinHeap {
 			this.down(largest)
 		}
 	}
+
+	indexOf(el) {
+		return this.data.indexOf(el)
+	}
+
+	findIndex(func) {
+		return this.data.findIndex(func)
+	}
+
+	extractIdx(idx) {
+		let oldVal = this.data[idx]
+
+		if (this.data.length > 1) {
+			this.update(idx, this.data.pop())
+		} else if (idx == 0) {
+			this.data = []
+		}
+
+		return oldVal
+	}
+
+	update(idx, newVal) {
+		let oldVal = this.data[idx]
+		this.data[idx] = newVal
+
+		if (this.cond(oldVal, newVal)) {
+			this.down(idx)
+		} else {
+			this.up(idx)
+		}
+
+		return oldVal
+	}
 }
 
 Cxn = class Cxn {
@@ -818,7 +851,7 @@ Node = class Node {
 		this.id = Node.GLOBAL_ID++
 		this.val = val
 		this.cxns = []
-		this.searchData = new SearchData(0)
+		this.searchData = new SearchData()
 	}
 
 	addCxn(node, weight = 1) { this.cxns.push(new Cxn(node, weight)) }
@@ -836,53 +869,25 @@ Node = class Node {
 		return path
 	}
 
-	dijkstraTo(dests) {
+	dijkstraTo(dests, addCxns) {
 		if (!Array.isArray(dests)) {
 			dests = [dests]
 		}
 
 		let id = Symbol()
 
-		this.searchData.update(id, 0)
-
-		console.time("heap gen")
-
 		let heap = new BinHeap((p, c) => p.searchData.get(id, Infinity, undefined, true).dist < c.searchData.get(id, Infinity, undefined, true).dist)
-		let visited = {}
-		let toVisit = [this]
+		heap.insert(this)
+
+		console.time("search")
 
 		let i = 0
 
-		while (toVisit.length) {
-			let toVisitNew = []
-
-			toVisit.forEach((node) => {
-				heap.insert(node)
-				visited[node.id] = true
-				node.cxns.map((cxn) => cxn.dest).map((node) => {
-					if (!visited[node.id]) {
-						toVisitNew.push(node)
-						visited[node.id] = true
-					}
-				})
-			})
-
-			toVisit = toVisitNew
-
-			if (++i % 100 == 0) {
-				console.log(toVisit.length)
-			}
-		}
-
-		console.timeEnd("heap gen")
-		console.time("search")
-
-		i = 0
+		this.searchData.update(id, 0, undefined, true)
 
 		while (heap.data.length) {
 			let min = heap.extract()
-			let minDist = min.searchData.get(id, Infinity, undefined, true).dist
-			min.searchData.custom = false
+			let minDist = min.searchData.get(id).dist
 
 			if (dests.includes(min)) {
 				console.timeEnd("search")
@@ -890,16 +895,24 @@ Node = class Node {
 				return min
 			}
 
-			min.cxns.filter((cxn) => cxn.dest.searchData.get(id).custom).forEach((cxn) => {
-				if (cxn.dest.searchData.update(id, minDist + cxn.weight, min, true)) {
-					let idx = heap.data.indexOf(cxn.dest)
-					if (idx > -1) {
-						heap.up(idx)
+			if (addCxns && min.cxns.length == 0) {
+				addCxns(min)
+			}
+
+			min.cxns.forEach((cxn) => {
+				let visited = cxn.dest.searchData.get(id, Infinity, undefined, false).custom
+				let dist = minDist + cxn.weight
+
+				if (cxn.dest.searchData.update(id, dist, min, true)) {
+					if (visited) {
+						heap.up(heap.data.indexOf(cxn.dest))
+					} else {
+						heap.insert(cxn.dest)
 					}
 				}
 			})
 
-			if (++i % 1000 == 0) {
+			if (++i % 10000 == 0) {
 				console.log(heap.data.length)
 			}
 		}
