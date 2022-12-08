@@ -60,7 +60,15 @@ utils = {
 	}
 }
 
-utils.range = utils.signAgnosticInclusiveRange
+R = utils.range = utils.signAgnosticInclusiveRange
+
+U = function U(n) {
+	return R(1, n)
+}
+
+Z = function Z(n) {
+	return R(0, n)
+}
 
 defaultPartNum = 1
 
@@ -79,8 +87,7 @@ A = function A(ans, part) {
 
 	utils.fetchText(location.href.replace("input", "answer"), {
 		"headers": {
-			"content-type": "application/x-www-form-urlencoded",
-			"user-agent": "github.com/nim-ka/aocutil by alexing105@gmail.com"
+			"content-type": "application/x-www-form-urlencoded"
 		},
 		"body": queryString,
 		"method": "POST",
@@ -96,3 +103,9 @@ A = function A(ans, part) {
 
 	return ans
 }
+
+B = function B(ans) {
+	return A(ans, 2)
+}
+
+

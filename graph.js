@@ -62,9 +62,17 @@ Node = class Node {
 		return path
 	}
 
-	dijkstraTo(dests, addCxns) {
-		if (!Array.isArray(dests)) {
-			dests = [dests]
+	dijkstraTo(dest, addCxns) {
+		let isDest
+
+		if (dest instanceof Node) {
+			isDest = (node) => node == dest
+		} else if (dest instanceof Array) {
+			isDest = (node) => dest.includes(node)
+		} else if (dest instanceof Function) {
+			isDest = dest
+		} else {
+			console.error("Node.dijkstraTo: Unrecognized destination type")
 		}
 
 		let id = Symbol()
@@ -82,7 +90,7 @@ Node = class Node {
 			let min = heap.extract()
 			let minDist = min.searchData.get(id).dist
 
-			if (dests.includes(min)) {
+			if (isDest(min)) {
 				console.timeEnd("search")
 				min.searchData.get(id)
 				return min

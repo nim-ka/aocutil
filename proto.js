@@ -22,8 +22,33 @@ S = function S(...args) {
 	return new Set(args)
 }
 
-chr = function chr(n) {
-	return String.fromCharCode(n)
+alias = function alias(proto, alias, original) {
+	let isFunc = false
+
+	try {
+		isFunc = proto[original] instanceof Function
+	} catch (err) {}
+
+	if (isFunc) {
+		Object.defineProperty(proto, alias, {
+			value: {
+				[original](...args) {
+					return this[original](...args)
+				}
+			}[original],
+			configurable: true
+		})
+	} else {
+		Object.defineProperty(proto, alias, {
+			get: function get() {
+				return this[original]
+			},
+			set: function set(val) {
+				this[original] = val
+			},
+			configurable: true
+		})
+	}
 }
 
 load = function load() {
@@ -35,6 +60,12 @@ load = function load() {
 	})
 
 	Object.defineProperties(Number.prototype, {
+		chr: {
+			value: function chr() {
+				return String.fromCharCode(this)
+			},
+			configurable: true
+		},
 		gcd: {
 			value: function gcd(...args) {
 				return utils.gcd(this, ...args)
@@ -68,21 +99,19 @@ load = function load() {
 	})
 
 	Object.defineProperties(String.prototype, {
-		lower: {
-			value: function lower() {
-				return this.toLowerCase()
-			},
-			configurable: true
-		},
-		upper: {
-			value: function upper() {
-				return this.toUpperCase()
-			},
-			configurable: true
-		},
-		ord: {
-			value: function ord(n) {
-				return this.charCodeAt(n)
+		count: {
+			value: function count(el) {
+				let fn = el instanceof Function ? el : (e) => e == el
+
+				let count = 0
+
+				for (let i = 0; i < this.length; i++) {
+					if (fn(this[i], i, this)) {
+						count++
+					}
+				}
+
+				return count
 			},
 			configurable: true
 		},
@@ -142,13 +171,19 @@ load = function load() {
 		},
 		nums: {
 			value: function nums() {
-				return this.match(/-?\d+(\.\d+)?/g).num()
+				return this.match(/-?\d+(\.\d+)?/g)?.num() ?? []
 			},
 			configurable: true
 		}
 	})
 
 	Object.defineProperties(Object.prototype, {
+		arr: {
+			value: function arr() {
+				return [...this]
+			},
+			configurable: true
+		},
 		copyDeep: {
 			value: function copyDeep() {
 				return JSON.parse(JSON.stringify(this))
@@ -159,11 +194,31 @@ load = function load() {
 			value: function num() {
 				if (this.map) {
 					return this.map((e) => +e)
-				} else if (this.mapMut) {
-					return this.mapMut((e) => +e)
 				} else {
 					console.error("Object.prototype.num: No suitable map method found")
 				}
+			},
+			configurable: true
+		},
+		numMut: {
+			value: function numMut() {
+				if (this.mapMut) {
+					return this.mapMut((e) => +e)
+				} else {
+					console.error("Object.prototype.numMut: No suitable map method found")
+				}
+			},
+			configurable: true
+		},
+		keys: {
+			value: function keys() {
+				return Object.keys(this)
+			},
+			configurable: true
+		},
+		values: {
+			value: function values() {
+				return Object.values(this)
 			},
 			configurable: true
 		}
@@ -171,8 +226,14 @@ load = function load() {
 
 	Object.defineProperties(Array.prototype, {
 		pt: {
-			get: function() {
+			get: function pt() {
 				return PointArray.convert(this)
+			},
+			configurable: true
+		},
+		entriesArr: {
+			value: function entriesArr() {
+				return [...this.entries()]
 			},
 			configurable: true
 		},
@@ -183,23 +244,79 @@ load = function load() {
 			configurable: true
 		},
 		last: {
-			get: function() {
+			get: function lastGet() {
 				return this[this.length - 1]
 			},
-			set: function(val) {
+			set: function lastSet(val) {
 				this[this.length - 1] = val
+			},
+			configurable: true
+		},
+		startsWith: {
+			value: function startsWith(that) {
+				for (let i = 0; i < that.length; i++) {
+					if (this[i] != that[i]) {
+						return false
+					}
+				}
+
+				return true
+			},
+			configurable: true
+		},
+		endsWith: {
+			value: function endsWith(that) {
+				for (let i = 0; i < that.length; i++) {
+					if (this[this.length - i - 1] != that[that.length - i - 1]) {
+						return false
+					}
+				}
+
+				return true
+			},
+			configurable: true
+		},
+		repeat: {
+			value: function repeat(n) {
+				let arr = new Array(this.length * n)
+
+				for (let i = 0; i < this.length * n; i++) {
+					arr[i] = this[i % this.length]
+				}
+
+				return arr
 			},
 			configurable: true
 		},
 		dll: {
 			value: function dll() {
-				return new DLL(this)
+				return new DLL(...this)
 			},
 			configurable: true
 		},
 		truthy: {
 			value: function truthy() {
 				return this.filter((e) => e)
+			},
+			configurable: true
+		},
+		no: {
+			value: function no(fn) {
+				return !this.some(fn)
+			},
+			configurable: true
+		},
+		findIndices: {
+			value: function findIndices(fn) {
+				let arr = []
+
+				for (let i = 0; i < this.length; i++) {
+					if (fn(this[i])) {
+						arr.push(i)
+					}
+				}
+
+				return arr
 			},
 			configurable: true
 		},
@@ -245,18 +362,6 @@ load = function load() {
 			},
 			configurable: true
 		},
-		splitOnElement: {
-			value: function splitOnElement(sep) {
-				return this.splitOn((e) => e == sep)
-			},
-			configurable: true
-		},
-		copy: {
-			value: function copy() {
-				return this.slice()
-			},
-			configurable: true
-		},
 		copyDeep: {
 			value: function copyDeep() {
 				return JSON.parse(JSON.stringify(this))
@@ -293,27 +398,15 @@ load = function load() {
 			},
 			configurable: true
 		},
-		prod: {
-			value: function prod(val = 1) {
+		mult: {
+			value: function mult(val = 1) {
 				return this.reduce((a, b) => a * b, val)
 			},
 			configurable: true
 		},
-		mult: {
-			value: function mult(...args) {
-				return this.prod(...args)
-			},
-			configurable: true
-		},
 		cartProduct: {
-			value: function cartProduct(that) {
+			value: function cartProduct(that = this) {
 				return this.flatMap((e) => that.map((f) => [e, f]))
-			},
-			configurable: true
-		},
-		pairs: {
-			value: function pairs() {
-				return this.cartProduct(this)
 			},
 			configurable: true
 		},
@@ -332,28 +425,6 @@ load = function load() {
 		transpose: {
 			value: function transpose() {
 				return this[0].map((_, i) => this.map(e => e[i]))
-			},
-			configurable: true
-		},
-		findLast: {
-			value: function findLast(func) {
-				for (let i = this.length - 1; i >= 0; i--) {
-					if (func(this[i], i, this)) {
-						return this[i]
-					}
-				}
-			},
-			configurable: true
-		},
-		findLastIndex: {
-			value: function findLastIndex(func) {
-				for (let i = this.length - 1; i >= 0; i--) {
-					if (func(this[i], i, this)) {
-						return i
-					}
-				}
-
-				return -1
 			},
 			configurable: true
 		},
@@ -395,6 +466,18 @@ load = function load() {
 			},
 			configurable: true
 		},
+		dups: {
+			value: function dups() {
+				return this.filter((e, i) => this.indexOf(e) != i)
+			},
+			configurable: true
+		},
+		isUniq: {
+			value: function isUniq() {
+				return this.no((e, i) => this.indexOf(e) != i)
+			},
+			configurable: true
+		},
 		pushUniq: {
 			value: function pushUniq(...vals) {
 				if (!warned) {
@@ -402,13 +485,29 @@ load = function load() {
 					warned = true
 				}
 
-				return this.push(...vals.uniq().sub(this))
+				for (let i = 0; i < vals.length; i++) {
+					if (!this.includes(vals[i])) {
+						this.push(vals[i])
+					}
+				}
+
+				return this.length
 			},
 			configurable: true
 		},
 		count: {
-			value: function count(fn) {
-				return this.filter(typeof fn == "function" ? fn : (e) => e == fn).length
+			value: function count(el) {
+				let fn = el instanceof Function ? el : (e) => e == el
+
+				let count = 0
+
+				for (let i = 0; i < this.length; i++) {
+					if (fn(this[i], i, this)) {
+						count++
+					}
+				}
+
+				return count
 			},
 			configurable: true
 		},
@@ -506,8 +605,44 @@ load = function load() {
 
 	Object.defineProperties(PointArray.prototype, {
 		arr: {
-			get: function() {
+			value: function arr() {
 				return PointArray.revert(this)
+			},
+			configurable: true
+		},
+		startsWith: {
+			value: function startsWith(that) {
+				for (let i = 0; i < that.length; i++) {
+					if (!this[i].equals(that[i])) {
+						return false
+					}
+				}
+
+				return true
+			},
+			configurable: true
+		},
+		endsWith: {
+			value: function endsWith(that) {
+				for (let i = 0; i < that.length; i++) {
+					if (!this[this.length - i - 1].equals(that[that.length - i - 1])) {
+						return false
+					}
+				}
+
+				return true
+			},
+			configurable: true
+		},
+		repeat: {
+			value: function repeat(n) {
+				let arr = new PointArray(this.length * n)
+
+				for (let i = 0; i < this.length * n; i++) {
+					arr[i] = this[i % this.length]
+				}
+
+				return arr
 			},
 			configurable: true
 		},
@@ -527,12 +662,18 @@ load = function load() {
 			},
 			configurable: true
 		},
-		splitOnElement: {
-			value: function splitOnElement(sep) {
-				let arr = [new PointArray()]
+		splitOn: {
+			value: function splitOn(sep) {
+				let func
+
+				if (sep instanceof Function) {
+					func = sep
+				} else {
+					func = (el) => sep.equals(el)
+				}
 
 				for (let i = 0; i < this.length; i++) {
-					if (this[i].equals(sep)) {
+					if (func(this[i])) {
 						arr.push(new PointArray())
 					} else {
 						arr[arr.length - 1].push(this[i])
@@ -556,7 +697,7 @@ load = function load() {
 			configurable: true
 		},
 		cartProduct: {
-			value: function cartProduct(that) {
+			value: function cartProduct(that = this) {
 				return this.flatMap((e) => that.map((f) => new PointArray(e, f)))
 			},
 			configurable: true
@@ -631,39 +772,25 @@ load = function load() {
 			},
 			configurable: true
 		},
-		uniq: {
-			value: function uniq() {
-				return this.filter((e, i) => this.pt.indexOf(e) == i)
-			},
-			configurable: true
-		},
-		pushUniq: {
-			value: function pushUniq(...vals) {
-				return this.push(...vals.pt.uniq().pt.sub(this))
-			},
-			configurable: true
-		},
 		count: {
-			value: function count(fn) {
-				return this.filter(typeof fn == "function" ? fn : (e) => e.equals(fn)).length
+			value: function count(el) {
+				let fn = el instanceof Function ? el : (e) => e.equals(el)
+
+				let count = 0
+
+				for (let i = 0; i < this.length; i++) {
+					if (fn(this[i], i, this)) {
+						count++
+					}
+				}
+
+				return count
 			},
 			configurable: true
 		}
 	})
 
 	Object.defineProperties(Set.prototype, {
-		length: {
-			get: function() {
-				return this.size
-			},
-			configurable: true
-		},
-		arr: {
-			value: function arr() {
-				return Array.from(this)
-			},
-			configurable: true
-		},
 		push: {
 			value: function push(...vals) {
 				for (let val of vals) {
@@ -671,24 +798,6 @@ load = function load() {
 				}
 
 				return this
-			},
-			configurable: true
-		},
-		empty: {
-			value: function empty() {
-				return this.clear()
-			},
-			configurable: true
-		},
-		remove: {
-			value: function remove(val) {
-				return this.delete(val)
-			},
-			configurable: true
-		},
-		includes: {
-			value: function includes(val) {
-				return this.has(val)
 			},
 			configurable: true
 		},
@@ -857,6 +966,90 @@ load = function load() {
 			configurable: true
 		}
 	})
+
+	alias(Object.prototype, "am", "antimode")
+	alias(Object.prototype, "cart", "cartProduct")
+	alias(Object.prototype, "c", "count")
+	alias(Object.prototype, "ea", "entriesArr")
+	alias(Object.prototype, "en", "entriesArr")
+	alias(Object.prototype, "ew", "endsWith")
+	alias(Object.prototype, "e", "every")
+	alias(Object.prototype, "f", "filter")
+	alias(Object.prototype, "fn", "find")
+	alias(Object.prototype, "fni", "findIndex")
+	alias(Object.prototype, "fnia", "findIndices")
+	alias(Object.prototype, "fnl", "findLast")
+	alias(Object.prototype, "fl", "flat")
+	alias(Object.prototype, "fld", "flatDeep")
+	alias(Object.prototype, "for", "forEach")
+	alias(Object.prototype, "h", "includes")
+	alias(Object.prototype, "has", "includes")
+	alias(Object.prototype, "i", "indexOf")
+	alias(Object.prototype, "ie", "entriesArr")
+	alias(Object.prototype, "iu", "isUniq")
+	alias(Object.prototype, "j", "join")
+	alias(Object.prototype, "k", "keys")
+	alias(Object.prototype, "li", "lastIndexOf")
+	alias(Object.prototype, "l", "length")
+	alias(Object.prototype, "m", "map")
+	alias(Object.prototype, "ma", "mapArr")
+	alias(Object.prototype, "maxi", "maxIndex")
+	alias(Object.prototype, "mini", "minIndex")
+	alias(Object.prototype, "n", "num")
+	alias(Object.prototype, "nm", "numMut")
+	alias(Object.prototype, "pe", "padEnd")
+	alias(Object.prototype, "ps", "padStart")
+	alias(Object.prototype, "pu", "pushUniq")
+	alias(Object.prototype, "r", "reduce")
+	alias(Object.prototype, "rep", "repeat")
+	alias(Object.prototype, "re", "replace")
+	alias(Object.prototype, "rea", "replaceAll")
+	alias(Object.prototype, "_", "reverse")
+	alias(Object.prototype, "rl", "rotateLeft")
+	alias(Object.prototype, "rr", "rotateRight")
+	alias(Object.prototype, "S", "set")
+	alias(Object.prototype, "sl", "slice")
+	alias(Object.prototype, "sorta", "sortNumAsc")
+	alias(Object.prototype, "sortd", "sortNumDesc")
+	alias(Object.prototype, "spl", "splice")
+	alias(Object.prototype, "s", "split")
+	alias(Object.prototype, "sv", "splitEvery")
+	alias(Object.prototype, "so", "splitOn")
+	alias(Object.prototype, "sw", "startsWith")
+	alias(Object.prototype, "ts", "toString")
+	alias(Object.prototype, "t", "transpose")
+	alias(Object.prototype, "ft", "truthy")
+	alias(Object.prototype, "u", "uniq")
+	alias(Object.prototype, "v", "values")
+
+	alias(String.prototype, "lower", "toLowerCase")
+	alias(String.prototype, "upper", "toUpperCase")
+	alias(String.prototype, "ord", "charCodeAt")
+
+	alias(Array.prototype, "copy", "slice")
+	alias(Array.prototype, "prod", "mult")
+
+	alias(Set.prototype, "length", "size")
+	alias(Set.prototype, "empty", "clear")
+	alias(Set.prototype, "remove", "delete")
+	alias(Set.prototype, "includes", "has")
+
+	for (let name of Object.getOwnPropertyNames(Array.prototype)) {
+		for (let proto of [String.prototype, Set.prototype]) {
+			if (!(name in proto)) {
+				proto[name] = {
+					[name](...args) {
+						return [...this][name](...args)
+					}
+				}[name]
+			}
+		}
+	}
 }
 
 load()
+
+if (typeof window != "undefined") {
+	a = input
+}
+
