@@ -159,13 +159,13 @@ load = function load() {
 		},
 		posints: {
 			value: function posints() {
-				return this.match(/\d+/g).num()
+				return this.match(/\d+/g)?.num() ?? []
 			},
 			configurable: true
 		},
 		ints: {
 			value: function ints() {
-				return this.match(/-?\d+/g).num()
+				return this.match(/-?\d+/g)?.num() ?? []
 			},
 			configurable: true
 		},
