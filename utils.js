@@ -57,17 +57,38 @@ utils = {
 		}
 
 		return [...arr, ...arr2]
-	}
+	},
+	lock: (obj, val) => new Proxy(obj, {
+		get(obj, prop) {
+			if (prop in obj) {
+				return obj[prop]
+			} else {
+				return val
+			}
+		}
+	}),
+	createMap: (val = undefined) => utils.lock({ __proto__: null }, val),
+	getObject: (obj) => Object.assign({}, obj),
+	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func)
 }
+
+M = utils.createMap
+
+N = utils.emptyArray
+
+O = utils.getObject
+
+L = utils.log
+LC = utils.logCopy
 
 R = utils.range = utils.signAgnosticInclusiveRange
 
 U = function U(n) {
-	return R(1, n)
+	return utils.emptyArray(n, (e, i) => i + 1)
 }
 
 Z = function Z(n) {
-	return R(0, n)
+	return utils.emptyArray(n, (e, i) => i)
 }
 
 defaultPartNum = 1

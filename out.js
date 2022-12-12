@@ -579,8 +579,8 @@ Grid = class Grid {
 		return this.get(this.findIndex(func))
 	}
 
-	findAllIndices(func) {
-		func = typeof func == "function" ? func : (e) => e == func
+	findAllIndices(el) {
+		let func = functify(el)
 
 		let points = new PointArray()
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
@@ -930,6 +930,109 @@ Node = class Node {
 	}
 }
 
+Instruction = class Instruction {
+	constructor(command, types, args) {
+		if (types.length != args.length) {
+			console.warn(`new Instruction: Attempted to create ${command} instruction: Expected ${types.length} arguments, got ${args.length} arguments`)
+			console.log(args)
+		}
+
+		this.command = command
+		this.args = args.map((e, i) => (types[i] ?? types[types.length - 1])(e))
+	}
+}
+
+// example command:
+//
+// addi: {
+//     types: [ String, String, Number ],
+//     op: function(dest, src, imm) {
+//         this.regs[dest] = this.src[dest] + imm
+//     }
+// }
+
+VM = class VM {
+	regs = utils.createMap(0)
+
+	get r() {
+		return this.regs
+	}
+
+	constructor(init = () => {}, commands, autoIncrementPc = true) {
+		this.init = init.bind(this)
+		this.commands = commands
+		this.autoIncrementPc = autoIncrementPc
+
+		this.clearProgram()
+		this.reset()
+	}
+
+	reset() {
+		this.regs.pc = 0
+		this.init()
+	}
+
+	parseLine(line) {
+		let words = line.split(/\s+/)
+
+		if (!words.length) {
+			return
+		}
+
+		let command = words.shift()
+
+		if (!(command in this.commands)) {
+			console.error(`VM.parseLine: Unrecognized command: ${command}`)
+		}
+
+		return new Instruction(command, this.commands[command].types ?? [], words)
+	}
+
+	executeInstruction(instr) {
+		return this.commands[instr.command].op.apply(this, instr.args)
+	}
+
+	loadProgram(str) {
+		this.clearProgram()
+
+		let lines = str.split("\n")
+
+		for (let i = 0; i < lines.length; i++) {
+			let instr = this.parseLine(lines[i])
+
+			if (instr) {
+				this.program.push(instr)
+			}
+		}
+	}
+
+	clearProgram() {
+		this.program = []
+	}
+
+	run(limit = 100000) {
+		while (true) {
+			if (--limit <= 0) {
+				console.warn(`VM.run: Run limit reached; stopping`)
+				break
+			}
+
+			let instr = this.program[this.regs.pc]
+
+			if (!instr) {
+				console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
+				break
+			}
+
+			this.executeInstruction(instr)
+
+			if (this.autoIncrementPc) {
+				this.regs.pc++
+			}
+		}
+	}
+}
+
 PtArray = PointArray = class PointArray extends Array {
 	static convert(arr) {
 		if (!(arr instanceof PointArray)) {
@@ -954,13 +1057,17 @@ S = function S(...args) {
 	return new Set(args)
 }
 
-alias = function alias(proto, alias, original) {
-	let isFunc = false
+function functify(el) {
+	if (el instanceof RegExp) {
+		return (e) => el.test(e)
+	} else if (el instanceof Function) {
+		return el
+	}
 
-	try {
-		isFunc = proto[original] instanceof Function
-	} catch (err) {}
+	return (e) => e == el
+}
 
+alias = function alias(proto, alias, original, isFunc = true) {
 	if (isFunc) {
 		Object.defineProperty(proto, alias, {
 			value: {
@@ -1033,12 +1140,12 @@ load = function load() {
 	Object.defineProperties(String.prototype, {
 		count: {
 			value: function count(el) {
-				let fn = el instanceof Function ? el : (e) => e == el
+				let func = functify(el)
 
 				let count = 0
 
 				for (let i = 0; i < this.length; i++) {
-					if (fn(this[i], i, this)) {
+					if (func(this[i], i, this)) {
 						count++
 					}
 				}
@@ -1065,15 +1172,7 @@ load = function load() {
 		},
 		splitOn: {
 			value: function splitOn(sep) {
-				let func
-
-				if (sep instanceof RegExp) {
-					func = (el) => sep.test(el)
-				} else if (sep instanceof Function) {
-					func = sep
-				} else {
-					func = (el) => el == sep
-				}
+				let func = functify(sep)
 
 				let arr = [""]
 
@@ -1239,11 +1338,13 @@ load = function load() {
 			configurable: true
 		},
 		findIndices: {
-			value: function findIndices(fn) {
+			value: function findIndices(el) {
+				let func = functify(el)
+
 				let arr = []
 
 				for (let i = 0; i < this.length; i++) {
-					if (fn(this[i])) {
+					if (func(this[i])) {
 						arr.push(i)
 					}
 				}
@@ -1270,15 +1371,7 @@ load = function load() {
 		},
 		splitOn: {
 			value: function splitOn(sep) {
-				let func
-
-				if (sep instanceof RegExp) {
-					func = (el) => sep.test(el)
-				} else if (sep instanceof Function) {
-					func = sep
-				} else {
-					func = (el) => el == sep
-				}
+				let func = functify(sep)
 
 				let arr = [[]]
 
@@ -1429,12 +1522,12 @@ load = function load() {
 		},
 		count: {
 			value: function count(el) {
-				let fn = el instanceof Function ? el : (e) => e == el
+				let func = functify(el)
 
 				let count = 0
 
 				for (let i = 0; i < this.length; i++) {
-					if (fn(this[i], i, this)) {
+					if (func(this[i], i, this)) {
 						count++
 					}
 				}
@@ -1530,6 +1623,12 @@ load = function load() {
 		antimode: {
 			value: function antimode(tiebreak) {
 				return this.freqs().min((e) => e[1], tiebreak ? (a, b, ai, bi) => tiebreak(a[0], b[0]) : undefined)[0]
+			},
+			configurable: true
+		},
+		x: {
+			value: function x(el) {
+				return this.findIndex(functify(el))
 			},
 			configurable: true
 		}
@@ -1706,12 +1805,18 @@ load = function load() {
 		},
 		count: {
 			value: function count(el) {
-				let fn = el instanceof Function ? el : (e) => e.equals(el)
+				let func
+
+				if (el instanceof Function) {
+					func = el
+				} else {
+					func = (e) => el.equals(e)
+				}
 
 				let count = 0
 
 				for (let i = 0; i < this.length; i++) {
-					if (fn(this[i], i, this)) {
+					if (func(this[i], i, this)) {
 						count++
 					}
 				}
@@ -1899,60 +2004,76 @@ load = function load() {
 		}
 	})
 
-	alias(Object.prototype, "am", "antimode")
-	alias(Object.prototype, "cart", "cartProduct")
-	alias(Object.prototype, "c", "count")
 	alias(Object.prototype, "ea", "entriesArr")
 	alias(Object.prototype, "en", "entriesArr")
-	alias(Object.prototype, "ew", "endsWith")
-	alias(Object.prototype, "e", "every")
-	alias(Object.prototype, "f", "filter")
-	alias(Object.prototype, "fn", "find")
-	alias(Object.prototype, "fni", "findIndex")
-	alias(Object.prototype, "fnia", "findIndices")
-	alias(Object.prototype, "fnl", "findLast")
-	alias(Object.prototype, "fl", "flat")
-	alias(Object.prototype, "fld", "flatDeep")
-	alias(Object.prototype, "for", "forEach")
-	alias(Object.prototype, "h", "includes")
-	alias(Object.prototype, "has", "includes")
-	alias(Object.prototype, "i", "indexOf")
 	alias(Object.prototype, "ie", "entriesArr")
-	alias(Object.prototype, "iu", "isUniq")
-	alias(Object.prototype, "j", "join")
-	alias(Object.prototype, "k", "keys")
-	alias(Object.prototype, "li", "lastIndexOf")
-	alias(Object.prototype, "l", "length")
-	alias(Object.prototype, "m", "map")
-	alias(Object.prototype, "ma", "mapArr")
-	alias(Object.prototype, "maxi", "maxIndex")
-	alias(Object.prototype, "mini", "minIndex")
-	alias(Object.prototype, "n", "num")
-	alias(Object.prototype, "nm", "numMut")
-	alias(Object.prototype, "pe", "padEnd")
-	alias(Object.prototype, "ps", "padStart")
-	alias(Object.prototype, "pu", "pushUniq")
-	alias(Object.prototype, "r", "reduce")
-	alias(Object.prototype, "rep", "repeat")
-	alias(Object.prototype, "re", "replace")
-	alias(Object.prototype, "rea", "replaceAll")
-	alias(Object.prototype, "_", "reverse")
-	alias(Object.prototype, "rl", "rotateLeft")
-	alias(Object.prototype, "rr", "rotateRight")
-	alias(Object.prototype, "S", "set")
-	alias(Object.prototype, "sl", "slice")
-	alias(Object.prototype, "sorta", "sortNumAsc")
-	alias(Object.prototype, "sortd", "sortNumDesc")
-	alias(Object.prototype, "spl", "splice")
-	alias(Object.prototype, "s", "split")
-	alias(Object.prototype, "sv", "splitEvery")
-	alias(Object.prototype, "so", "splitOn")
-	alias(Object.prototype, "sw", "startsWith")
 	alias(Object.prototype, "ts", "toString")
-	alias(Object.prototype, "t", "transpose")
-	alias(Object.prototype, "ft", "truthy")
-	alias(Object.prototype, "u", "uniq")
-	alias(Object.prototype, "v", "values")
+
+	alias(Array.prototype, "am", "antimode")
+	alias(Array.prototype, "cart", "cartProduct")
+	alias(Array.prototype, "c", "count")
+	alias(Array.prototype, "ew", "endsWith")
+	alias(String.prototype, "ew", "endsWith")
+	alias(Array.prototype, "e", "every")
+	alias(Array.prototype, "f", "filter")
+	alias(Array.prototype, "fn", "find")
+	alias(Array.prototype, "fni", "findIndex")
+	alias(Array.prototype, "fx", "findIndex")
+	alias(Array.prototype, "fnia", "findIndices")
+	alias(Array.prototype, "fxa", "findIndices")
+	alias(Array.prototype, "fnl", "findLast")
+	alias(Array.prototype, "fl", "flat")
+	alias(Array.prototype, "fld", "flatDeep")
+	alias(Array.prototype, "for", "forEach")
+	alias(Array.prototype, "h", "includes")
+	alias(String.prototype, "h", "includes")
+	alias(Array.prototype, "has", "includes")
+	alias(String.prototype, "has", "includes")
+	alias(Array.prototype, "iu", "isUniq")
+	alias(Array.prototype, "j", "join")
+	alias(Array.prototype, "li", "lastIndexOf")
+	alias(String.prototype, "li", "lastIndexOf")
+	alias(Array.prototype, "l", "length", false)
+	alias(String.prototype, "l", "length", false)
+	alias(Set.prototype, "l", "length", false)
+	alias(Array.prototype, "m", "map")
+	alias(Array.prototype, "ma", "mapArr")
+	alias(Array.prototype, "maxi", "maxIndex")
+	alias(Array.prototype, "maxx", "maxIndex")
+	alias(Array.prototype, "mini", "minIndex")
+	alias(Array.prototype, "minx", "minIndex")
+	alias(Array.prototype, "n", "num")
+	alias(Array.prototype, "nm", "numMut")
+	alias(String.prototype, "pe", "padEnd")
+	alias(String.prototype, "ps", "padStart")
+	alias(Array.prototype, "pu", "pushUniq")
+	alias(Array.prototype, "r", "reduce")
+	alias(Array.prototype, "rep", "repeat")
+	alias(String.prototype, "rep", "repeat")
+	alias(String.prototype, "re", "replace")
+	alias(String.prototype, "rea", "replaceAll")
+	alias(Array.prototype, "_", "reverse")
+	alias(Array.prototype, "rl", "rotateLeft")
+	alias(Array.prototype, "rr", "rotateRight")
+	alias(Array.prototype, "S", "set")
+	alias(Array.prototype, "sl", "slice")
+	alias(String.prototype, "sl", "slice")
+	alias(Array.prototype, "sorta", "sortNumAsc")
+	alias(Array.prototype, "sortd", "sortNumDesc")
+	alias(Array.prototype, "spl", "splice")
+	alias(Array.prototype, "s", "split")
+	alias(String.prototype, "s", "split")
+	alias(Array.prototype, "sv", "splitEvery")
+	alias(String.prototype, "sv", "splitEvery")
+	alias(Array.prototype, "so", "splitOn")
+	alias(String.prototype, "so", "splitOn")
+	alias(Array.prototype, "sw", "startsWith")
+	alias(String.prototype, "sw", "startsWith")
+	alias(Array.prototype, "t", "transpose")
+	alias(Array.prototype, "ft", "truthy")
+	alias(Array.prototype, "u", "uniq")
+	alias(Array.prototype, "x", "indexOf")
+	alias(String.prototype, "x", "indexOf")
 
 	alias(String.prototype, "lower", "toLowerCase")
 	alias(String.prototype, "upper", "toUpperCase")
@@ -1961,7 +2082,7 @@ load = function load() {
 	alias(Array.prototype, "copy", "slice")
 	alias(Array.prototype, "prod", "mult")
 
-	alias(Set.prototype, "length", "size")
+	alias(Set.prototype, "length", "size", false)
 	alias(Set.prototype, "empty", "clear")
 	alias(Set.prototype, "remove", "delete")
 	alias(Set.prototype, "includes", "has")
@@ -1983,6 +2104,7 @@ load()
 
 if (typeof window != "undefined") {
 	a = input
+	cb = a.split("\n")
 }
 
 utils = {
@@ -2044,17 +2166,38 @@ utils = {
 		}
 
 		return [...arr, ...arr2]
-	}
+	},
+	lock: (obj, val) => new Proxy(obj, {
+		get(obj, prop) {
+			if (prop in obj) {
+				return obj[prop]
+			} else {
+				return val
+			}
+		}
+	}),
+	createMap: (val = undefined) => utils.lock({ __proto__: null }, val),
+	getObject: (obj) => Object.assign({}, obj),
+	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func)
 }
+
+M = utils.createMap
+
+N = utils.emptyArray
+
+O = utils.getObject
+
+L = utils.log
+LC = utils.logCopy
 
 R = utils.range = utils.signAgnosticInclusiveRange
 
 U = function U(n) {
-	return R(1, n)
+	return utils.emptyArray(n, (e, i) => i + 1)
 }
 
 Z = function Z(n) {
-	return R(0, n)
+	return utils.emptyArray(n, (e, i) => i)
 }
 
 defaultPartNum = 1

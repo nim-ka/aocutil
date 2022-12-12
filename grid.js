@@ -99,8 +99,8 @@ Grid = class Grid {
 		return this.get(this.findIndex(func))
 	}
 
-	findAllIndices(func) {
-		func = typeof func == "function" ? func : (e) => e == func
+	findAllIndices(el) {
+		let func = functify(el)
 
 		let points = new PointArray()
 		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
