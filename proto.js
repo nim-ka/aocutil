@@ -555,6 +555,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		minVal: {
+			value: function minVal(fn, tiebreak) {
+				return fn(this.min(fn, tiebreak))
+			},
+			configurable: true
+		},
 		maxIndex: {
 			value: function maxIndex(fn = (e) => e, tiebreak) {
 				let maxval = -Infinity
@@ -579,6 +585,12 @@ load = function load() {
 		max: {
 			value: function max(fn, tiebreak) {
 				return this[this.maxIndex(fn, tiebreak)]
+			},
+			configurable: true
+		},
+		maxVal: {
+			value: function maxVal(fn, tiebreak) {
+				return fn(this.max(fn, tiebreak))
 			},
 			configurable: true
 		},

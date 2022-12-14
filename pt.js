@@ -8,17 +8,92 @@ Pt = Point = class Point {
 
 	equals(pt) { return this.x == pt.x && this.y == pt.y && (!this.is3D || this.z == pt.z) }
 
-	encode(width) { return this.x | (this.y << width) }
-	encode3D(width) { return this.x | (this.y << width) | (this.z << (width * 2)) }
+	static encode2D(pt, width = 15) {
+		if (pt.is3D) {
+			console.error(`Point.encode2D: Use encode3D for 3D points`)
+			return
+		}
 
-	static decode(width, num) {
-		let mask = (1 << width) - 1
-		return new Point(num & mask, num >> width)
+		let x = Math.abs(pt.x)
+		let y = Math.abs(pt.y)
+		let nx = x != pt.x
+		let ny = y != pt.y
+
+		if (x >= 1 << width || y >= 1 << width) {
+			console.error(`Point.encode2D: Tried to encode point out of range: ${pt.x}, ${pt.y}`)
+			return
+		}
+
+		return ((ny << 1 | nx) << width | y) << width | x
 	}
 
-	static decode3D(width, num) {
+	static encode3D(pt, width = 9) {
+		if (!pt.is3D) {
+			console.error(`Point.encode3D: Use encode2D for 2D points`)
+			return
+		}
+
+		let x = Math.abs(pt.x)
+		let y = Math.abs(pt.y)
+		let z = Math.abs(pt.z)
+		let nx = x != pt.x
+		let ny = y != pt.y
+		let nz = z != pt.z
+
+		if (x >= 1 << width || y >= 1 << width || z >= 1 << width) {
+			console.error(`Point.encode3D: Tried to encode point out of range: ${pt.x}, ${pt.y}, ${pt.z}`)
+			return
+		}
+
+		return (((nz << 2 | ny << 1 | nx) << width | z) << width | y) << width | x
+	}
+
+	static encode(pt, width) {
+		return pt.is3D ? Point.encode3D(pt, width) : Point.encode2D(pt, width)
+	}
+
+	encode2D(width) { return Point.encode2D(this, width) }
+	encode3D(width) { return Point.encode3D(this, width) }
+	encode(width) { return Point.encode(this, width) }
+
+	static decode2D(num, width = 15) {
+		num = +num
+
 		let mask = (1 << width) - 1
-		return new Point(num & mask, (num >> width) & mask, num >> (width * 2))
+
+		let x = num & mask
+		num >>>= width
+		let y = num & mask
+		num >>>= width
+		let nx = num & 1
+		num >>>= 1
+		let ny = num & 1
+
+		return new Point(nx ? -x : x, ny ? -y : y)
+	}
+
+	static decode3D(num, width = 9) {
+		num = +num
+
+		let mask = (1 << width) - 1
+
+		let x = num & mask
+		num >>>= width
+		let y = num & mask
+		num >>>= width
+		let z = num & mask
+		num >>>= width
+		let nx = num & 1
+		num >>>= 1
+		let ny = num & 1
+		num >>>= 1
+		let nz = num & 1
+
+		return new Point(nx ? -x : x, ny ? -y : y, nz ? -z : z)
+	}
+
+	static decode(num, is3D = false, width) {
+		return is3D ? Point.decode3D(num, width) : Point.decode2D(num, width)
 	}
 
 	isIn(arr) { return this.indexIn(arr) != -1 }
@@ -256,6 +331,7 @@ Pt = Point = class Point {
 
 	copy() { return new Point(this.x, this.y, this.z) }
 	toString() { return this.x + "," + this.y + (this.is3D ? "," + this.z : "") }
+	[Symbol.toPrimitive]() { return Point.encode(this) }
 }
 
 Point.NONE = new Point(null, null)

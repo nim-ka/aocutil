@@ -256,17 +256,92 @@ Pt = Point = class Point {
 
 	equals(pt) { return this.x == pt.x && this.y == pt.y && (!this.is3D || this.z == pt.z) }
 
-	encode(width) { return this.x | (this.y << width) }
-	encode3D(width) { return this.x | (this.y << width) | (this.z << (width * 2)) }
+	static encode2D(pt, width = 15) {
+		if (pt.is3D) {
+			console.error(`Point.encode2D: Use encode3D for 3D points`)
+			return
+		}
 
-	static decode(width, num) {
-		let mask = (1 << width) - 1
-		return new Point(num & mask, num >> width)
+		let x = Math.abs(pt.x)
+		let y = Math.abs(pt.y)
+		let nx = x != pt.x
+		let ny = y != pt.y
+
+		if (x >= 1 << width || y >= 1 << width) {
+			console.error(`Point.encode2D: Tried to encode point out of range: ${pt.x}, ${pt.y}`)
+			return
+		}
+
+		return ((ny << 1 | nx) << width | y) << width | x
 	}
 
-	static decode3D(width, num) {
+	static encode3D(pt, width = 9) {
+		if (!pt.is3D) {
+			console.error(`Point.encode3D: Use encode2D for 2D points`)
+			return
+		}
+
+		let x = Math.abs(pt.x)
+		let y = Math.abs(pt.y)
+		let z = Math.abs(pt.z)
+		let nx = x != pt.x
+		let ny = y != pt.y
+		let nz = z != pt.z
+
+		if (x >= 1 << width || y >= 1 << width || z >= 1 << width) {
+			console.error(`Point.encode3D: Tried to encode point out of range: ${pt.x}, ${pt.y}, ${pt.z}`)
+			return
+		}
+
+		return (((nz << 2 | ny << 1 | nx) << width | z) << width | y) << width | x
+	}
+
+	static encode(pt, width) {
+		return pt.is3D ? Point.encode3D(pt, width) : Point.encode2D(pt, width)
+	}
+
+	encode2D(width) { return Point.encode2D(this, width) }
+	encode3D(width) { return Point.encode3D(this, width) }
+	encode(width) { return Point.encode(this, width) }
+
+	static decode2D(num, width = 15) {
+		num = +num
+
 		let mask = (1 << width) - 1
-		return new Point(num & mask, (num >> width) & mask, num >> (width * 2))
+
+		let x = num & mask
+		num >>>= width
+		let y = num & mask
+		num >>>= width
+		let nx = num & 1
+		num >>>= 1
+		let ny = num & 1
+
+		return new Point(nx ? -x : x, ny ? -y : y)
+	}
+
+	static decode3D(num, width = 9) {
+		num = +num
+
+		let mask = (1 << width) - 1
+
+		let x = num & mask
+		num >>>= width
+		let y = num & mask
+		num >>>= width
+		let z = num & mask
+		num >>>= width
+		let nx = num & 1
+		num >>>= 1
+		let ny = num & 1
+		num >>>= 1
+		let nz = num & 1
+
+		return new Point(nx ? -x : x, ny ? -y : y, nz ? -z : z)
+	}
+
+	static decode(num, is3D = false, width) {
+		return is3D ? Point.decode3D(num, width) : Point.decode2D(num, width)
 	}
 
 	isIn(arr) { return this.indexIn(arr) != -1 }
@@ -504,6 +579,7 @@ Pt = Point = class Point {
 
 	copy() { return new Point(this.x, this.y, this.z) }
 	toString() { return this.x + "," + this.y + (this.is3D ? "," + this.z : "") }
+	[Symbol.toPrimitive]() { return Point.encode(this) }
 }
 
 Point.NONE = new Point(null, null)
@@ -547,11 +623,38 @@ Grid = class Grid {
 	static fromArr(arr) { return new Grid(arr[0].length, arr.length).fillFromArr(arr) }
 	static fromStr(str, sep = "") { return Grid.fromArr(str.split("\n").map((line) => line.split(sep))) }
 
+	static fromObj(obj, fill = null, translate = false) {
+		let entries = Object.keys(obj).map((e) => [Point.decode2D(e), obj[e]])
+
+		let minX = entries.minVal((e) => e[0].x)
+		let maxX = entries.maxVal((e) => e[0].x)
+		let minY = entries.minVal((e) => e[0].y)
+		let maxY = entries.maxVal((e) => e[0].y)
+
+		if (minX < 0 || minY < 0) {
+			console.warn("Grid.fromObj: Object has negative point indices, but translation not specified. Translating anyway")
+			translate = true
+		}
+
+		let translation = translate ? new Point(-minX, -minY) : new Point(0, 0)
+
+		let grid = new Grid(
+			translate ? maxX - minX + 1 : maxX + 1,
+			translate ? maxY - minY + 1 : maxY + 1,
+			fill)
+
+		for (let [point, value] of entries) {
+			grid.set(point.add(translation), value)
+		}
+
+		return grid
+	}
+
 	get(pt) {
 		if (this.contains(pt)) {
 			return this.data[pt.y][pt.x]
 		} else {
-			console.error("Grid.get: Grid does not contain point " + pt + ":\n" + this)
+			console.error("Grid.get: Grid does not contain point " + pt.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -560,7 +663,7 @@ Grid = class Grid {
 			this.data[pt.y][pt.x] = val
 			return this
 		} else {
-			console.error("Grid.set: does not contain point " + pt + ":\n" + this)
+			console.error("Grid.set: does not contain point " + pt.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -568,7 +671,7 @@ Grid = class Grid {
 		if (x >= 0 && x < this.width) {
 			return this.data.map((row) => row[x])
 		} else {
-			console.error("Grid.getColumn: does not contain column " + x + ":\n" + this)
+			console.error("Grid.getColumn: does not contain column " + x.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -576,7 +679,7 @@ Grid = class Grid {
 		if (y >= 0 && y < this.height) {
 			return this.data[y]
 		} else {
-			console.error("Grid.getRow: does not contain row " + y + ":\n" + this)
+			console.error("Grid.getRow: does not contain row " + y.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -584,7 +687,7 @@ Grid = class Grid {
 		if (pt2.x >= pt1.x && pt2.y >= pt2.y) {
 			return new Grid(pt2.x - pt1.x + 1, pt2.y - pt1.y + 1).mapMut((_, pt) => this.get(pt.add(pt1)))
 		} else {
-			console.error("Grid.getSection: Second point " + pt2 + " behind first point " + pt1 + ":\n" + this)
+			console.error("Grid.getSection: Second point " + pt2.toString() + " behind first point " + pt1.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -1659,6 +1762,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		minVal: {
+			value: function minVal(fn, tiebreak) {
+				return fn(this.min(fn, tiebreak))
+			},
+			configurable: true
+		},
 		maxIndex: {
 			value: function maxIndex(fn = (e) => e, tiebreak) {
 				let maxval = -Infinity
@@ -1683,6 +1792,12 @@ load = function load() {
 		max: {
 			value: function max(fn, tiebreak) {
 				return this[this.maxIndex(fn, tiebreak)]
+			},
+			configurable: true
+		},
+		maxVal: {
+			value: function maxVal(fn, tiebreak) {
+				return fn(this.max(fn, tiebreak))
 			},
 			configurable: true
 		},

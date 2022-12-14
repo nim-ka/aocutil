@@ -32,11 +32,38 @@ Grid = class Grid {
 	static fromArr(arr) { return new Grid(arr[0].length, arr.length).fillFromArr(arr) }
 	static fromStr(str, sep = "") { return Grid.fromArr(str.split("\n").map((line) => line.split(sep))) }
 
+	static fromObj(obj, fill = null, translate = false) {
+		let entries = Object.keys(obj).map((e) => [Point.decode2D(e), obj[e]])
+
+		let minX = entries.minVal((e) => e[0].x)
+		let maxX = entries.maxVal((e) => e[0].x)
+		let minY = entries.minVal((e) => e[0].y)
+		let maxY = entries.maxVal((e) => e[0].y)
+
+		if (minX < 0 || minY < 0) {
+			console.warn("Grid.fromObj: Object has negative point indices, but translation not specified. Translating anyway")
+			translate = true
+		}
+
+		let translation = translate ? new Point(-minX, -minY) : new Point(0, 0)
+
+		let grid = new Grid(
+			translate ? maxX - minX + 1 : maxX + 1,
+			translate ? maxY - minY + 1 : maxY + 1,
+			fill)
+
+		for (let [point, value] of entries) {
+			grid.set(point.add(translation), value)
+		}
+
+		return grid
+	}
+
 	get(pt) {
 		if (this.contains(pt)) {
 			return this.data[pt.y][pt.x]
 		} else {
-			console.error("Grid.get: Grid does not contain point " + pt + ":\n" + this)
+			console.error("Grid.get: Grid does not contain point " + pt.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -45,7 +72,7 @@ Grid = class Grid {
 			this.data[pt.y][pt.x] = val
 			return this
 		} else {
-			console.error("Grid.set: does not contain point " + pt + ":\n" + this)
+			console.error("Grid.set: does not contain point " + pt.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -53,7 +80,7 @@ Grid = class Grid {
 		if (x >= 0 && x < this.width) {
 			return this.data.map((row) => row[x])
 		} else {
-			console.error("Grid.getColumn: does not contain column " + x + ":\n" + this)
+			console.error("Grid.getColumn: does not contain column " + x.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -61,7 +88,7 @@ Grid = class Grid {
 		if (y >= 0 && y < this.height) {
 			return this.data[y]
 		} else {
-			console.error("Grid.getRow: does not contain row " + y + ":\n" + this)
+			console.error("Grid.getRow: does not contain row " + y.toString() + ":\n" + this.toString())
 		}
 	}
 
@@ -69,7 +96,7 @@ Grid = class Grid {
 		if (pt2.x >= pt1.x && pt2.y >= pt2.y) {
 			return new Grid(pt2.x - pt1.x + 1, pt2.y - pt1.y + 1).mapMut((_, pt) => this.get(pt.add(pt1)))
 		} else {
-			console.error("Grid.getSection: Second point " + pt2 + " behind first point " + pt1 + ":\n" + this)
+			console.error("Grid.getSection: Second point " + pt2.toString() + " behind first point " + pt1.toString() + ":\n" + this.toString())
 		}
 	}
 
