@@ -39,6 +39,7 @@ SearchData = class SearchData {
 
 Node = class Node {
 	static GLOBAL_ID = 0
+	static SUPPRESS_PRINTING = false
 
 	constructor(val) {
 		this.id = Node.GLOBAL_ID++
@@ -62,7 +63,7 @@ Node = class Node {
 		return path
 	}
 
-	dijkstraTo(dest, addCxns) {
+	dijkstraTo(dest, addCxns, heapCond = (p, c, pdist, cdist) => pdist < cdist) {
 		let isDest
 
 		if (dest instanceof Node) {
@@ -77,10 +78,17 @@ Node = class Node {
 
 		let id = Symbol()
 
-		let heap = new BinHeap((p, c) => p.searchData.get(id, Infinity, undefined, true).dist < c.searchData.get(id, Infinity, undefined, true).dist)
+		let heap = new BinHeap((p, c) => {
+			let pdist = p.searchData.get(id, Infinity, undefined, true).dist
+			let cdist = c.searchData.get(id, Infinity, undefined, true).dist
+			return heapCond(p, c, pdist, cdist)
+		})
+
 		heap.insert(this)
 
-		console.time("search")
+		if (!Node.SUPPRESS_PRINTING) {
+			console.time("search")
+		}
 
 		let i = 0
 
@@ -91,7 +99,10 @@ Node = class Node {
 			let minDist = min.searchData.get(id).dist
 
 			if (isDest(min)) {
-				console.timeEnd("search")
+				if (!Node.SUPPRESS_PRINTING) {
+					console.timeEnd("search")
+				}
+
 				min.searchData.get(id)
 				return min
 			}
@@ -118,8 +129,10 @@ Node = class Node {
 			}
 		}
 
-		console.timeEnd("search")
-		console.warn("Node.dijkstraTo: Could not find a path")
+		if (!Node.SUPPRESS_PRINTING) {
+			console.timeEnd("search")
+			console.warn("Node.dijkstraTo: Could not find a path")
+		}
 	}
 }
 

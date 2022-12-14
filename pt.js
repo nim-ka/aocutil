@@ -198,8 +198,43 @@ Pt = Point = class Point {
 	squaredMag() { return this.x * this.x + this.y * this.y + (this.is3D ? this.z * this.z : 0) }
 	mag() { return Math.sqrt(this.squaredMag()) }
 
+	norm() { return this.mult(1 / this.mag()) }
+	normMut() { return this.multMut(1 / this.mag()) }
+
 	squaredDist(pt) { return this.sub(pt).squaredMag() }
 	dist(pt) { return this.sub(pt).mag() }
+
+	lineTo(that, halfOpen = false) {
+		if (this.is3D != that.is3D) {
+			console.error("Point.lineTo: Tried to make line between 2D point and 3D point")
+			return
+		}
+
+		let line = new PointArray()
+
+		let dir = new Point(
+			Math.sign(that.x - this.x),
+			Math.sign(that.y - this.y),
+			this.is3D ? Math.sign(that.z - this.z) : undefined)
+
+		let pt = this.copy()
+
+		while (!that.equals(pt)) {
+			if (pt.x == that.x) {
+				console.error("Point.lineTo: Line not straight")
+				return
+			}
+
+			line.push(pt)
+			pt = pt.add(dir)
+		}
+
+		if (!halfOpen) {
+			line.push(pt)
+		}
+
+		return line
+	}
 
 	readingOrderCompare(pt) {
 		if (this.is3D && this.z < pt.z) {

@@ -58,16 +58,24 @@ utils = {
 
 		return [...arr, ...arr2]
 	},
-	lock: (obj, val) => new Proxy(obj, {
-		get(obj, prop) {
-			if (prop in obj) {
-				return obj[prop]
-			} else {
-				return val
+	lock: (obj, val) => {
+		let proxy
+
+		let func = val instanceof Function ? val : () => val
+
+		return proxy = new Proxy(obj, {
+			get(obj, prop) {
+				if (prop == "obj") {
+					return Object.assign({}, proxy)
+				} else if (prop in obj) {
+					return obj[prop]
+				} else {
+					return func(obj, prop)
+				}
 			}
-		}
-	}),
-	createMap: (val = undefined) => utils.lock({ __proto__: null }, val),
+		})
+	},
+	createMap: (val = undefined, obj) => utils.lock(Object.assign({ __proto__: null }, obj), val),
 	getObject: (obj) => Object.assign({}, obj),
 	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func)
 }

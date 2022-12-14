@@ -43,6 +43,7 @@ Grid = class Grid {
 	set(pt, val) {
 		if (this.contains(pt)) {
 			this.data[pt.y][pt.x] = val
+			return this
 		} else {
 			console.error("Grid.set: does not contain point " + pt + ":\n" + this)
 		}
@@ -80,8 +81,8 @@ Grid = class Grid {
 		return this.data.transpose()
 	}
 
-	findIndex(func) {
-		func = typeof func == "function" ? func : (e) => e == func
+	findIndex(el) {
+		let func = functify(el)
 
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
@@ -99,7 +100,7 @@ Grid = class Grid {
 		return this.get(this.findIndex(func))
 	}
 
-	findAllIndices(el) {
+	findIndices(el) {
 		let func = functify(el)
 
 		let points = new PointArray()
@@ -109,11 +110,15 @@ Grid = class Grid {
 	}
 
 	findAll(func) {
-		return this.findAllIndices(func).mapArr((pt) => this.get(pt))
+		return this.findIndices(func).mapArr((pt) => this.get(pt))
+	}
+
+	filter(func) {
+		return this.findAll(func)
 	}
 
 	count(func) {
-		return this.findAllIndices(func).length
+		return this.findIndices(func).length
 	}
 
 	indexOf(val) {
@@ -224,11 +229,11 @@ Grid = class Grid {
 	graphify(neighbors = "getAdjNeighbors", cxn = (node, cxnNode) => node.addCxn(cxnNode, cxnNode.val)) {
 		this.mapMut((e) => new Node(e))
 		this.forEach((e, pt) => this[neighbors](pt).forEach((pt) => cxn(e, this.get(pt))))
-		return
+		return this
 	}
 
 	copy() { return this.map((e) => e) }
-	toString(sep = "\t", ...pts) { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? "P" : e).join(sep)).join("\n") }
-	print(sep = "\t", ...pts) { console.log(this.toString(sep, pts)) }
+	toString(sep = "", pts = [], ptkey = "P") { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? ptkey : e).join(sep)).join("\n") }
+	print(sep, pts, ptkey) { console.log(this.toString(sep, pts, ptkey)) }
 }
 

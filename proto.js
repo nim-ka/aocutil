@@ -32,7 +32,13 @@ function functify(el) {
 	return (e) => e == el
 }
 
+const arrayAliases = {}
+
 alias = function alias(proto, alias, original, isFunc = true) {
+	if (proto == Array.prototype) {
+		arrayAliases[alias] = original
+	}
+
 	if (isFunc) {
 		Object.defineProperty(proto, alias, {
 			value: {
@@ -58,10 +64,19 @@ alias = function alias(proto, alias, original, isFunc = true) {
 load = function load() {
 	Object.defineProperty(globalThis, "input", {
 		get: function input() {
-			return document.body.innerText.trim()
+			return document.body.innerText.trimEnd()
 		},
 		configurable: true
 	})
+
+	for (let primitive of [ Boolean, Number, BigInt, String, Symbol ]) {
+		Object.defineProperty(primitive, Symbol.hasInstance, {
+			value: function(val) {
+				return val.constructor == primitive
+			},
+			configurable: true
+		})
+	}
 
 	Object.defineProperties(Number.prototype, {
 		chr: {
@@ -174,6 +189,12 @@ load = function load() {
 	})
 
 	Object.defineProperties(Object.prototype, {
+		is: {
+			value: function is(cons) {
+				return this instanceof cons
+			},
+			configurable: true
+		},
 		arr: {
 			value: function arr() {
 				return [...this]
@@ -215,6 +236,12 @@ load = function load() {
 		values: {
 			value: function values() {
 				return Object.values(this)
+			},
+			configurable: true
+		},
+		entriesArr: {
+			value: function entriesArr() {
+				return Object.entries(this)
 			},
 			configurable: true
 		}
@@ -983,10 +1010,15 @@ load = function load() {
 	alias(Array.prototype, "f", "filter")
 	alias(Array.prototype, "fn", "find")
 	alias(Array.prototype, "fni", "findIndex")
+	alias(Array.prototype, "fnx", "findIndex")
 	alias(Array.prototype, "fx", "findIndex")
 	alias(Array.prototype, "fnia", "findIndices")
+	alias(Array.prototype, "fnxa", "findIndices")
 	alias(Array.prototype, "fxa", "findIndices")
 	alias(Array.prototype, "fnl", "findLast")
+	alias(Array.prototype, "fnli", "findLastIndex")
+	alias(Array.prototype, "fnlx", "findLastIndex")
+	alias(Array.prototype, "flx", "findLastIndex")
 	alias(Array.prototype, "fl", "flat")
 	alias(Array.prototype, "fld", "flatDeep")
 	alias(Array.prototype, "for", "forEach")
@@ -1058,6 +1090,20 @@ load = function load() {
 				proto[name] = {
 					[name](...args) {
 						return [...this][name](...args)
+					}
+				}[name]
+			}
+		}
+
+		if (!(name in Grid.prototype) && name in arrayAliases) {
+			let original = arrayAliases[name]
+
+			if (!(original in Grid.prototype)) {
+				//console.warn(`Couldn't find Grid.${original} method`)
+			} else {
+				Grid.prototype[name] = {
+					[name](...args) {
+						return this[original](...args)
 					}
 				}[name]
 			}

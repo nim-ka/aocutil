@@ -446,8 +446,43 @@ Pt = Point = class Point {
 	squaredMag() { return this.x * this.x + this.y * this.y + (this.is3D ? this.z * this.z : 0) }
 	mag() { return Math.sqrt(this.squaredMag()) }
 
+	norm() { return this.mult(1 / this.mag()) }
+	normMut() { return this.multMut(1 / this.mag()) }
+
 	squaredDist(pt) { return this.sub(pt).squaredMag() }
 	dist(pt) { return this.sub(pt).mag() }
+
+	lineTo(that, halfOpen = false) {
+		if (this.is3D != that.is3D) {
+			console.error("Point.lineTo: Tried to make line between 2D point and 3D point")
+			return
+		}
+
+		let line = new PointArray()
+
+		let dir = new Point(
+			Math.sign(that.x - this.x),
+			Math.sign(that.y - this.y),
+			this.is3D ? Math.sign(that.z - this.z) : undefined)
+
+		let pt = this.copy()
+
+		while (!that.equals(pt)) {
+			if (pt.x == that.x) {
+				console.error("Point.lineTo: Line not straight")
+				return
+			}
+
+			line.push(pt)
+			pt = pt.add(dir)
+		}
+
+		if (!halfOpen) {
+			line.push(pt)
+		}
+
+		return line
+	}
 
 	readingOrderCompare(pt) {
 		if (this.is3D && this.z < pt.z) {
@@ -523,6 +558,7 @@ Grid = class Grid {
 	set(pt, val) {
 		if (this.contains(pt)) {
 			this.data[pt.y][pt.x] = val
+			return this
 		} else {
 			console.error("Grid.set: does not contain point " + pt + ":\n" + this)
 		}
@@ -560,8 +596,8 @@ Grid = class Grid {
 		return this.data.transpose()
 	}
 
-	findIndex(func) {
-		func = typeof func == "function" ? func : (e) => e == func
+	findIndex(el) {
+		let func = functify(el)
 
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
@@ -579,7 +615,7 @@ Grid = class Grid {
 		return this.get(this.findIndex(func))
 	}
 
-	findAllIndices(el) {
+	findIndices(el) {
 		let func = functify(el)
 
 		let points = new PointArray()
@@ -589,11 +625,15 @@ Grid = class Grid {
 	}
 
 	findAll(func) {
-		return this.findAllIndices(func).mapArr((pt) => this.get(pt))
+		return this.findIndices(func).mapArr((pt) => this.get(pt))
+	}
+
+	filter(func) {
+		return this.findAll(func)
 	}
 
 	count(func) {
-		return this.findAllIndices(func).length
+		return this.findIndices(func).length
 	}
 
 	indexOf(val) {
@@ -704,12 +744,12 @@ Grid = class Grid {
 	graphify(neighbors = "getAdjNeighbors", cxn = (node, cxnNode) => node.addCxn(cxnNode, cxnNode.val)) {
 		this.mapMut((e) => new Node(e))
 		this.forEach((e, pt) => this[neighbors](pt).forEach((pt) => cxn(e, this.get(pt))))
-		return
+		return this
 	}
 
 	copy() { return this.map((e) => e) }
-	toString(sep = "\t", ...pts) { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? "P" : e).join(sep)).join("\n") }
-	print(sep = "\t", ...pts) { console.log(this.toString(sep, pts)) }
+	toString(sep = "", pts = [], ptkey = "P") { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? ptkey : e).join(sep)).join("\n") }
+	print(sep, pts, ptkey) { console.log(this.toString(sep, pts, ptkey)) }
 }
 
 BinHeap = class BinHeap {
@@ -846,6 +886,7 @@ SearchData = class SearchData {
 
 Node = class Node {
 	static GLOBAL_ID = 0
+	static SUPPRESS_PRINTING = false
 
 	constructor(val) {
 		this.id = Node.GLOBAL_ID++
@@ -869,7 +910,7 @@ Node = class Node {
 		return path
 	}
 
-	dijkstraTo(dest, addCxns) {
+	dijkstraTo(dest, addCxns, heapCond = (p, c, pdist, cdist) => pdist < cdist) {
 		let isDest
 
 		if (dest instanceof Node) {
@@ -884,10 +925,17 @@ Node = class Node {
 
 		let id = Symbol()
 
-		let heap = new BinHeap((p, c) => p.searchData.get(id, Infinity, undefined, true).dist < c.searchData.get(id, Infinity, undefined, true).dist)
+		let heap = new BinHeap((p, c) => {
+			let pdist = p.searchData.get(id, Infinity, undefined, true).dist
+			let cdist = c.searchData.get(id, Infinity, undefined, true).dist
+			return heapCond(p, c, pdist, cdist)
+		})
+
 		heap.insert(this)
 
-		console.time("search")
+		if (!Node.SUPPRESS_PRINTING) {
+			console.time("search")
+		}
 
 		let i = 0
 
@@ -898,7 +946,10 @@ Node = class Node {
 			let minDist = min.searchData.get(id).dist
 
 			if (isDest(min)) {
-				console.timeEnd("search")
+				if (!Node.SUPPRESS_PRINTING) {
+					console.timeEnd("search")
+				}
+
 				min.searchData.get(id)
 				return min
 			}
@@ -925,14 +976,16 @@ Node = class Node {
 			}
 		}
 
-		console.timeEnd("search")
-		console.warn("Node.dijkstraTo: Could not find a path")
+		if (!Node.SUPPRESS_PRINTING) {
+			console.timeEnd("search")
+			console.warn("Node.dijkstraTo: Could not find a path")
+		}
 	}
 }
 
 Instruction = class Instruction {
-	constructor(command, types, args) {
-		if (types.length != args.length) {
+	constructor(command, types, args, varargs = false) {
+		if (types.length != args.length && !varargs) {
 			console.warn(`new Instruction: Attempted to create ${command} instruction: Expected ${types.length} arguments, got ${args.length} arguments`)
 			console.log(args)
 		}
@@ -952,14 +1005,22 @@ Instruction = class Instruction {
 // }
 
 VM = class VM {
-	regs = utils.createMap(0)
-
 	get r() {
 		return this.regs
 	}
 
-	constructor(init = () => {}, commands, autoIncrementPc = true) {
-		this.init = init.bind(this)
+	constructor(init = () => {}, commands = {}, autoIncrementPc = true) {
+		if (init instanceof Function) {
+			this.init = function() {
+				this.regs = utils.createMap(0)
+				init.apply(this)
+			}
+		} else if (init) {
+			this.init = function() {
+				this.regs = utils.createMap(0, init)
+			}
+		}
+
 		this.commands = commands
 		this.autoIncrementPc = autoIncrementPc
 
@@ -967,9 +1028,17 @@ VM = class VM {
 		this.reset()
 	}
 
+	addCommand(name, command) {
+		this.commands[name] = command
+	}
+
+	removeCommand(name) {
+		return delete this.commands[name]
+	}
+
 	reset() {
-		this.regs.pc = 0
 		this.init()
+		this.regs.pc = 0
 	}
 
 	parseLine(line) {
@@ -985,7 +1054,7 @@ VM = class VM {
 			console.error(`VM.parseLine: Unrecognized command: ${command}`)
 		}
 
-		return new Instruction(command, this.commands[command].types ?? [], words)
+		return new Instruction(command, this.commands[command].types ?? [], words, this.commands[command].varargs)
 	}
 
 	executeInstruction(instr) {
@@ -1067,7 +1136,13 @@ function functify(el) {
 	return (e) => e == el
 }
 
+const arrayAliases = {}
+
 alias = function alias(proto, alias, original, isFunc = true) {
+	if (proto == Array.prototype) {
+		arrayAliases[alias] = original
+	}
+
 	if (isFunc) {
 		Object.defineProperty(proto, alias, {
 			value: {
@@ -1093,10 +1168,19 @@ alias = function alias(proto, alias, original, isFunc = true) {
 load = function load() {
 	Object.defineProperty(globalThis, "input", {
 		get: function input() {
-			return document.body.innerText.trim()
+			return document.body.innerText.trimEnd()
 		},
 		configurable: true
 	})
+
+	for (let primitive of [ Boolean, Number, BigInt, String, Symbol ]) {
+		Object.defineProperty(primitive, Symbol.hasInstance, {
+			value: function(val) {
+				return val.constructor == primitive
+			},
+			configurable: true
+		})
+	}
 
 	Object.defineProperties(Number.prototype, {
 		chr: {
@@ -1209,6 +1293,12 @@ load = function load() {
 	})
 
 	Object.defineProperties(Object.prototype, {
+		is: {
+			value: function is(cons) {
+				return this instanceof cons
+			},
+			configurable: true
+		},
 		arr: {
 			value: function arr() {
 				return [...this]
@@ -1250,6 +1340,12 @@ load = function load() {
 		values: {
 			value: function values() {
 				return Object.values(this)
+			},
+			configurable: true
+		},
+		entriesArr: {
+			value: function entriesArr() {
+				return Object.entries(this)
 			},
 			configurable: true
 		}
@@ -2018,10 +2114,15 @@ load = function load() {
 	alias(Array.prototype, "f", "filter")
 	alias(Array.prototype, "fn", "find")
 	alias(Array.prototype, "fni", "findIndex")
+	alias(Array.prototype, "fnx", "findIndex")
 	alias(Array.prototype, "fx", "findIndex")
 	alias(Array.prototype, "fnia", "findIndices")
+	alias(Array.prototype, "fnxa", "findIndices")
 	alias(Array.prototype, "fxa", "findIndices")
 	alias(Array.prototype, "fnl", "findLast")
+	alias(Array.prototype, "fnli", "findLastIndex")
+	alias(Array.prototype, "fnlx", "findLastIndex")
+	alias(Array.prototype, "flx", "findLastIndex")
 	alias(Array.prototype, "fl", "flat")
 	alias(Array.prototype, "fld", "flatDeep")
 	alias(Array.prototype, "for", "forEach")
@@ -2097,6 +2198,20 @@ load = function load() {
 				}[name]
 			}
 		}
+
+		if (!(name in Grid.prototype) && name in arrayAliases) {
+			let original = arrayAliases[name]
+
+			if (!(original in Grid.prototype)) {
+				//console.warn(`Couldn't find Grid.${original} method`)
+			} else {
+				Grid.prototype[name] = {
+					[name](...args) {
+						return this[original](...args)
+					}
+				}[name]
+			}
+		}
 	}
 }
 
@@ -2167,16 +2282,24 @@ utils = {
 
 		return [...arr, ...arr2]
 	},
-	lock: (obj, val) => new Proxy(obj, {
-		get(obj, prop) {
-			if (prop in obj) {
-				return obj[prop]
-			} else {
-				return val
+	lock: (obj, val) => {
+		let proxy
+
+		let func = val instanceof Function ? val : () => val
+
+		return proxy = new Proxy(obj, {
+			get(obj, prop) {
+				if (prop == "obj") {
+					return Object.assign({}, proxy)
+				} else if (prop in obj) {
+					return obj[prop]
+				} else {
+					return func(obj, prop)
+				}
 			}
-		}
-	}),
-	createMap: (val = undefined) => utils.lock({ __proto__: null }, val),
+		})
+	},
+	createMap: (val = undefined, obj) => utils.lock(Object.assign({ __proto__: null }, obj), val),
 	getObject: (obj) => Object.assign({}, obj),
 	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func)
 }

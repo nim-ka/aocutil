@@ -1,6 +1,6 @@
 Instruction = class Instruction {
-	constructor(command, types, args) {
-		if (types.length != args.length) {
+	constructor(command, types, args, varargs = false) {
+		if (types.length != args.length && !varargs) {
 			console.warn(`new Instruction: Attempted to create ${command} instruction: Expected ${types.length} arguments, got ${args.length} arguments`)
 			console.log(args)
 		}
@@ -20,14 +20,22 @@ Instruction = class Instruction {
 // }
 
 VM = class VM {
-	regs = utils.createMap(0)
-
 	get r() {
 		return this.regs
 	}
 
-	constructor(init = () => {}, commands, autoIncrementPc = true) {
-		this.init = init.bind(this)
+	constructor(init = () => {}, commands = {}, autoIncrementPc = true) {
+		if (init instanceof Function) {
+			this.init = function() {
+				this.regs = utils.createMap(0)
+				init.apply(this)
+			}
+		} else if (init) {
+			this.init = function() {
+				this.regs = utils.createMap(0, init)
+			}
+		}
+
 		this.commands = commands
 		this.autoIncrementPc = autoIncrementPc
 
@@ -35,9 +43,17 @@ VM = class VM {
 		this.reset()
 	}
 
+	addCommand(name, command) {
+		this.commands[name] = command
+	}
+
+	removeCommand(name) {
+		return delete this.commands[name]
+	}
+
 	reset() {
-		this.regs.pc = 0
 		this.init()
+		this.regs.pc = 0
 	}
 
 	parseLine(line) {
@@ -53,7 +69,7 @@ VM = class VM {
 			console.error(`VM.parseLine: Unrecognized command: ${command}`)
 		}
 
-		return new Instruction(command, this.commands[command].types ?? [], words)
+		return new Instruction(command, this.commands[command].types ?? [], words, this.commands[command].varargs)
 	}
 
 	executeInstruction(instr) {
