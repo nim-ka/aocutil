@@ -99,6 +99,12 @@ Z = function Z(n) {
 	return utils.emptyArray(n, (e, i) => i)
 }
 
+for (let i of Object.getOwnPropertyNames(Math)) {
+	if (Math[i] instanceof Function) {
+		globalThis[i] = Math[i]
+	}
+}
+
 defaultPartNum = 1
 
 A = function A(ans, part) {

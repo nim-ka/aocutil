@@ -1096,6 +1096,8 @@ load = function load() {
 	alias(Set.prototype, "remove", "delete")
 	alias(Set.prototype, "includes", "has")
 
+	alias(Grid.prototype, "p", "print")
+
 	for (let name of Object.getOwnPropertyNames(Array.prototype)) {
 		for (let proto of [String.prototype, Set.prototype]) {
 			if (!(name in proto)) {

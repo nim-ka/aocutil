@@ -33,7 +33,7 @@ Grid = class Grid {
 	static fromStr(str, sep = "") { return Grid.fromArr(str.split("\n").map((line) => line.split(sep))) }
 
 	static fromObj(obj, fill = null, translate = false) {
-		let entries = Object.keys(obj).map((e) => [Point.decode2D(e), obj[e]])
+		let entries = Object.keys(obj).map((e) => [Point.decode2D(e), obj[e]]).filter((e) => e[0])
 
 		let minX = entries.minVal((e) => e[0].x)
 		let maxX = entries.maxVal((e) => e[0].x)
@@ -260,7 +260,12 @@ Grid = class Grid {
 	}
 
 	copy() { return this.map((e) => e) }
-	toString(sep = "", pts = [], ptkey = "P") { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? ptkey : e).join(sep)).join("\n") }
+	toString(sep = "", pts = [], ptkey = "P") { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? ptkey : e ?? " ").join(sep)).join("\n") }
 	print(sep, pts, ptkey) { console.log(this.toString(sep, pts, ptkey)) }
 }
+
+G = function G(...args) {
+	return new Grid(...args)
+}
+
 

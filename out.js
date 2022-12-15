@@ -247,6 +247,8 @@ DLL = class DLL {
 
 
 Pt = Point = class Point {
+	static STRING = true
+
 	constructor(x, y, z) {
 		this.is3D = z != undefined
 		this.x = x
@@ -307,6 +309,10 @@ Pt = Point = class Point {
 	static decode2D(num, width = 15) {
 		num = +num
 
+		if (Number.isNaN(num)) {
+			return null
+		}
+
 		let mask = (1 << width) - 1
 
 		let x = num & mask
@@ -322,6 +328,10 @@ Pt = Point = class Point {
 
 	static decode3D(num, width = 9) {
 		num = +num
+
+		if (Number.isNaN(num)) {
+			return null
+		}
 
 		let mask = (1 << width) - 1
 
@@ -527,10 +537,17 @@ Pt = Point = class Point {
 	squaredDist(pt) { return this.sub(pt).squaredMag() }
 	dist(pt) { return this.sub(pt).mag() }
 
+	manhattanMag() { return Math.abs(this.x) + Math.abs(this.y) + (this.is3D ? Math.abs(this.z) : 0) }
+	manhattanDist(pt) { return this.sub(pt).manhattanMag() }
+
 	lineTo(that, halfOpen = false) {
 		if (this.is3D != that.is3D) {
-			console.error("Point.lineTo: Tried to make line between 2D point and 3D point")
+			console.error(`Point.lineTo: Tried to make line between 2D point and 3D point: ${this.toString}; ${that.toString}`)
 			return
+		}
+
+		if (this.equals(that)) {
+			return [this.copy()]
 		}
 
 		let line = new PointArray()
@@ -540,11 +557,13 @@ Pt = Point = class Point {
 			Math.sign(that.y - this.y),
 			this.is3D ? Math.sign(that.z - this.z) : undefined)
 
+		let movement = dir.x == 0 ? dir.y == 0 ? "z" : "y" : "x"
+
 		let pt = this.copy()
 
 		while (!that.equals(pt)) {
-			if (pt.x == that.x) {
-				console.error("Point.lineTo: Line not straight")
+			if (that[movement] == pt[movement]) {
+				console.error(`Point.lineTo: Line not straight: ${this.toString()}; ${that.toString()}`)
 				return
 			}
 
@@ -579,7 +598,14 @@ Pt = Point = class Point {
 
 	copy() { return new Point(this.x, this.y, this.z) }
 	toString() { return this.x + "," + this.y + (this.is3D ? "," + this.z : "") }
-	[Symbol.toPrimitive]() { return Point.encode(this) }
+
+	[Symbol.toPrimitive]() {
+		if (Point.STRING) {
+			return this.toString()
+		} else {
+			return Point.encode(this)
+		}
+	}
 }
 
 Point.NONE = new Point(null, null)
@@ -624,7 +650,7 @@ Grid = class Grid {
 	static fromStr(str, sep = "") { return Grid.fromArr(str.split("\n").map((line) => line.split(sep))) }
 
 	static fromObj(obj, fill = null, translate = false) {
-		let entries = Object.keys(obj).map((e) => [Point.decode2D(e), obj[e]])
+		let entries = Object.keys(obj).map((e) => [Point.decode2D(e), obj[e]]).filter((e) => e[0])
 
 		let minX = entries.minVal((e) => e[0].x)
 		let maxX = entries.maxVal((e) => e[0].x)
@@ -851,9 +877,14 @@ Grid = class Grid {
 	}
 
 	copy() { return this.map((e) => e) }
-	toString(sep = "", pts = [], ptkey = "P") { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? ptkey : e).join(sep)).join("\n") }
+	toString(sep = "", pts = [], ptkey = "P") { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? ptkey : e ?? " ").join(sep)).join("\n") }
 	print(sep, pts, ptkey) { console.log(this.toString(sep, pts, ptkey)) }
 }
+
+G = function G(...args) {
+	return new Grid(...args)
+}
+
 
 BinHeap = class BinHeap {
 	constructor(cond = (p, c) => p < c) {
@@ -2303,6 +2334,8 @@ load = function load() {
 	alias(Set.prototype, "remove", "delete")
 	alias(Set.prototype, "includes", "has")
 
+	alias(Grid.prototype, "p", "print")
+
 	for (let name of Object.getOwnPropertyNames(Array.prototype)) {
 		for (let proto of [String.prototype, Set.prototype]) {
 			if (!(name in proto)) {
@@ -2436,6 +2469,12 @@ U = function U(n) {
 
 Z = function Z(n) {
 	return utils.emptyArray(n, (e, i) => i)
+}
+
+for (let i of Object.getOwnPropertyNames(Math)) {
+	if (Math[i] instanceof Function) {
+		globalThis[i] = Math[i]
+	}
 }
 
 defaultPartNum = 1
