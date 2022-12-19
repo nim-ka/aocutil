@@ -5,6 +5,11 @@ Grid = class Grid {
 		this.data = utils.createGridArray(w, h, fill)
 	}
 
+	get w() { return this.width }
+	set w(val) { this.width = val }
+	get h() { return this.height }
+	set h(val) { this.height = val }
+
 	forEach(func) {
 		this.data.map((r, y) => r.map((e, x) => func(e, new Point(x, y), this)))
 		return this

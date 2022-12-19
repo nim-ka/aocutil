@@ -41,9 +41,10 @@ Node = class Node {
 	static GLOBAL_ID = 0
 	static SUPPRESS_PRINTING = false
 
-	constructor(val) {
+	constructor(val, name = "") {
 		this.id = Node.GLOBAL_ID++
 		this.val = val
+		this.name = name
 		this.cxns = []
 		this.searchData = new SearchData()
 	}
@@ -133,6 +134,10 @@ Node = class Node {
 			console.timeEnd("search")
 			console.warn("Node.dijkstraTo: Could not find a path")
 		}
+	}
+
+	createGfx(...args) {
+		return this.gfx = new GraphicalNode(this, ...args)
 	}
 }
 

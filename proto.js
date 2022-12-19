@@ -85,6 +85,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		divmod: {
+			value: function divmod(that) {
+				return utils.divmod(this, that)
+			},
+			configurable: true
+		},
 		gcd: {
 			value: function gcd(...args) {
 				return utils.gcd(this, ...args)

@@ -358,14 +358,14 @@ Pt = Point = class Point {
 	indexIn(arr) { return arr.findIndex((pt) => this.equals(pt)) }
 	lastIndexIn(arr) { return arr.findLastIndex((pt) => this.equals(pt)) }
 
-	up() { return new Point(this.x, this.y - 1) }
-	down() { return new Point(this.x, this.y + 1) }
-	left() { return new Point(this.x - 1, this.y) }
-	right() { return new Point(this.x + 1, this.y) }
-	upleft() { return new Point(this.x - 1, this.y - 1) }
-	upright() { return new Point(this.x + 1, this.y - 1) }
-	downleft() { return new Point(this.x - 1, this.y + 1) }
-	downright() { return new Point(this.x + 1, this.y + 1) }
+	up() { return new Point(this.x, this.y - 1, this.z) }
+	down() { return new Point(this.x, this.y + 1, this.z) }
+	left() { return new Point(this.x - 1, this.y, this.z) }
+	right() { return new Point(this.x + 1, this.y, this.z) }
+	upleft() { return new Point(this.x - 1, this.y - 1, this.z) }
+	upright() { return new Point(this.x + 1, this.y - 1, this.z) }
+	downleft() { return new Point(this.x - 1, this.y + 1, this.z) }
+	downright() { return new Point(this.x + 1, this.y + 1, this.z) }
 	above() { return new Point(this.x, this.y, this.z - 1) }
 	below() { return new Point(this.x, this.y, this.z + 1) }
 
@@ -621,6 +621,11 @@ Grid = class Grid {
 		this.height = h
 		this.data = utils.createGridArray(w, h, fill)
 	}
+
+	get w() { return this.width }
+	set w(val) { this.width = val }
+	get h() { return this.height }
+	set h(val) { this.height = val }
 
 	forEach(func) {
 		this.data.map((r, y) => r.map((e, x) => func(e, new Point(x, y), this)))
@@ -1022,9 +1027,10 @@ Node = class Node {
 	static GLOBAL_ID = 0
 	static SUPPRESS_PRINTING = false
 
-	constructor(val) {
+	constructor(val, name = "") {
 		this.id = Node.GLOBAL_ID++
 		this.val = val
+		this.name = name
 		this.cxns = []
 		this.searchData = new SearchData()
 	}
@@ -1114,6 +1120,10 @@ Node = class Node {
 			console.timeEnd("search")
 			console.warn("Node.dijkstraTo: Could not find a path")
 		}
+	}
+
+	createGfx(...args) {
+		return this.gfx = new GraphicalNode(this, ...args)
 	}
 }
 
@@ -1320,6 +1330,12 @@ load = function load() {
 		chr: {
 			value: function chr() {
 				return String.fromCharCode(this)
+			},
+			configurable: true
+		},
+		divmod: {
+			value: function divmod(that) {
+				return utils.divmod(this, that)
 			},
 			configurable: true
 		},
@@ -2378,6 +2394,9 @@ utils = {
 	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
 	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill)),
 	// num utils because numbers are weird
+	divmod: (a, b) => {
+		return [Math.floor(a / b), a % b]
+	},
 	gcd2: (a, b) => {
 		while (b) {
 			[a, b] = [b, a % b]

@@ -110,14 +110,14 @@ Pt = Point = class Point {
 	indexIn(arr) { return arr.findIndex((pt) => this.equals(pt)) }
 	lastIndexIn(arr) { return arr.findLastIndex((pt) => this.equals(pt)) }
 
-	up() { return new Point(this.x, this.y - 1) }
-	down() { return new Point(this.x, this.y + 1) }
-	left() { return new Point(this.x - 1, this.y) }
-	right() { return new Point(this.x + 1, this.y) }
-	upleft() { return new Point(this.x - 1, this.y - 1) }
-	upright() { return new Point(this.x + 1, this.y - 1) }
-	downleft() { return new Point(this.x - 1, this.y + 1) }
-	downright() { return new Point(this.x + 1, this.y + 1) }
+	up() { return new Point(this.x, this.y - 1, this.z) }
+	down() { return new Point(this.x, this.y + 1, this.z) }
+	left() { return new Point(this.x - 1, this.y, this.z) }
+	right() { return new Point(this.x + 1, this.y, this.z) }
+	upleft() { return new Point(this.x - 1, this.y - 1, this.z) }
+	upright() { return new Point(this.x + 1, this.y - 1, this.z) }
+	downleft() { return new Point(this.x - 1, this.y + 1, this.z) }
+	downright() { return new Point(this.x + 1, this.y + 1, this.z) }
 	above() { return new Point(this.x, this.y, this.z - 1) }
 	below() { return new Point(this.x, this.y, this.z + 1) }
 
