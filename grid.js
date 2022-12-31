@@ -45,7 +45,7 @@ Grid = class Grid {
 		let minY = entries.minVal((e) => e[0].y)
 		let maxY = entries.maxVal((e) => e[0].y)
 
-		if (minX < 0 || minY < 0) {
+		if ((minX < 0 || minY < 0) && !translate) {
 			console.warn("Grid.fromObj: Object has negative point indices, but translation not specified. Translating anyway")
 			translate = true
 		}

@@ -6,25 +6,30 @@ Instruction = class Instruction {
 		}
 
 		this.command = command
-		this.args = args.map((e, i) => (types[i] ?? types[types.length - 1])(e))
+		this.args = args
+		this.types = args.map((e, i) => types[i] ?? types[types.length - 1])
 	}
 }
 
 // example command:
 //
-// addi: {
-//     types: [ String, String, Number ],
-//     op: function(dest, src, imm) {
-//         this.regs[dest] = this.src[dest] + imm
+// add: {
+//     types: [ String, 0, 0 ],
+//     op: function(dest, a, b) {
+//         this.regs[dest] = a + b
 //     }
 // }
 
 VM = class VM {
+	static evalNum(val) {
+		return isNaN(val) ? this.regs[val] : Number(val)
+	}
+
 	get r() {
 		return this.regs
 	}
 
-	constructor(init = () => {}, commands = {}, autoIncrementPc = true) {
+	constructor(init = () => {}, commands = {}) {
 		if (init instanceof Function) {
 			this.init = function() {
 				this.regs = utils.createMap(0)
@@ -37,7 +42,6 @@ VM = class VM {
 		}
 
 		this.commands = commands
-		this.autoIncrementPc = autoIncrementPc
 
 		this.clearProgram()
 		this.reset()
@@ -54,6 +58,7 @@ VM = class VM {
 	reset() {
 		this.init()
 		this.regs.pc = 0
+		this.halted = false
 	}
 
 	parseLine(line) {
@@ -69,11 +74,11 @@ VM = class VM {
 			console.error(`VM.parseLine: Unrecognized command: ${command}`)
 		}
 
-		return new Instruction(command, this.commands[command].types ?? [], words, this.commands[command].varargs)
+		return new Instruction(command, this.commands[command].types.map((e) => e.bind(this)) ?? [], words, this.commands[command].varargs)
 	}
 
 	executeInstruction(instr) {
-		return this.commands[instr.command].op.apply(this, instr.args)
+		return this.commands[instr.command].op.apply(this, instr.args.map((e, i) => instr.types[i](e)))
 	}
 
 	loadProgram(str) {
@@ -94,26 +99,36 @@ VM = class VM {
 		this.program = []
 	}
 
-	run(limit = 100000) {
-		while (true) {
-			if (--limit <= 0) {
-				console.warn(`VM.run: Run limit reached; stopping`)
-				break
-			}
+	step() {
+		let instr = this.program[this.regs.pc]
 
-			let instr = this.program[this.regs.pc]
-
-			if (!instr) {
-				console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
-				break
-			}
-
-			this.executeInstruction(instr)
-
-			if (this.autoIncrementPc) {
-				this.regs.pc++
-			}
+		if (!instr) {
+			console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
+			this.halt()
+			return
 		}
+
+		this.executeInstruction(instr)
+
+		if (!this.commands[instr.command].holdPc) {
+			this.regs.pc++
+		}
+	}
+
+	run(limit = 100000) {
+		while (!this.halted) {
+			if (--limit <= 0) {
+				console.error(`VM.run: Run limit reached; stopping`)
+				this.halt()
+				break
+			}
+
+			this.step()
+		}
+	}
+
+	halt() {
+		this.halted = true
 	}
 }
 

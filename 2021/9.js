@@ -1,7 +1,7 @@
 function day9(input, part2) {
     let grid = Grid.fromStr(input).num()
 
-    let lows = grid.findAllIndices((e, pt, g) => g.getAdjNeighbors(pt).every((nb) => e < g.get(nb)))
+    let lows = grid.findIndices((e, pt, g) => g.getAdjNeighbors(pt).every((nb) => e < g.get(nb)))
 
     if (!part2) {
         return lows.mapArr((e) => grid.get(e) + 1).sum()

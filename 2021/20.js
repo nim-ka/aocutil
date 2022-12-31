@@ -7,7 +7,7 @@ function expand(grid, fill) {
 }
 
 function day20(input, part2) {
-    let lines = input.split("\n").splitOnElement("")
+    let lines = input.split("\n").splitOn("")
 
     let code = lines[0][0].split("").map((e) => e == "#")
 

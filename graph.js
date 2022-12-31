@@ -126,7 +126,7 @@ Node = class Node {
 			})
 
 			if (++i % 10000 == 0) {
-				console.log(heap.data.length)
+				console.log(heap.data.length, minDist)
 			}
 		}
 

@@ -1,6 +1,6 @@
 function day24(input, part2) {
     let lines = input.split("\n")
-    let ops = lines.splitOnElement("inp w").filter((e) => e.length).transpose()
+    let ops = lines.splitOn("inp w").filter((e) => e.length).transpose()
 
     let compareVals = ops[4].map((e) => +e.split(" ").last)
     let stackVals = ops[14].map((e) => +e.split(" ").last)

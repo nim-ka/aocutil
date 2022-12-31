@@ -1,5 +1,5 @@
 function day8(input, part2) {
-    let lines = input.split("\n").map((e) => e.split(" ").splitOnElement("|").map((e) => e.map((e) => e.split("").sort())))
+    let lines = input.split("\n").map((e) => e.split(" ").splitOn("|").map((e) => e.map((e) => e.split("").sort())))
 
     if (!part2) {
         return lines.map((e) => e[1].count((e) => [2, 4, 3, 7].includes(e.length))).sum()

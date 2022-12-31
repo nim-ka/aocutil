@@ -153,6 +153,7 @@ Pt = Point = class Point {
 	getUnfilteredWingNeighborsIncSelf() {
 		if (!this.is3D) {
 			console.error("Can't get wing neighbors of 2D point")
+			return
 		}
 
 		return new PointArray(
@@ -240,6 +241,53 @@ Pt = Point = class Point {
 	getUnfilteredAdjNeighbors() { return this.getUnfilteredAdjNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
 	getUnfilteredDiagNeighbors() { return this.getUnfilteredDiagNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
 	getUnfilteredAllNeighbors() { return this.getUnfilteredAllNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
+
+	cw90() {
+		if (this.is3D) {
+			console.error("Point.cw90: Can't rotate 3D point")
+			return
+		}
+
+		return new Point(-this.y, this.x)
+	}
+
+	cw90Mut() {
+		if (this.is3D) {
+			console.error("Point.cw90Mut: Can't rotate 3D point")
+			return
+		}
+
+		[this.x, this.y] = [-this.y, this.x]
+		return this
+	}
+
+	ccw90() {
+		if (this.is3D) {
+			console.error("Point.ccw90: Can't rotate 3D point")
+			return
+		}
+
+		return new Point(this.y, -this.x)
+	}
+
+	ccw90Mut() {
+		if (this.is3D) {
+			console.error("Point.ccw90Mut: Can't rotate 3D point")
+			return
+		}
+
+		[this.x, this.y] = [this.y, -this.x]
+		return this
+	}
+
+	mutate(pt) {
+		this.is3D = pt.is3D
+		this.x = pt.x
+		this.y = pt.y
+		this.z = pt.z
+
+		return this
+	}
 
 	add(pt) { return new Point(this.x + pt.x, this.y + pt.y, this.is3D ? this.z + pt.z : undefined) }
 	addMut(pt) {

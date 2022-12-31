@@ -3,7 +3,7 @@ function getNum(letter) {
 }
 
 function day14(input, part2) {
-    let lines = input.split("\n").splitOnElement("")
+    let lines = input.split("\n").splitOn("")
 
     let init = lines[0][0].split("")
     let rules = lines[1].map((e) => e.split(" -> "))

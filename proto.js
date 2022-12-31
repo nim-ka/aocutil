@@ -1024,7 +1024,7 @@ load = function load() {
 	alias(Array.prototype, "c", "count")
 	alias(Array.prototype, "ew", "endsWith")
 	alias(String.prototype, "ew", "endsWith")
-	alias(Array.prototype, "e", "every")
+	alias(Array.prototype, "v", "every")
 	alias(Array.prototype, "f", "filter")
 	alias(Array.prototype, "fn", "find")
 	alias(Array.prototype, "fni", "findIndex")

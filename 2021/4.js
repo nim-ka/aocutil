@@ -2,7 +2,7 @@ function day4(input, part2) {
     let lines = input.split("\n")
 
     let seq = lines.shift().split(",").num()
-    let grids = lines.splitOnElement("").filter((e) => e.length).map((grid) => Grid.fromStr(grid.map((line) => line.replace(/^ /, "")).join("\n"), /\s+/).mapMut((e) => [+e, false]))
+    let grids = lines.splitOn("").filter((e) => e.length).map((grid) => Grid.fromStr(grid.map((line) => line.replace(/^ /, "")).join("\n"), /\s+/).mapMut((e) => [+e, false]))
 
     let score
 

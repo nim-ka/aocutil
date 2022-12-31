@@ -111,6 +111,8 @@ for (let i of Object.getOwnPropertyNames(Math)) {
 defaultPartNum = 1
 
 A = function A(ans, part) {
+	let day = +location.href.match(/(\d+)\/input/)[1]
+
 	if (part != 1 && part != 2) {
 		part = defaultPartNum
 		console.warn(`Remember to specify part number! Defaulting to ${part}`)
@@ -134,6 +136,11 @@ A = function A(ans, part) {
 	}).then((text) => {
 		if (text.includes("That's the right answer!")) {
 			defaultPartNum = 2
+
+			if (day == 25) {
+				A(0, 2)
+				setTimeout(() => A(0, 2), 1000)
+			}
 		}
 
 		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, ""))

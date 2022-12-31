@@ -1,5 +1,5 @@
 function day13(input, part2) {
-    let lines = input.split("\n").splitOnElement("")
+    let lines = input.split("\n").splitOn("")
 
     let points = lines[0].map((e) => new Point(...e.split(",").num())).pt
     let instructions = lines[1].map((e) => e.split(" ").last.split("=")).map((e) => [e[0], +e[1]])

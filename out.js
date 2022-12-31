@@ -401,6 +401,7 @@ Pt = Point = class Point {
 	getUnfilteredWingNeighborsIncSelf() {
 		if (!this.is3D) {
 			console.error("Can't get wing neighbors of 2D point")
+			return
 		}
 
 		return new PointArray(
@@ -488,6 +489,53 @@ Pt = Point = class Point {
 	getUnfilteredAdjNeighbors() { return this.getUnfilteredAdjNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
 	getUnfilteredDiagNeighbors() { return this.getUnfilteredDiagNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
 	getUnfilteredAllNeighbors() { return this.getUnfilteredAllNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
+
+	cw90() {
+		if (this.is3D) {
+			console.error("Point.cw90: Can't rotate 3D point")
+			return
+		}
+
+		return new Point(-this.y, this.x)
+	}
+
+	cw90Mut() {
+		if (this.is3D) {
+			console.error("Point.cw90Mut: Can't rotate 3D point")
+			return
+		}
+
+		[this.x, this.y] = [-this.y, this.x]
+		return this
+	}
+
+	ccw90() {
+		if (this.is3D) {
+			console.error("Point.ccw90: Can't rotate 3D point")
+			return
+		}
+
+		return new Point(this.y, -this.x)
+	}
+
+	ccw90Mut() {
+		if (this.is3D) {
+			console.error("Point.ccw90Mut: Can't rotate 3D point")
+			return
+		}
+
+		[this.x, this.y] = [this.y, -this.x]
+		return this
+	}
+
+	mutate(pt) {
+		this.is3D = pt.is3D
+		this.x = pt.x
+		this.y = pt.y
+		this.z = pt.z
+
+		return this
+	}
 
 	add(pt) { return new Point(this.x + pt.x, this.y + pt.y, this.is3D ? this.z + pt.z : undefined) }
 	addMut(pt) {
@@ -662,7 +710,7 @@ Grid = class Grid {
 		let minY = entries.minVal((e) => e[0].y)
 		let maxY = entries.maxVal((e) => e[0].y)
 
-		if (minX < 0 || minY < 0) {
+		if ((minX < 0 || minY < 0) && !translate) {
 			console.warn("Grid.fromObj: Object has negative point indices, but translation not specified. Translating anyway")
 			translate = true
 		}
@@ -1112,7 +1160,7 @@ Node = class Node {
 			})
 
 			if (++i % 10000 == 0) {
-				console.log(heap.data.length)
+				console.log(heap.data.length, minDist)
 			}
 		}
 
@@ -1135,25 +1183,30 @@ Instruction = class Instruction {
 		}
 
 		this.command = command
-		this.args = args.map((e, i) => (types[i] ?? types[types.length - 1])(e))
+		this.args = args
+		this.types = args.map((e, i) => types[i] ?? types[types.length - 1])
 	}
 }
 
 // example command:
 //
-// addi: {
-//     types: [ String, String, Number ],
-//     op: function(dest, src, imm) {
-//         this.regs[dest] = this.src[dest] + imm
+// add: {
+//     types: [ String, 0, 0 ],
+//     op: function(dest, a, b) {
+//         this.regs[dest] = a + b
 //     }
 // }
 
 VM = class VM {
+	static evalNum(val) {
+		return isNaN(val) ? this.regs[val] : Number(val)
+	}
+
 	get r() {
 		return this.regs
 	}
 
-	constructor(init = () => {}, commands = {}, autoIncrementPc = true) {
+	constructor(init = () => {}, commands = {}) {
 		if (init instanceof Function) {
 			this.init = function() {
 				this.regs = utils.createMap(0)
@@ -1166,7 +1219,6 @@ VM = class VM {
 		}
 
 		this.commands = commands
-		this.autoIncrementPc = autoIncrementPc
 
 		this.clearProgram()
 		this.reset()
@@ -1183,6 +1235,7 @@ VM = class VM {
 	reset() {
 		this.init()
 		this.regs.pc = 0
+		this.halted = false
 	}
 
 	parseLine(line) {
@@ -1198,11 +1251,11 @@ VM = class VM {
 			console.error(`VM.parseLine: Unrecognized command: ${command}`)
 		}
 
-		return new Instruction(command, this.commands[command].types ?? [], words, this.commands[command].varargs)
+		return new Instruction(command, this.commands[command].types.map((e) => e.bind(this)) ?? [], words, this.commands[command].varargs)
 	}
 
 	executeInstruction(instr) {
-		return this.commands[instr.command].op.apply(this, instr.args)
+		return this.commands[instr.command].op.apply(this, instr.args.map((e, i) => instr.types[i](e)))
 	}
 
 	loadProgram(str) {
@@ -1223,26 +1276,358 @@ VM = class VM {
 		this.program = []
 	}
 
-	run(limit = 100000) {
-		while (true) {
-			if (--limit <= 0) {
-				console.warn(`VM.run: Run limit reached; stopping`)
-				break
-			}
+	step() {
+		let instr = this.program[this.regs.pc]
 
-			let instr = this.program[this.regs.pc]
-
-			if (!instr) {
-				console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
-				break
-			}
-
-			this.executeInstruction(instr)
-
-			if (this.autoIncrementPc) {
-				this.regs.pc++
-			}
+		if (!instr) {
+			console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
+			this.halt()
+			return
 		}
+
+		this.executeInstruction(instr)
+
+		if (!this.commands[instr.command].holdPc) {
+			this.regs.pc++
+		}
+	}
+
+	run(limit = 100000) {
+		while (!this.halted) {
+			if (--limit <= 0) {
+				console.error(`VM.run: Run limit reached; stopping`)
+				this.halt()
+				break
+			}
+
+			this.step()
+		}
+	}
+
+	halt() {
+		this.halted = true
+	}
+}
+
+IntcodeParameter = class IntcodeParameter {
+	static MODE_POS = 0
+	static MODE_IMM = 1
+	static MODE_REL = 2
+
+	constructor(vm, val, mode) {
+		this.vm = vm
+		this.val = val
+		this.mode = mode
+	}
+
+	get() {
+		switch (this.mode) {
+			case IntcodeParameter.MODE_POS:
+				return this.vm.readMemory(this.val)
+				break
+
+			case IntcodeParameter.MODE_IMM:
+				return this.val
+				break
+
+			case IntcodeParameter.MODE_REL:
+				return this.vm.readMemory(this.vm.base + this.val)
+				break
+
+			default:
+				console.error(`IntcodeParameter.get: Unrecognized parameter mode ${this.mode}`)
+				this.vm.halt()
+		}
+	}
+
+	set(val) {
+		switch (this.mode) {
+			case IntcodeParameter.MODE_POS:
+				return this.vm.writeMemory(this.val, val)
+				break
+
+			case IntcodeParameter.MODE_IMM:
+				console.error(`IntcodeParameter.set: Cannot write to parameter in immediate mode`)
+				this.vm.halt()
+				break
+
+			case IntcodeParameter.MODE_REL:
+				return this.vm.writeMemory(this.vm.base + this.val, val)
+				break
+
+			default:
+				console.error(`IntcodeParameter.set: Unrecognized parameter mode ${this.mode}`)
+				this.vm.halt()
+		}
+	}
+}
+
+IntcodeVM = class IntcodeVM {
+	static OP_ADD = 1
+	static OP_MUL = 2
+	static OP_INP = 3
+	static OP_OUT = 4
+	static OP_JIT = 5
+	static OP_JIF = 6
+	static OP_SLT = 7
+	static OP_SEQ = 8
+	static OP_RBO = 9
+
+	static OP_HLT = 99
+
+	static INSTRS = []
+
+	constructor(program, inputBuffer = [], outputBuffer = []) {
+		this.program = program
+		this.inputBuffer = inputBuffer
+		this.outputBuffer = outputBuffer
+
+		this.reset()
+	}
+
+	reset() {
+		this.outputBuffer.length = 0
+
+		this.data = this.program.slice()
+		this.pc = 0
+		this.base = 0
+
+		this.running = false
+		this.halted = false
+		this.jumping = false
+		this.awaitingInput = false
+	}
+
+	clone() {
+		let vm = new IntcodeVM(this.program.slice(), this.inputBuffer.slice(), this.outputBuffer.slice())
+
+		vm.data = this.data.slice()
+		vm.pc = this.pc
+		vm.base = this.base
+
+		vm.running = this.running
+		vm.halted = this.halted
+		vm.jumping = this.jumping
+		vm.awaitingInput = this.awaitingInput
+
+		return vm
+	}
+
+	readMemory(addr) {
+		if (addr < 0) {
+			console.error(`IntcodeVM.readMemory: Attempted to read from invalid address ${addr}`)
+			return null
+		}
+
+		return this.data[addr] ?? 0
+	}
+
+	writeMemory(addr, val) {
+		if (addr < 0) {
+			console.error(`IntcodeVM.writeMemory: Attempted to write ${val} to invalid address ${addr}`)
+			return null
+		}
+
+		return this.data[addr] = val
+	}
+
+	executeInstruction(num) {
+		let opcode = num % 100
+
+		if (!(opcode in IntcodeVM.INSTRS)) {
+			console.error(`IntcodeVM.executeInstruction: Unrecognized opcode: ${opcode} (${num})`)
+		}
+
+		let instr = IntcodeVM.INSTRS[opcode]
+
+		let args = []
+		let ptr = this.pc + 1
+
+		num = Math.floor(num / 100)
+
+		for (let i = 0; i < instr.arity; i++) {
+			args.push(new IntcodeParameter(this, this.readMemory(ptr++), num % 10))
+			num = Math.floor(num / 10)
+		}
+
+		instr.op.apply(this, args)
+
+		return ptr
+	}
+
+	step() {
+		let num = this.readMemory(this.pc)
+
+		if (num === undefined) {
+			console.error(`IntcodeVM.run: No instruction found at PC ${this.pc}; stopping`)
+			this.halt()
+			return
+		}
+
+		let newPc = this.executeInstruction(num)
+
+		if (this.jumping) {
+			this.jumping = false
+		} else if (this.running) {
+			this.pc = newPc
+		}
+	}
+
+	run(limit = 10000000) {
+		let i = 0
+
+		this.running = true
+
+		while (this.running) {
+			if (++i > limit) {
+				console.error(`IntcodeVM.run: Run limit reached; stopping`)
+				this.halt()
+				break
+			}
+
+			this.step()
+		}
+
+		return i
+	}
+
+	halt() {
+		this.running = false
+		this.halted = true
+	}
+
+	jump(newPc) {
+		this.pc = newPc
+		this.jumping = true
+	}
+
+	receiveInput() {
+		if (this.inputBuffer.length) {
+			return this.inputBuffer.shift()
+		} else {
+			this.awaitingInput = true
+			this.running = false
+			return null
+		}
+	}
+
+	sendInput(...vals) {
+		this.inputBuffer.push(...vals)
+	}
+
+	sendInputString(str) {
+		this.sendInput(...str.split("").map((e) => e.charCodeAt()))
+	}
+
+	receiveOutput() {
+		if (this.outputBuffer.length) {
+			return this.outputBuffer.shift()
+		} else {
+			return null
+		}
+	}
+
+	receiveNOutputs(n = Infinity) {
+		let arr = []
+		let res
+
+		for (let i = 0; i < n; i++) {
+			res = this.receiveOutput()
+
+			if (res == null) {
+				break
+			}
+
+			arr.push(res)
+		}
+
+		return arr
+	}
+
+	receiveOutputString(str) {
+		return this.receiveNOutputs().map((e) => String.fromCharCode(e)).join("")
+	}
+
+	sendOutput(...vals) {
+		this.outputBuffer.push(...vals)
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_ADD] = {
+	arity: 3,
+	op: function(a, b, c) {
+		c.set(a.get() + b.get())
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_MUL] = {
+	arity: 3,
+	op: function(a, b, c) {
+		c.set(a.get() * b.get())
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_INP] = {
+	arity: 1,
+	op: function(a) {
+		let res = this.receiveInput()
+
+		if (res !== null) {
+			a.set(res)
+		}
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_OUT] = {
+	arity: 1,
+	op: function(a) {
+		this.sendOutput(a.get())
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_JIT] = {
+	arity: 2,
+	op: function(a, b) {
+		if (a.get() != 0) {
+			this.jump(b.get())
+		}
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_JIF] = {
+	arity: 2,
+	op: function(a, b) {
+		if (a.get() == 0) {
+			this.jump(b.get())
+		}
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_SLT] = {
+	arity: 3,
+	op: function(a, b, c) {
+		c.set(+(a.get() < b.get()))
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_SEQ] = {
+	arity: 3,
+	op: function(a, b, c) {
+		c.set(+(a.get() == b.get()))
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_RBO] = {
+	arity: 1,
+	op: function(a) {
+		this.base += a.get()
+	}
+}
+
+IntcodeVM.INSTRS[IntcodeVM.OP_HLT] = {
+	arity: 0,
+	op: function() {
+		this.halt()
 	}
 }
 
@@ -2272,7 +2657,7 @@ load = function load() {
 	alias(Array.prototype, "c", "count")
 	alias(Array.prototype, "ew", "endsWith")
 	alias(String.prototype, "ew", "endsWith")
-	alias(Array.prototype, "e", "every")
+	alias(Array.prototype, "v", "every")
 	alias(Array.prototype, "f", "filter")
 	alias(Array.prototype, "fn", "find")
 	alias(Array.prototype, "fni", "findIndex")
@@ -2499,6 +2884,8 @@ for (let i of Object.getOwnPropertyNames(Math)) {
 defaultPartNum = 1
 
 A = function A(ans, part) {
+	let day = +location.href.match(/(\d+)\/input/)[1]
+
 	if (part != 1 && part != 2) {
 		part = defaultPartNum
 		console.warn(`Remember to specify part number! Defaulting to ${part}`)
@@ -2522,6 +2909,11 @@ A = function A(ans, part) {
 	}).then((text) => {
 		if (text.includes("That's the right answer!")) {
 			defaultPartNum = 2
+
+			if (day == 25) {
+				A(0, 2)
+				setTimeout(() => A(0, 2), 1000)
+			}
 		}
 
 		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, ""))

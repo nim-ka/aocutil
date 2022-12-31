@@ -29,7 +29,7 @@ class Cuboid {
     }
 }
 
-function day20(input, part2) {
+function day22(input, part2) {
     let lines = input.split("\n")
 
     let cuboids = []
@@ -62,5 +62,5 @@ function day20(input, part2) {
 }
 
 if (typeof window == "undefined") {
-    module.exports = day20
+    module.exports = day22
 }
