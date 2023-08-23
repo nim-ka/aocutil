@@ -793,8 +793,8 @@ Grid = class Grid {
 		return Point.NONE
 	}
 
-	find(func) {
-		return this.get(this.findIndex(func))
+	find(el) {
+		return this.get(this.findIndex(el))
 	}
 
 	findIndices(el) {
@@ -819,7 +819,33 @@ Grid = class Grid {
 	}
 
 	indexOf(val) {
-		return this.findIndex((e) => e == val)
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				if (this.get(pt) == val) {
+					return pt
+				}
+			}
+		}
+
+		return Point.NONE
+	}
+
+	includes(val) {
+		return this.indexOf(val) != Point.NONE
+	}
+
+	some(el) {
+		return this.findIndex(el) != Point.NONE
+	}
+
+	every(el) {
+		let func = functify(el)
+		return this.findIndex((e) => !func(e)) == Point.NONE
+	}
+
+	no(el) {
+		return !this.some(el)
 	}
 
 	contains(pt) { return !pt.is3D && pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }
@@ -935,9 +961,12 @@ Grid = class Grid {
 }
 
 G = function G(...args) {
+	if (typeof args[0] == "string") {
+		return Grid.fromStr(...args)
+	}
+
 	return new Grid(...args)
 }
-
 
 BinHeap = class BinHeap {
 	constructor(cond = (p, c) => p < c) {
@@ -1631,6 +1660,177 @@ IntcodeVM.INSTRS[IntcodeVM.OP_HLT] = {
 	}
 }
 
+utils = {
+	log: (e, ...args) => (console.log(e, ...args), e),
+	logCopy: (e, ...args) => (console.log(e.copyDeep(), ...args), e),
+	fetchText: (...args) => fetch(...args).then((e) => e.text()),
+	fetchEval: (...args) => utils.fetchText(...args).then((e) => eval(e)),
+	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
+	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill)),
+	// num utils because numbers are weird
+	divmod: (a, b) => {
+		return [Math.floor(a / b), a % b]
+	},
+	powmod: (a, b, m) => {
+		a %= m
+
+		if (b == 0) {
+			return 1
+		}
+
+		if (b == 1) {
+			return a
+		}
+
+		let r = utils.powmod(a, Math.floor(b / 2), m)
+
+		return (b % 2 ? a : 1) * r * r % m
+	},
+	gcd2: (a, b) => {
+		while (b) {
+			[a, b] = [b, a % b]
+		}
+
+		return a
+	},
+	gcd: (...args) => args.length ? args.reduce(utils.gcd2) : 0,
+	lcm2: (a, b) => a && b ? a * (b / utils.gcd2(a, b)) : 0,
+	lcm: (...args) => args.length ? args.reduce(utils.lcm2) : 0,
+	isPrime: (n) => {
+		for (let i = 2; i * i <= n; i++) {
+			if (n % i == 0) {
+				return false
+			}
+		}
+
+		return true
+	},
+	primeFactors: (n) => {
+		let arr = []
+
+		for (let i = 2; n > 1;) {
+			if (i * i > n) {
+				arr.push(+n)
+				break
+			} else if (n % i == 0) {
+				arr.push(i)
+				n /= i
+			} else {
+				i++
+			}
+		}
+
+		return arr
+	},
+	factors: (n) => {
+		let arr = []
+		let arr2 = []
+
+		for (let i = 1; i * i <= n; i++) {
+			if (n % i == 0) {
+				arr.push(i)
+
+				if (i != n / i) {
+					arr2.unshift(n / i)
+				}
+			}
+		}
+
+		return [...arr, ...arr2]
+	},
+	lock: (obj, val) => {
+		let proxy
+
+		let func = val instanceof Function ? val : () => val
+
+		return proxy = new Proxy(obj, {
+			get(obj, prop) {
+				if (prop == "obj") {
+					return Object.assign({}, proxy)
+				} else if (prop in obj) {
+					return obj[prop]
+				} else {
+					return func(obj, prop)
+				}
+			}
+		})
+	},
+	createMap: (val = undefined, obj) => utils.lock(Object.assign({ __proto__: null }, obj), val),
+	getObject: (obj) => Object.assign({}, obj),
+	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func)
+}
+
+M = utils.createMap
+
+N = utils.emptyArray
+
+O = utils.getObject
+
+L = utils.log
+LC = utils.logCopy
+
+R = utils.range = utils.signAgnosticInclusiveRange
+
+U = function U(n) {
+	return utils.emptyArray(n, (e, i) => i + 1)
+}
+
+Z = function Z(n) {
+	return utils.emptyArray(n, (e, i) => i)
+}
+
+for (let i of Object.getOwnPropertyNames(Math)) {
+	if (Math[i] instanceof Function) {
+		globalThis[i] = Math[i]
+	}
+}
+
+defaultPartNum = 1
+
+A = function A(ans, part) {
+	let day = +location.href.match(/(\d+)\/input/)[1]
+
+	if (part != 1 && part != 2) {
+		part = defaultPartNum
+		console.warn(`Remember to specify part number! Defaulting to ${part}`)
+	}
+
+	console.log(`Submitting ${ans} for part ${part}`)
+
+	let queryString = new URLSearchParams({
+		"level": part.toString(),
+		"answer": ans.toString()
+	}).toString()
+
+	utils.fetchText(location.href.replace("input", "answer"), {
+		"headers": {
+			"content-type": "application/x-www-form-urlencoded"
+		},
+		"body": queryString,
+		"method": "POST",
+		"mode": "cors",
+		"credentials": "include"
+	}).then((text) => {
+		if (text.includes("That's the right answer!")) {
+			defaultPartNum = 2
+
+			if (day == 25) {
+				A(0, 2)
+				setTimeout(() => A(0, 2), 1000)
+			}
+		}
+
+		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, ""))
+	})
+
+	return ans
+}
+
+B = function B(ans) {
+	return A(ans, 2)
+}
+
+
 PtArray = PointArray = class PointArray extends Array {
 	static convert(arr) {
 		if (!(arr instanceof PointArray)) {
@@ -1695,11 +1895,13 @@ alias = function alias(proto, alias, original, isFunc = true) {
 }
 
 load = function load() {
-	Object.defineProperty(globalThis, "input", {
-		get: function input() {
-			return document.body.innerText.trimEnd()
-		},
-		configurable: true
+	Object.defineProperties(globalThis, {
+		input: {
+			get: function input() {
+				return document.body.innerText.trimEnd()
+			},
+			configurable: true
+		}
 	})
 
 	for (let primitive of [ Boolean, Number, BigInt, String, Symbol ]) {
@@ -1720,37 +1922,43 @@ load = function load() {
 		},
 		divmod: {
 			value: function divmod(that) {
-				return utils.divmod(this, that)
+				return utils.divmod(+this, that)
+			},
+			configurable: true
+		},
+		powmod: {
+			value: function powmod(that, mod) {
+				return utils.powmod(+this, that, mod)
 			},
 			configurable: true
 		},
 		gcd: {
 			value: function gcd(...args) {
-				return utils.gcd(this, ...args)
+				return utils.gcd(+this, ...args)
 			},
 			configurable: true
 		},
 		lcm: {
 			value: function lcm(...args) {
-				return utils.lcm(this, ...args)
+				return utils.lcm(+this, ...args)
 			},
 			configurable: true
 		},
 		isPrime: {
 			value: function isPrime() {
-				return utils.isPrime(this)
+				return utils.isPrime(+this)
 			},
 			configurable: true
 		},
 		primeFactors: {
 			value: function primeFactors() {
-				return utils.primeFactors(this)
+				return utils.primeFactors(+this)
 			},
 			configurable: true
 		},
 		factors: {
 			value: function factors() {
-				return utils.factors(this)
+				return utils.factors(+this)
 			},
 			configurable: true
 		}
@@ -1890,6 +2098,16 @@ load = function load() {
 		pt: {
 			get: function pt() {
 				return PointArray.convert(this)
+			},
+			configurable: true
+		},
+		mapMut: {
+			value: function mapMut(func) {
+				for (let i = 0; i < this.length; i++) {
+					this[i] = func(this[i], i, this)
+				}
+
+				return this
 			},
 			configurable: true
 		},
@@ -2707,7 +2925,9 @@ load = function load() {
 	alias(Array.prototype, "sl", "slice")
 	alias(String.prototype, "sl", "slice")
 	alias(Array.prototype, "sorta", "sortNumAsc")
+	alias(Array.prototype, "sna", "sortNumAsc")
 	alias(Array.prototype, "sortd", "sortNumDesc")
+	alias(Array.prototype, "snd", "sortNumDesc")
 	alias(Array.prototype, "spl", "splice")
 	alias(Array.prototype, "s", "split")
 	alias(String.prototype, "s", "split")
@@ -2769,163 +2989,15 @@ load()
 if (typeof window != "undefined") {
 	a = input
 	cb = a.split("\n")
-}
 
-utils = {
-	log: (e, ...args) => (console.log(e, ...args), e),
-	logCopy: (e, ...args) => (console.log(e.copyDeep(), ...args), e),
-	fetchText: (...args) => fetch(...args).then((e) => e.text()),
-	fetchEval: (...args) => utils.fetchText(...args).then((e) => eval(e)),
-	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
-	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill)),
-	// num utils because numbers are weird
-	divmod: (a, b) => {
-		return [Math.floor(a / b), a % b]
-	},
-	gcd2: (a, b) => {
-		while (b) {
-			[a, b] = [b, a % b]
+	if (cb.every((e) => e.length == cb.length)) {
+		g = Grid.fromStr(a)
+
+		if (g.every((e) => !Number.isNaN(+e))) {
+			g.numMut()
 		}
-
-		return a
-	},
-	gcd: (...args) => args.length ? args.reduce(utils.gcd2) : 0,
-	lcm2: (a, b) => a && b ? a * (b / utils.gcd2(a, b)) : 0,
-	lcm: (...args) => args.length ? args.reduce(utils.lcm2) : 0,
-	isPrime: (n) => {
-		for (let i = 2; i * i <= n; i++) {
-			if (n % i == 0) {
-				return false
-			}
-		}
-
-		return true
-	},
-	primeFactors: (n) => {
-		let arr = []
-
-		for (let i = 2; n > 1;) {
-			if (i * i > n) {
-				arr.push(+n)
-				break
-			} else if (n % i == 0) {
-				arr.push(i)
-				n /= i
-			} else {
-				i++
-			}
-		}
-
-		return arr
-	},
-	factors: (n) => {
-		let arr = []
-		let arr2 = []
-
-		for (let i = 1; i * i <= n; i++) {
-			if (n % i == 0) {
-				arr.push(i)
-
-				if (i != n / i) {
-					arr2.unshift(n / i)
-				}
-			}
-		}
-
-		return [...arr, ...arr2]
-	},
-	lock: (obj, val) => {
-		let proxy
-
-		let func = val instanceof Function ? val : () => val
-
-		return proxy = new Proxy(obj, {
-			get(obj, prop) {
-				if (prop == "obj") {
-					return Object.assign({}, proxy)
-				} else if (prop in obj) {
-					return obj[prop]
-				} else {
-					return func(obj, prop)
-				}
-			}
-		})
-	},
-	createMap: (val = undefined, obj) => utils.lock(Object.assign({ __proto__: null }, obj), val),
-	getObject: (obj) => Object.assign({}, obj),
-	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func)
-}
-
-M = utils.createMap
-
-N = utils.emptyArray
-
-O = utils.getObject
-
-L = utils.log
-LC = utils.logCopy
-
-R = utils.range = utils.signAgnosticInclusiveRange
-
-U = function U(n) {
-	return utils.emptyArray(n, (e, i) => i + 1)
-}
-
-Z = function Z(n) {
-	return utils.emptyArray(n, (e, i) => i)
-}
-
-for (let i of Object.getOwnPropertyNames(Math)) {
-	if (Math[i] instanceof Function) {
-		globalThis[i] = Math[i]
 	}
 }
-
-defaultPartNum = 1
-
-A = function A(ans, part) {
-	let day = +location.href.match(/(\d+)\/input/)[1]
-
-	if (part != 1 && part != 2) {
-		part = defaultPartNum
-		console.warn(`Remember to specify part number! Defaulting to ${part}`)
-	}
-
-	console.log(`Submitting ${ans} for part ${part}`)
-
-	let queryString = new URLSearchParams({
-		"level": part.toString(),
-		"answer": ans.toString()
-	}).toString()
-
-	utils.fetchText(location.href.replace("input", "answer"), {
-		"headers": {
-			"content-type": "application/x-www-form-urlencoded"
-		},
-		"body": queryString,
-		"method": "POST",
-		"mode": "cors",
-		"credentials": "include"
-	}).then((text) => {
-		if (text.includes("That's the right answer!")) {
-			defaultPartNum = 2
-
-			if (day == 25) {
-				A(0, 2)
-				setTimeout(() => A(0, 2), 1000)
-			}
-		}
-
-		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, ""))
-	})
-
-	return ans
-}
-
-B = function B(ans) {
-	return A(ans, 2)
-}
-
 
 if (typeof window == "undefined" && process.argv[2] == "test") {
 	const fs = require("fs")

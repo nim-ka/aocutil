@@ -62,11 +62,13 @@ alias = function alias(proto, alias, original, isFunc = true) {
 }
 
 load = function load() {
-	Object.defineProperty(globalThis, "input", {
-		get: function input() {
-			return document.body.innerText.trimEnd()
-		},
-		configurable: true
+	Object.defineProperties(globalThis, {
+		input: {
+			get: function input() {
+				return document.body.innerText.trimEnd()
+			},
+			configurable: true
+		}
 	})
 
 	for (let primitive of [ Boolean, Number, BigInt, String, Symbol ]) {
@@ -87,37 +89,43 @@ load = function load() {
 		},
 		divmod: {
 			value: function divmod(that) {
-				return utils.divmod(this, that)
+				return utils.divmod(+this, that)
+			},
+			configurable: true
+		},
+		powmod: {
+			value: function powmod(that, mod) {
+				return utils.powmod(+this, that, mod)
 			},
 			configurable: true
 		},
 		gcd: {
 			value: function gcd(...args) {
-				return utils.gcd(this, ...args)
+				return utils.gcd(+this, ...args)
 			},
 			configurable: true
 		},
 		lcm: {
 			value: function lcm(...args) {
-				return utils.lcm(this, ...args)
+				return utils.lcm(+this, ...args)
 			},
 			configurable: true
 		},
 		isPrime: {
 			value: function isPrime() {
-				return utils.isPrime(this)
+				return utils.isPrime(+this)
 			},
 			configurable: true
 		},
 		primeFactors: {
 			value: function primeFactors() {
-				return utils.primeFactors(this)
+				return utils.primeFactors(+this)
 			},
 			configurable: true
 		},
 		factors: {
 			value: function factors() {
-				return utils.factors(this)
+				return utils.factors(+this)
 			},
 			configurable: true
 		}
@@ -257,6 +265,16 @@ load = function load() {
 		pt: {
 			get: function pt() {
 				return PointArray.convert(this)
+			},
+			configurable: true
+		},
+		mapMut: {
+			value: function mapMut(func) {
+				for (let i = 0; i < this.length; i++) {
+					this[i] = func(this[i], i, this)
+				}
+
+				return this
 			},
 			configurable: true
 		},
@@ -1074,7 +1092,9 @@ load = function load() {
 	alias(Array.prototype, "sl", "slice")
 	alias(String.prototype, "sl", "slice")
 	alias(Array.prototype, "sorta", "sortNumAsc")
+	alias(Array.prototype, "sna", "sortNumAsc")
 	alias(Array.prototype, "sortd", "sortNumDesc")
+	alias(Array.prototype, "snd", "sortNumDesc")
 	alias(Array.prototype, "spl", "splice")
 	alias(Array.prototype, "s", "split")
 	alias(String.prototype, "s", "split")
@@ -1136,5 +1156,13 @@ load()
 if (typeof window != "undefined") {
 	a = input
 	cb = a.split("\n")
+
+	if (cb.every((e) => e.length == cb.length)) {
+		g = Grid.fromStr(a)
+
+		if (g.every((e) => !Number.isNaN(+e))) {
+			g.numMut()
+		}
+	}
 }
 

@@ -9,6 +9,21 @@ utils = {
 	divmod: (a, b) => {
 		return [Math.floor(a / b), a % b]
 	},
+	powmod: (a, b, m) => {
+		a %= m
+
+		if (b == 0) {
+			return 1
+		}
+
+		if (b == 1) {
+			return a
+		}
+
+		let r = utils.powmod(a, Math.floor(b / 2), m)
+
+		return (b % 2 ? a : 1) * r * r % m
+	},
 	gcd2: (a, b) => {
 		while (b) {
 			[a, b] = [b, a % b]

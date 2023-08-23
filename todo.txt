@@ -2,12 +2,11 @@
 - partitions
 - levenshtein dist
 - array swaps, reverse range, etc
-- Grid.fromStr shortcut
-- g global for Grid.fromStr(input) [read only?]
 - memoization (maybe other decorators?)
 - Point.lineTo generator
 - Make Grid.get/set throw on point not contained
 - Grid.get alternative to allow non contained points
+- Grid.get and neighbors methods &c that work with cyclic grids
 - range compare/merge/subtract/etc utils
 - 3d grids
 - grid expand
@@ -19,3 +18,6 @@
 - Point.UP Point.DOWN etc aliases
 - binary search on arbitrary function
 - rewrite grid bfs
+- structuredClone
+- test case retrieval
+- node utils for input retrieval and also z3 wrappers

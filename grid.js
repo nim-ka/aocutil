@@ -128,8 +128,8 @@ Grid = class Grid {
 		return Point.NONE
 	}
 
-	find(func) {
-		return this.get(this.findIndex(func))
+	find(el) {
+		return this.get(this.findIndex(el))
 	}
 
 	findIndices(el) {
@@ -154,7 +154,33 @@ Grid = class Grid {
 	}
 
 	indexOf(val) {
-		return this.findIndex((e) => e == val)
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				if (this.get(pt) == val) {
+					return pt
+				}
+			}
+		}
+
+		return Point.NONE
+	}
+
+	includes(val) {
+		return this.indexOf(val) != Point.NONE
+	}
+
+	some(el) {
+		return this.findIndex(el) != Point.NONE
+	}
+
+	every(el) {
+		let func = functify(el)
+		return this.findIndex((e) => !func(e)) == Point.NONE
+	}
+
+	no(el) {
+		return !this.some(el)
 	}
 
 	contains(pt) { return !pt.is3D && pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }
@@ -270,7 +296,10 @@ Grid = class Grid {
 }
 
 G = function G(...args) {
+	if (typeof args[0] == "string") {
+		return Grid.fromStr(...args)
+	}
+
 	return new Grid(...args)
 }
-
 
