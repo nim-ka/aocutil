@@ -130,6 +130,15 @@ Pt = Point = class Point {
 	dl() { return this.downleft() }
 	dr() { return this.downright() }
 
+	n() { return this.up() }
+	s() { return this.down() }
+	w() { return this.left() }
+	e() { return this.right() }
+	nw() { return this.upleft() }
+	ne() { return this.upright() }
+	sw() { return this.downleft() }
+	se() { return this.downright() }
+
 	getUnfilteredAdjNeighborsIncSelf() {
 		if (!this.is3D) {
 			return new PointArray(
@@ -409,6 +418,14 @@ Pt = Point = class Point {
 }
 
 Point.NONE = new Point(null, null)
+
+Point.ZERO = new Point(0, 0)
+Point.ORIGIN = Point.ZERO
+
+Point.UP = Point.ZERO.up()
+Point.LEFT = Point.ZERO.left()
+Point.DOWN = Point.ZERO.down()
+Point.RIGHT = Point.ZERO.right()
 
 P = function P(...args) {
 	return new Point(...args)

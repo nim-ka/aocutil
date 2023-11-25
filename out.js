@@ -378,6 +378,15 @@ Pt = Point = class Point {
 	dl() { return this.downleft() }
 	dr() { return this.downright() }
 
+	n() { return this.up() }
+	s() { return this.down() }
+	w() { return this.left() }
+	e() { return this.right() }
+	nw() { return this.upleft() }
+	ne() { return this.upright() }
+	sw() { return this.downleft() }
+	se() { return this.downright() }
+
 	getUnfilteredAdjNeighborsIncSelf() {
 		if (!this.is3D) {
 			return new PointArray(
@@ -658,6 +667,14 @@ Pt = Point = class Point {
 
 Point.NONE = new Point(null, null)
 
+Point.ZERO = new Point(0, 0)
+Point.ORIGIN = Point.ZERO
+
+Point.UP = Point.ZERO.up()
+Point.LEFT = Point.ZERO.left()
+Point.DOWN = Point.ZERO.down()
+Point.RIGHT = Point.ZERO.right()
+
 P = function P(...args) {
 	return new Point(...args)
 }
@@ -729,12 +746,31 @@ Grid = class Grid {
 		return grid
 	}
 
+	wrap(pt) {
+		let x = ((pt.x % this.width) + this.width) % this.width
+		let y = ((pt.y % this.height) + this.height) % this.height
+		return new Point(x, y)
+	}
+
 	get(pt) {
 		if (this.contains(pt)) {
 			return this.data[pt.y][pt.x]
 		} else {
 			console.error("Grid.get: Grid does not contain point " + pt.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
+	}
+
+	getDef(pt, def) {
+		if (this.contains(pt)) {
+			return this.data[pt.y][pt.x]
+		} else {
+			return def
+		}
+	}
+
+	getWrap(pt) {
+		return this.get(this.wrap(pt))
 	}
 
 	set(pt, val) {
@@ -743,7 +779,12 @@ Grid = class Grid {
 			return this
 		} else {
 			console.error("Grid.set: does not contain point " + pt.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
+	}
+
+	setWrap(pt, val) {
+		return this.set(this.wrap(pt), val)
 	}
 
 	getColumn(x) {
@@ -751,6 +792,7 @@ Grid = class Grid {
 			return this.data.map((row) => row[x])
 		} else {
 			console.error("Grid.getColumn: does not contain column " + x.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
 	}
 
@@ -759,6 +801,7 @@ Grid = class Grid {
 			return this.data[y]
 		} else {
 			console.error("Grid.getRow: does not contain row " + y.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
 	}
 
@@ -767,6 +810,7 @@ Grid = class Grid {
 			return new Grid(pt2.x - pt1.x + 1, pt2.y - pt1.y + 1).mapMut((_, pt) => this.get(pt.add(pt1)))
 		} else {
 			console.error("Grid.getSection: Second point " + pt2.toString() + " behind first point " + pt1.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
 	}
 
@@ -863,6 +907,20 @@ Grid = class Grid {
 	getDiagNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredDiagNeighborsIncSelf().filter((pt) => this.contains(pt) && func(pt)) }
 	getAllNeighborsThat(pt, func) { return pt.getUnfilteredAllNeighbors().filter((pt) => this.contains(pt) && func(pt)) }
 	getAllNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredAllNeighborsIncSelf().filter((pt) => this.contains(pt) && func(pt)) }
+
+	getAdjNeighborsWrap(pt) { return pt.getUnfilteredAdjNeighbors().map((pt) => this.wrap(pt)) }
+	getAdjNeighborsWrapIncSelf(pt) { return pt.getUnfilteredAdjNeighborsIncSelf().map((pt) => this.wrap(pt)) }
+	getDiagNeighborsWrap(pt) { return pt.getUnfilteredDiagNeighbors().map((pt) => this.wrap(pt)) }
+	getDiagNeighborsWrapIncSelf(pt) { return pt.getUnfilteredDiagNeighborsIncSelf().map((pt) => this.wrap(pt)) }
+	getAllNeighborsWrap(pt) { return pt.getUnfilteredAllNeighbors().map((pt) => this.wrap(pt)) }
+	getAllNeighborsWrapIncSelf(pt) { return pt.getUnfilteredAllNeighborsIncSelf().map((pt) => this.wrap(pt)) }
+
+	getAdjNeighborsWrapThat(pt, func) { return pt.getUnfilteredAdjNeighbors().map((pt) => this.wrap(pt)).filter(func) }
+	getAdjNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredAdjNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
+	getDiagNeighborsWrapThat(pt, func) { return pt.getUnfilteredDiagNeighbors().map((pt) => this.wrap(pt)).filter(func) }
+	getDiagNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredDiagNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
+	getAllNeighborsWrapThat(pt, func) { return pt.getUnfilteredAllNeighbors().map((pt) => this.wrap(pt)).filter(func) }
+	getAllNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredAllNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
 
 	static BFS_CONTINUE = 0
 	static BFS_STOP = 1
@@ -1661,12 +1719,18 @@ IntcodeVM.INSTRS[IntcodeVM.OP_HLT] = {
 }
 
 utils = {
-	log: (e, ...args) => (console.log(e, ...args), e),
-	logCopy: (e, ...args) => (console.log(e.copyDeep(), ...args), e),
+	log: (e, ...args) => (console.log(e instanceof Grid ? e.toString() : e, ...args), e),
+	logCopy: (e, ...args) => (console.log(e instanceof Grid ? e.toString() : e.copyDeep(), ...args), e),
 	fetchText: (...args) => fetch(...args).then((e) => e.text()),
 	fetchEval: (...args) => utils.fetchText(...args).then((e) => eval(e)),
 	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
-	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill)),
+	createGridArray: (w, h, fill = undefined) => {
+		let func = functifyVal(fill)
+
+		return Array(h).fill().map((_, y) => {
+			return Array(w).fill().map((_, x) => func(new Point(x, y)))
+		})
+	},
 	// num utils because numbers are weird
 	divmod: (a, b) => {
 		return [Math.floor(a / b), a % b]
@@ -1757,8 +1821,45 @@ utils = {
 	},
 	createMap: (val = undefined, obj) => utils.lock(Object.assign({ __proto__: null }, obj), val),
 	getObject: (obj) => Object.assign({}, obj),
-	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func)
+	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func),
+	memoize: (func, serialize = (...args) => args.join("\0")) => {
+		let map = new Map()
+
+		return (...args) => {
+			let key = serialize(...args)
+
+			if (map.has(key)) {
+				return map.get(key)
+			}
+
+			let val = func(...args)
+			map.set(key, val)
+			return val
+		}
+	},
+	binarySearch: (func, start, end, searchVal = true) => {
+		if (!(func(start) != searchVal && func(end) == searchVal)) {
+			return null
+		}
+
+		let lastNo = start
+		let lastYes = end
+
+		while (lastYes - lastNo > 1) {
+			let mid = Math.floor((lastNo + lastYes) / 2)
+
+			if (func(mid) != searchVal) {
+				lastNo = mid
+			} else {
+				lastYes = mid
+			}
+		}
+
+		return lastYes
+	}
 }
+
+utils.prime = utils.isPrime
 
 M = utils.createMap
 
@@ -1820,7 +1921,7 @@ A = function A(ans, part) {
 			}
 		}
 
-		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, ""))
+		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, "").replace(/rank \d+/g, "???"))
 	})
 
 	return ans
@@ -1830,6 +1931,9 @@ B = function B(ans) {
 	return A(ans, 2)
 }
 
+I = function I(num) {
+	utils.fetchText(location.href.match(/^(.+)\/day/)[1] + "/day/" + num + "/input").then((e) => a = (document.body.children[0] ?? document.body).innerText = e.trimEnd())
+}
 
 PtArray = PointArray = class PointArray extends Array {
 	static convert(arr) {
@@ -1863,6 +1967,14 @@ function functify(el) {
 	}
 
 	return (e) => e == el
+}
+
+function functifyVal(el) {
+	if (el instanceof Function) {
+		return el
+	}
+
+	return () => el
 }
 
 const arrayAliases = {}
@@ -1965,6 +2077,12 @@ load = function load() {
 	})
 
 	Object.defineProperties(String.prototype, {
+		last: {
+			get: function lastGet() {
+				return this[this.length - 1]
+			},
+			configurable: true
+		},
 		count: {
 			value: function count(el) {
 				let func = functify(el)
@@ -2004,7 +2122,7 @@ load = function load() {
 				let arr = [""]
 
 				for (let i = 0; i < this.length; i++) {
-					if (func(this[i])) {
+					if (func(this[i], i, this)) {
 						arr.push("")
 					} else {
 						arr[arr.length - 1] += this[i]
@@ -2193,7 +2311,7 @@ load = function load() {
 				let arr = []
 
 				for (let i = 0; i < this.length; i++) {
-					if (func(this[i])) {
+					if (func(this[i], i, this)) {
 						arr.push(i)
 					}
 				}
@@ -2225,7 +2343,7 @@ load = function load() {
 				let arr = [[]]
 
 				for (let i = 0; i < this.length; i++) {
-					if (func(this[i])) {
+					if (func(this[i], i, this)) {
 						arr.push([])
 					} else {
 						arr[arr.length - 1].push(this[i])
@@ -2328,6 +2446,36 @@ load = function load() {
 			},
 			configurable: true
 		},
+        remove: {
+            value: function remove(el) {
+                let func = functify(el)
+                
+                for (let i = 0; i < this.length; i++) {
+                    if (func(this[i], i, this)) {
+                        this.splice(i, 1)
+                        break
+                    }
+                }
+                
+                return this
+            },
+            configurable: true
+        },
+        removeAll: {
+            value: function removeAll(el) {
+                let func = functify(el)
+                
+                for (let i = 0; i < this.length; i++) {
+                    if (func(this[i], i, this)) {
+                        this.splice(i, 1)
+                        i--
+                    }
+                }
+                
+                return this
+            },
+            configurable: true
+        },
 		int: {
 			value: function int(that) {
 				return this.filter(e => that.includes(e))
@@ -2385,14 +2533,14 @@ load = function load() {
 			},
 			configurable: true
 		},
-		minIndex: {
-			value: function minIndex(fn = (e) => e, tiebreak) {
+        __min: {
+			value: function __min(fn = (e) => e, tiebreak) {
 				let minval = Infinity
 				let min
 				let idx
 
 				for (let i = 0; i < this.length; i++) {
-					let val = fn(this[i])
+					let val = fn(this[i], i, this)
 
 					if (minval > val ||
 						(minval == val && tiebreak && tiebreak(min, this[i], idx, i) > 0)) {
@@ -2402,30 +2550,36 @@ load = function load() {
 					}
 				}
 
-				return idx
+				return { index: idx, element: min, value: minval }
+			},
+			configurable: true
+        },
+		minIndex: {
+			value: function minIndex(fn, tiebreak) {
+				return this.__min(fn, tiebreak).index
 			},
 			configurable: true
 		},
 		min: {
 			value: function min(fn, tiebreak) {
-				return this[this.minIndex(fn, tiebreak)]
+				return this.__min(fn, tiebreak).element
 			},
 			configurable: true
 		},
 		minVal: {
 			value: function minVal(fn, tiebreak) {
-				return fn(this.min(fn, tiebreak))
+				return this.__min(fn, tiebreak).value
 			},
 			configurable: true
 		},
-		maxIndex: {
-			value: function maxIndex(fn = (e) => e, tiebreak) {
+		__max: {
+			value: function __max(fn = (e) => e, tiebreak) {
 				let maxval = -Infinity
 				let max
 				let idx
 
 				for (let i = 0; i < this.length; i++) {
-					let val = fn(this[i])
+					let val = fn(this[i], i, this)
 
 					if (maxval < val ||
 						(maxval == val && tiebreak && tiebreak(max, this[i], idx, i) > 0)) {
@@ -2435,19 +2589,25 @@ load = function load() {
 					}
 				}
 
-				return idx
+				return { index: idx, element: max, value: maxval }
+			},
+			configurable: true
+		},
+		maxIndex: {
+			value: function maxIndex(fn, tiebreak) {
+				return this.__max(fn, tiebreak).index
 			},
 			configurable: true
 		},
 		max: {
 			value: function max(fn, tiebreak) {
-				return this[this.maxIndex(fn, tiebreak)]
+				return this.__max(fn, tiebreak).element
 			},
 			configurable: true
 		},
 		maxVal: {
 			value: function maxVal(fn, tiebreak) {
-				return fn(this.max(fn, tiebreak))
+				return this.__max(fn, tiebreak).value
 			},
 			configurable: true
 		},
@@ -2565,7 +2725,7 @@ load = function load() {
 				}
 
 				for (let i = 0; i < this.length; i++) {
-					if (func(this[i])) {
+					if (func(this[i], i, this)) {
 						arr.push(new PointArray())
 					} else {
 						arr[arr.length - 1].push(this[i])
@@ -2893,6 +3053,7 @@ load = function load() {
 	alias(Array.prototype, "for", "forEach")
 	alias(Array.prototype, "h", "includes")
 	alias(String.prototype, "h", "includes")
+	alias(Set.prototype, "h", "has")
 	alias(Array.prototype, "has", "includes")
 	alias(String.prototype, "has", "includes")
 	alias(Array.prototype, "iu", "isUniq")
@@ -2914,6 +3075,11 @@ load = function load() {
 	alias(String.prototype, "ps", "padStart")
 	alias(Array.prototype, "pu", "pushUniq")
 	alias(Array.prototype, "r", "reduce")
+	alias(Array.prototype, "delete", "remove")
+	alias(Array.prototype, "del", "remove")
+	alias(Array.prototype, "deleteAll", "removeAll")
+	alias(Array.prototype, "dela", "removeAll")
+	alias(Array.prototype, "delv", "removeAll")
 	alias(Array.prototype, "rep", "repeat")
 	alias(String.prototype, "rep", "repeat")
 	alias(String.prototype, "re", "replace")

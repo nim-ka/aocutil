@@ -32,6 +32,14 @@ function functify(el) {
 	return (e) => e == el
 }
 
+function functifyVal(el) {
+	if (el instanceof Function) {
+		return el
+	}
+
+	return () => el
+}
+
 const arrayAliases = {}
 
 alias = function alias(proto, alias, original, isFunc = true) {
@@ -132,6 +140,12 @@ load = function load() {
 	})
 
 	Object.defineProperties(String.prototype, {
+		last: {
+			get: function lastGet() {
+				return this[this.length - 1]
+			},
+			configurable: true
+		},
 		count: {
 			value: function count(el) {
 				let func = functify(el)
@@ -171,7 +185,7 @@ load = function load() {
 				let arr = [""]
 
 				for (let i = 0; i < this.length; i++) {
-					if (func(this[i])) {
+					if (func(this[i], i, this)) {
 						arr.push("")
 					} else {
 						arr[arr.length - 1] += this[i]
@@ -360,7 +374,7 @@ load = function load() {
 				let arr = []
 
 				for (let i = 0; i < this.length; i++) {
-					if (func(this[i])) {
+					if (func(this[i], i, this)) {
 						arr.push(i)
 					}
 				}
@@ -392,7 +406,7 @@ load = function load() {
 				let arr = [[]]
 
 				for (let i = 0; i < this.length; i++) {
-					if (func(this[i])) {
+					if (func(this[i], i, this)) {
 						arr.push([])
 					} else {
 						arr[arr.length - 1].push(this[i])
@@ -495,6 +509,36 @@ load = function load() {
 			},
 			configurable: true
 		},
+        remove: {
+            value: function remove(el) {
+                let func = functify(el)
+                
+                for (let i = 0; i < this.length; i++) {
+                    if (func(this[i], i, this)) {
+                        this.splice(i, 1)
+                        break
+                    }
+                }
+                
+                return this
+            },
+            configurable: true
+        },
+        removeAll: {
+            value: function removeAll(el) {
+                let func = functify(el)
+                
+                for (let i = 0; i < this.length; i++) {
+                    if (func(this[i], i, this)) {
+                        this.splice(i, 1)
+                        i--
+                    }
+                }
+                
+                return this
+            },
+            configurable: true
+        },
 		int: {
 			value: function int(that) {
 				return this.filter(e => that.includes(e))
@@ -552,14 +596,14 @@ load = function load() {
 			},
 			configurable: true
 		},
-		minIndex: {
-			value: function minIndex(fn = (e) => e, tiebreak) {
+        __min: {
+			value: function __min(fn = (e) => e, tiebreak) {
 				let minval = Infinity
 				let min
 				let idx
 
 				for (let i = 0; i < this.length; i++) {
-					let val = fn(this[i])
+					let val = fn(this[i], i, this)
 
 					if (minval > val ||
 						(minval == val && tiebreak && tiebreak(min, this[i], idx, i) > 0)) {
@@ -569,30 +613,36 @@ load = function load() {
 					}
 				}
 
-				return idx
+				return { index: idx, element: min, value: minval }
+			},
+			configurable: true
+        },
+		minIndex: {
+			value: function minIndex(fn, tiebreak) {
+				return this.__min(fn, tiebreak).index
 			},
 			configurable: true
 		},
 		min: {
 			value: function min(fn, tiebreak) {
-				return this[this.minIndex(fn, tiebreak)]
+				return this.__min(fn, tiebreak).element
 			},
 			configurable: true
 		},
 		minVal: {
 			value: function minVal(fn, tiebreak) {
-				return fn(this.min(fn, tiebreak))
+				return this.__min(fn, tiebreak).value
 			},
 			configurable: true
 		},
-		maxIndex: {
-			value: function maxIndex(fn = (e) => e, tiebreak) {
+		__max: {
+			value: function __max(fn = (e) => e, tiebreak) {
 				let maxval = -Infinity
 				let max
 				let idx
 
 				for (let i = 0; i < this.length; i++) {
-					let val = fn(this[i])
+					let val = fn(this[i], i, this)
 
 					if (maxval < val ||
 						(maxval == val && tiebreak && tiebreak(max, this[i], idx, i) > 0)) {
@@ -602,19 +652,25 @@ load = function load() {
 					}
 				}
 
-				return idx
+				return { index: idx, element: max, value: maxval }
+			},
+			configurable: true
+		},
+		maxIndex: {
+			value: function maxIndex(fn, tiebreak) {
+				return this.__max(fn, tiebreak).index
 			},
 			configurable: true
 		},
 		max: {
 			value: function max(fn, tiebreak) {
-				return this[this.maxIndex(fn, tiebreak)]
+				return this.__max(fn, tiebreak).element
 			},
 			configurable: true
 		},
 		maxVal: {
 			value: function maxVal(fn, tiebreak) {
-				return fn(this.max(fn, tiebreak))
+				return this.__max(fn, tiebreak).value
 			},
 			configurable: true
 		},
@@ -732,7 +788,7 @@ load = function load() {
 				}
 
 				for (let i = 0; i < this.length; i++) {
-					if (func(this[i])) {
+					if (func(this[i], i, this)) {
 						arr.push(new PointArray())
 					} else {
 						arr[arr.length - 1].push(this[i])
@@ -1060,6 +1116,7 @@ load = function load() {
 	alias(Array.prototype, "for", "forEach")
 	alias(Array.prototype, "h", "includes")
 	alias(String.prototype, "h", "includes")
+	alias(Set.prototype, "h", "has")
 	alias(Array.prototype, "has", "includes")
 	alias(String.prototype, "has", "includes")
 	alias(Array.prototype, "iu", "isUniq")
@@ -1081,6 +1138,11 @@ load = function load() {
 	alias(String.prototype, "ps", "padStart")
 	alias(Array.prototype, "pu", "pushUniq")
 	alias(Array.prototype, "r", "reduce")
+	alias(Array.prototype, "delete", "remove")
+	alias(Array.prototype, "del", "remove")
+	alias(Array.prototype, "deleteAll", "removeAll")
+	alias(Array.prototype, "dela", "removeAll")
+	alias(Array.prototype, "delv", "removeAll")
 	alias(Array.prototype, "rep", "repeat")
 	alias(String.prototype, "rep", "repeat")
 	alias(String.prototype, "re", "replace")

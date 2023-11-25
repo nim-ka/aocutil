@@ -64,12 +64,31 @@ Grid = class Grid {
 		return grid
 	}
 
+	wrap(pt) {
+		let x = ((pt.x % this.width) + this.width) % this.width
+		let y = ((pt.y % this.height) + this.height) % this.height
+		return new Point(x, y)
+	}
+
 	get(pt) {
 		if (this.contains(pt)) {
 			return this.data[pt.y][pt.x]
 		} else {
 			console.error("Grid.get: Grid does not contain point " + pt.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
+	}
+
+	getDef(pt, def) {
+		if (this.contains(pt)) {
+			return this.data[pt.y][pt.x]
+		} else {
+			return def
+		}
+	}
+
+	getWrap(pt) {
+		return this.get(this.wrap(pt))
 	}
 
 	set(pt, val) {
@@ -78,7 +97,12 @@ Grid = class Grid {
 			return this
 		} else {
 			console.error("Grid.set: does not contain point " + pt.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
+	}
+
+	setWrap(pt, val) {
+		return this.set(this.wrap(pt), val)
 	}
 
 	getColumn(x) {
@@ -86,6 +110,7 @@ Grid = class Grid {
 			return this.data.map((row) => row[x])
 		} else {
 			console.error("Grid.getColumn: does not contain column " + x.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
 	}
 
@@ -94,6 +119,7 @@ Grid = class Grid {
 			return this.data[y]
 		} else {
 			console.error("Grid.getRow: does not contain row " + y.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
 	}
 
@@ -102,6 +128,7 @@ Grid = class Grid {
 			return new Grid(pt2.x - pt1.x + 1, pt2.y - pt1.y + 1).mapMut((_, pt) => this.get(pt.add(pt1)))
 		} else {
 			console.error("Grid.getSection: Second point " + pt2.toString() + " behind first point " + pt1.toString() + ":\n" + this.toString())
+			throw [this.width, this.height]
 		}
 	}
 
@@ -198,6 +225,20 @@ Grid = class Grid {
 	getDiagNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredDiagNeighborsIncSelf().filter((pt) => this.contains(pt) && func(pt)) }
 	getAllNeighborsThat(pt, func) { return pt.getUnfilteredAllNeighbors().filter((pt) => this.contains(pt) && func(pt)) }
 	getAllNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredAllNeighborsIncSelf().filter((pt) => this.contains(pt) && func(pt)) }
+
+	getAdjNeighborsWrap(pt) { return pt.getUnfilteredAdjNeighbors().map((pt) => this.wrap(pt)) }
+	getAdjNeighborsWrapIncSelf(pt) { return pt.getUnfilteredAdjNeighborsIncSelf().map((pt) => this.wrap(pt)) }
+	getDiagNeighborsWrap(pt) { return pt.getUnfilteredDiagNeighbors().map((pt) => this.wrap(pt)) }
+	getDiagNeighborsWrapIncSelf(pt) { return pt.getUnfilteredDiagNeighborsIncSelf().map((pt) => this.wrap(pt)) }
+	getAllNeighborsWrap(pt) { return pt.getUnfilteredAllNeighbors().map((pt) => this.wrap(pt)) }
+	getAllNeighborsWrapIncSelf(pt) { return pt.getUnfilteredAllNeighborsIncSelf().map((pt) => this.wrap(pt)) }
+
+	getAdjNeighborsWrapThat(pt, func) { return pt.getUnfilteredAdjNeighbors().map((pt) => this.wrap(pt)).filter(func) }
+	getAdjNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredAdjNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
+	getDiagNeighborsWrapThat(pt, func) { return pt.getUnfilteredDiagNeighbors().map((pt) => this.wrap(pt)).filter(func) }
+	getDiagNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredDiagNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
+	getAllNeighborsWrapThat(pt, func) { return pt.getUnfilteredAllNeighbors().map((pt) => this.wrap(pt)).filter(func) }
+	getAllNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredAllNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
 
 	static BFS_CONTINUE = 0
 	static BFS_STOP = 1

@@ -1,10 +1,16 @@
 utils = {
-	log: (e, ...args) => (console.log(e, ...args), e),
-	logCopy: (e, ...args) => (console.log(e.copyDeep(), ...args), e),
+	log: (e, ...args) => (console.log(e instanceof Grid ? e.toString() : e, ...args), e),
+	logCopy: (e, ...args) => (console.log(e instanceof Grid ? e.toString() : e.copyDeep(), ...args), e),
 	fetchText: (...args) => fetch(...args).then((e) => e.text()),
 	fetchEval: (...args) => utils.fetchText(...args).then((e) => eval(e)),
 	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
-	createGridArray: (w, h, fill = undefined) => Array(h).fill().map(() => Array(w).fill(fill)),
+	createGridArray: (w, h, fill = undefined) => {
+		let func = functifyVal(fill)
+
+		return Array(h).fill().map((_, y) => {
+			return Array(w).fill().map((_, x) => func(new Point(x, y)))
+		})
+	},
 	// num utils because numbers are weird
 	divmod: (a, b) => {
 		return [Math.floor(a / b), a % b]
@@ -95,8 +101,45 @@ utils = {
 	},
 	createMap: (val = undefined, obj) => utils.lock(Object.assign({ __proto__: null }, obj), val),
 	getObject: (obj) => Object.assign({}, obj),
-	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func)
+	emptyArray: (n, func = (e, i) => i) => Array(n).fill().map(func),
+	memoize: (func, serialize = (...args) => args.join("\0")) => {
+		let map = new Map()
+
+		return (...args) => {
+			let key = serialize(...args)
+
+			if (map.has(key)) {
+				return map.get(key)
+			}
+
+			let val = func(...args)
+			map.set(key, val)
+			return val
+		}
+	},
+	binarySearch: (func, start, end, searchVal = true) => {
+		if (!(func(start) != searchVal && func(end) == searchVal)) {
+			return null
+		}
+
+		let lastNo = start
+		let lastYes = end
+
+		while (lastYes - lastNo > 1) {
+			let mid = Math.floor((lastNo + lastYes) / 2)
+
+			if (func(mid) != searchVal) {
+				lastNo = mid
+			} else {
+				lastYes = mid
+			}
+		}
+
+		return lastYes
+	}
 }
+
+utils.prime = utils.isPrime
 
 M = utils.createMap
 
@@ -158,7 +201,7 @@ A = function A(ans, part) {
 			}
 		}
 
-		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, ""))
+		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, "").replace(/rank \d+/g, "???"))
 	})
 
 	return ans
@@ -168,4 +211,7 @@ B = function B(ans) {
 	return A(ans, 2)
 }
 
+I = function I(num) {
+	utils.fetchText(location.href.match(/^(.+)\/day/)[1] + "/day/" + num + "/input").then((e) => a = (document.body.children[0] ?? document.body).innerText = e.trimEnd())
+}
 

@@ -1,20 +1,15 @@
 - permutations/combinations
 - partitions
 - levenshtein dist
-- array swaps, reverse range, etc
-- memoization (maybe other decorators?)
-- Point.lineTo generator
-- Make Grid.get/set throw on point not contained
-- Grid.get alternative to allow non contained points
-- Grid.get and neighbors methods &c that work with cyclic grids
+!!- array swaps, reverse range, etc
+*- Point.lineTo generator
 - range compare/merge/subtract/etc utils
+- sparse grids
 - 3d grids
 - grid expand
 - hex pt utils? maybe?
-- change utils.log to auto toString grids
 - figure out tsp
-- nwse aliases for uldr
-- min/max x/y from arr of points
+*- min/max x/y from arr of points
 - Point.UP Point.DOWN etc aliases
 - binary search on arbitrary function
 - rewrite grid bfs
