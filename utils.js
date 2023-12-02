@@ -172,13 +172,13 @@ for (let i of Object.getOwnPropertyNames(Math)) {
 defaultPartNum = 1
 
 A = function A(ans, part = 0) {
-    if (part < 1000 && typeof ans != "number") {
-        console.warn("Tried to submit non-number; cancelled. To override, add 1000 to part number.")
-        return
-    }
-    
-    part %= 1000
-    
+	if (part < 1000 && typeof ans != "number") {
+		console.warn("Tried to submit non-number; cancelled. To override, add 1000 to part number.")
+		return
+	}
+	
+	part %= 1000
+	
 	let day = +location.href.match(/(\d+)\/input/)[1]
 
 	if (part != 1 && part != 2) {

@@ -14,10 +14,10 @@ Instruction = class Instruction {
 // example command:
 //
 // add: {
-//     types: [ String, 0, 0 ],
-//     op: function(dest, a, b) {
-//         this.regs[dest] = a + b
-//     }
+//	 types: [ String, 0, 0 ],
+//	 op: function(dest, a, b) {
+//		 this.regs[dest] = a + b
+//	 }
 // }
 
 VM = class VM {

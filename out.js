@@ -1278,10 +1278,10 @@ Instruction = class Instruction {
 // example command:
 //
 // add: {
-//     types: [ String, 0, 0 ],
-//     op: function(dest, a, b) {
-//         this.regs[dest] = a + b
-//     }
+//	 types: [ String, 0, 0 ],
+//	 op: function(dest, a, b) {
+//		 this.regs[dest] = a + b
+//	 }
 // }
 
 VM = class VM {
@@ -1892,13 +1892,13 @@ for (let i of Object.getOwnPropertyNames(Math)) {
 defaultPartNum = 1
 
 A = function A(ans, part = 0) {
-    if (part < 1000 && typeof ans != "number") {
-        console.warn("Tried to submit non-number; cancelled. To override, add 1000 to part number.")
-        return
-    }
-    
-    part %= 1000
-    
+	if (part < 1000 && typeof ans != "number") {
+		console.warn("Tried to submit non-number; cancelled. To override, add 1000 to part number.")
+		return
+	}
+	
+	part %= 1000
+	
 	let day = +location.href.match(/(\d+)\/input/)[1]
 
 	if (part != 1 && part != 2) {
@@ -1986,14 +1986,14 @@ function functify(el) {
 	if (el instanceof RegExp) {
 		return (e) => el.test(e)
 	}
-    
-    if (el instanceof Function) {
+	
+	if (el instanceof Function) {
 		return el
 	}
-    
-    if (el instanceof Point) {
-        return (e) => e.equals(el)
-    }
+	
+	if (el instanceof Point) {
+		return (e) => e.equals(el)
+	}
 
 	return (e) => e == el
 }
@@ -2128,12 +2128,12 @@ load = function load() {
 			},
 			configurable: true
 		},
-        s: {
-            value: function s(split = /\s+/g, limit) {
-                return this.split(split, limit)
-            },
-            configurable: true
-        },
+		s: {
+			value: function s(split = /\s+/g, limit) {
+				return this.split(split, limit)
+			},
+			configurable: true
+		},
 		splitEvery: {
 			value: function splitEvery(n) {
 				let arr = [""]
@@ -2186,24 +2186,24 @@ load = function load() {
 			},
 			configurable: true
 		},
-        digits: {
-            value: function digits() {
-                return this.match(/\d/g)?.num() ?? []
-            },
-            configurable: true
-        },
-        reverse: {
-            value: function reverse() {
-                let s = ""
-                
-                for (let i = this.length - 1; i >= 0; i--) {
-                    s += this[i]
-                }
-                
-                return s
-            },
-            configurable: true
-        }
+		digits: {
+			value: function digits() {
+				return this.match(/\d/g)?.num() ?? []
+			},
+			configurable: true
+		},
+		reverse: {
+			value: function reverse() {
+				let s = ""
+				
+				for (let i = this.length - 1; i >= 0; i--) {
+					s += this[i]
+				}
+				
+				return s
+			},
+			configurable: true
+		}
 	})
 
 	Object.defineProperties(Object.prototype, {
@@ -2219,12 +2219,12 @@ load = function load() {
 			},
 			configurable: true
 		},
-        copy: {
-            value: function copy() {
-                return Object.assign({}, this)
-            },
-            configurable: true
-        },
+		copy: {
+			value: function copy() {
+				return Object.assign({}, this)
+			},
+			configurable: true
+		},
 		copyDeep: {
 			value: function copyDeep() {
 				return JSON.parse(JSON.stringify(this))
@@ -2481,19 +2481,19 @@ load = function load() {
 			},
 			configurable: true
 		},
-        pair: {
-            value: function pair(that = this) {
-                let len = Math.min(this.length, that.length)
-                let res = new Array(len)
-                
-                for (let i = 0; i < len; i++) {
-                    res[i] = [this[i], that[i]]
-                }
-                
-                return res
-            },
-            configurable: true
-        },
+		pair: {
+			value: function pair(that = this) {
+				let len = Math.min(this.length, that.length)
+				let res = new Array(len)
+				
+				for (let i = 0; i < len; i++) {
+					res[i] = [this[i], that[i]]
+				}
+				
+				return res
+			},
+			configurable: true
+		},
 		interleave: {
 			value: function interleave(that) {
 				return [this, that].transpose().flat()
@@ -2520,36 +2520,36 @@ load = function load() {
 			},
 			configurable: true
 		},
-        remove: {
-            value: function remove(el) {
-                let func = functify(el)
-                
-                for (let i = 0; i < this.length; i++) {
-                    if (func(this[i], i, this)) {
-                        this.splice(i, 1)
-                        break
-                    }
-                }
-                
-                return this
-            },
-            configurable: true
-        },
-        removeAll: {
-            value: function removeAll(el) {
-                let func = functify(el)
-                
-                for (let i = 0; i < this.length; i++) {
-                    if (func(this[i], i, this)) {
-                        this.splice(i, 1)
-                        i--
-                    }
-                }
-                
-                return this
-            },
-            configurable: true
-        },
+		remove: {
+			value: function remove(el) {
+				let func = functify(el)
+				
+				for (let i = 0; i < this.length; i++) {
+					if (func(this[i], i, this)) {
+						this.splice(i, 1)
+						break
+					}
+				}
+				
+				return this
+			},
+			configurable: true
+		},
+		removeAll: {
+			value: function removeAll(el) {
+				let func = functify(el)
+				
+				for (let i = 0; i < this.length; i++) {
+					if (func(this[i], i, this)) {
+						this.splice(i, 1)
+						i--
+					}
+				}
+				
+				return this
+			},
+			configurable: true
+		},
 		int: {
 			value: function int(that) {
 				return this.filter(e => that.includes(e))
@@ -2607,7 +2607,7 @@ load = function load() {
 			},
 			configurable: true
 		},
-        __min: {
+		__min: {
 			value: function __min(fn = (e) => e, tiebreak) {
 				let minval = Infinity
 				let min
@@ -2627,7 +2627,7 @@ load = function load() {
 				return { index: idx, element: min, value: minval }
 			},
 			configurable: true
-        },
+		},
 		minIndex: {
 			value: function minIndex(fn, tiebreak) {
 				return this.__min(fn, tiebreak).index
@@ -2727,24 +2727,24 @@ load = function load() {
 			},
 			configurable: true
 		},
-        deltas: {
-            value: function deltas() {
-                if (this.length < 2) {
-                    return []
-                }
-                
-                let res = new Array(this.length - 1)
-                let last = this[0]
-                
-                for (let i = 1; i < this.length; i++) {
-                    res[i - 1] = this[i] - last
-                    last = this[i]
-                }
-                
-                return res
-            },
-            configurable: true
-        }
+		deltas: {
+			value: function deltas() {
+				if (this.length < 2) {
+					return []
+				}
+				
+				let res = new Array(this.length - 1)
+				let last = this[0]
+				
+				for (let i = 1; i < this.length; i++) {
+					res[i - 1] = this[i] - last
+					last = this[i]
+				}
+				
+				return res
+			},
+			configurable: true
+		}
 	})
 
 	Object.defineProperties(PointArray.prototype, {
@@ -2850,19 +2850,19 @@ load = function load() {
 			},
 			configurable: true
 		},
-        pair: {
-            value: function pair(that = this) {
-                let len = Math.min(this.length, that.length)
-                let res = new PointArray(len)
-                
-                for (let i = 0; i < len; i++) {
-                    res[i] = [this[i], that[i]]
-                }
-                
-                return res
-            },
-            configurable: true
-        },
+		pair: {
+			value: function pair(that = this) {
+				let len = Math.min(this.length, that.length)
+				let res = new PointArray(len)
+				
+				for (let i = 0; i < len; i++) {
+					res[i] = [this[i], that[i]]
+				}
+				
+				return res
+			},
+			configurable: true
+		},
 		interleave: {
 			value: function interleave(that = new PointArray()) {
 				return new PointArray(this, that).transpose().flat()
