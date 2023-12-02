@@ -139,6 +139,9 @@ utils = {
 	}
 }
 
+alpha = "abcdefghijklmnopqrstuvwxyz"
+ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 utils.prime = utils.isPrime
 
 M = utils.createMap
@@ -168,7 +171,14 @@ for (let i of Object.getOwnPropertyNames(Math)) {
 
 defaultPartNum = 1
 
-A = function A(ans, part) {
+A = function A(ans, part = 0) {
+    if (part < 1000 && typeof ans != "number") {
+        console.warn("Tried to submit non-number; cancelled. To override, add 1000 to part number.")
+        return
+    }
+    
+    part %= 1000
+    
 	let day = +location.href.match(/(\d+)\/input/)[1]
 
 	if (part != 1 && part != 2) {
@@ -207,11 +217,16 @@ A = function A(ans, part) {
 	return ans
 }
 
-B = function B(ans) {
-	return A(ans, 2)
+B = function B(ans, part = 0) {
+	return A(ans, part + 2)
 }
 
-I = function I(num) {
-	utils.fetchText(location.href.match(/^(.+)\/day/)[1] + "/day/" + num + "/input").then((e) => a = (document.body.children[0] ?? document.body).innerText = e.trimEnd())
+I = async function I(num) {
+	let url = location.href.match(/^(.+)\/day/)[1] + "/day/" + num + "/input"
+	history.pushState({}, "", url)
+
+	let text = await utils.fetchText(url)
+	a = (document.body.children[0] ?? document.body).innerText = text.trimEnd()
+	defaultPartNum = 1
 }
 

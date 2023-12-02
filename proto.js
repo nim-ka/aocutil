@@ -25,9 +25,15 @@ S = function S(...args) {
 function functify(el) {
 	if (el instanceof RegExp) {
 		return (e) => el.test(e)
-	} else if (el instanceof Function) {
+	}
+    
+    if (el instanceof Function) {
 		return el
 	}
+    
+    if (el instanceof Point) {
+        return (e) => e.equals(el)
+    }
 
 	return (e) => e == el
 }
@@ -213,7 +219,25 @@ load = function load() {
 				return this.match(/-?\d+(\.\d+)?/g)?.num() ?? []
 			},
 			configurable: true
-		}
+		},
+        digits: {
+            value: function digits() {
+                return this.match(/\d/g)?.num() ?? []
+            },
+            configurable: true
+        },
+        reverse: {
+            value: function reverse() {
+                let s = ""
+                
+                for (let i = this.length - 1; i >= 0; i--) {
+                    s += this[i]
+                }
+                
+                return s
+            },
+            configurable: true
+        }
 	})
 
 	Object.defineProperties(Object.prototype, {
@@ -229,6 +253,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+        copy: {
+            value: function copy() {
+                return Object.assign({}, this)
+            },
+            configurable: true
+        },
 		copyDeep: {
 			value: function copyDeep() {
 				return JSON.parse(JSON.stringify(this))
@@ -339,6 +369,8 @@ load = function load() {
 		},
 		repeat: {
 			value: function repeat(n) {
+				n = Math.floor(n)
+
 				let arr = new Array(this.length * n)
 
 				for (let i = 0; i < this.length * n; i++) {
@@ -449,7 +481,7 @@ load = function load() {
 		},
 		sum: {
 			value: function sum(val = 0) {
-				return this.reduce((a, b) => a + b, val)
+				return this.reduce((a, b) => +a + +b, val)
 			},
 			configurable: true
 		},
@@ -483,6 +515,19 @@ load = function load() {
 			},
 			configurable: true
 		},
+        pair: {
+            value: function pair(that = this) {
+                let len = Math.min(this.length, that.length)
+                let res = new Array(len)
+                
+                for (let i = 0; i < len; i++) {
+                    res[i] = [this[i], that[i]]
+                }
+                
+                return res
+            },
+            configurable: true
+        },
 		interleave: {
 			value: function interleave(that) {
 				return [this, that].transpose().flat()
@@ -694,7 +739,7 @@ load = function load() {
 		},
 		freqs: {
 			value: function freqs() {
-				return this.uniq().map((e) => [e, this.count(e)])
+				return this.uniq().mapArr((e) => [e, this.count(e)])
 			},
 			configurable: true
 		},
@@ -715,7 +760,25 @@ load = function load() {
 				return this.findIndex(functify(el))
 			},
 			configurable: true
-		}
+		},
+        deltas: {
+            value: function deltas() {
+                if (this.length < 2) {
+                    return []
+                }
+                
+                let res = new Array(this.length - 1)
+                let last = this[0]
+                
+                for (let i = 1; i < this.length; i++) {
+                    res[i - 1] = this[i] - last
+                    last = this[i]
+                }
+                
+                return res
+            },
+            configurable: true
+        }
 	})
 
 	Object.defineProperties(PointArray.prototype, {
@@ -751,6 +814,8 @@ load = function load() {
 		},
 		repeat: {
 			value: function repeat(n) {
+				n = Math.floor(n)
+
 				let arr = new PointArray(this.length * n)
 
 				for (let i = 0; i < this.length * n; i++) {
@@ -779,13 +844,9 @@ load = function load() {
 		},
 		splitOn: {
 			value: function splitOn(sep) {
-				let func
+				let func = functify(sep)
 
-				if (sep instanceof Function) {
-					func = sep
-				} else {
-					func = (el) => sep.equals(el)
-				}
+				let arr = [[]]
 
 				for (let i = 0; i < this.length; i++) {
 					if (func(this[i], i, this)) {
@@ -813,16 +874,29 @@ load = function load() {
 		},
 		cartProduct: {
 			value: function cartProduct(that = this) {
-				return this.flatMap((e) => that.map((f) => new PointArray(e, f)))
+				return this.mapArr((e) => that.map((f) => new PointArray(e, f))).flat()
 			},
 			configurable: true
 		},
 		pairsExcl: {
 			value: function pairsExcl() {
-				return this.flatMap((e, i) => this.filter((_, j) => i != j).map((f) => new PointArray(e, f)))
+				return this.mapArr((e, i) => this.filter((_, j) => i != j).map((f) => new PointArray(e, f))).flat()
 			},
 			configurable: true
 		},
+        pair: {
+            value: function pair(that = this) {
+                let len = Math.min(this.length, that.length)
+                let res = new PointArray(len)
+                
+                for (let i = 0; i < len; i++) {
+                    res[i] = [this[i], that[i]]
+                }
+                
+                return res
+            },
+            configurable: true
+        },
 		interleave: {
 			value: function interleave(that = new PointArray()) {
 				return new PointArray(this, that).transpose().flat()
@@ -877,35 +951,13 @@ load = function load() {
 		},
 		sub: {
 			value: function sub(that) {
-				return this.filter(e => !that.pt.includes(e))
+				return this.filter(e => !e.isIn(that))
 			},
 			configurable: true
 		},
 		int: {
 			value: function int(that) {
-				return this.filter(e => that.pt.includes(e))
-			},
-			configurable: true
-		},
-		count: {
-			value: function count(el) {
-				let func
-
-				if (el instanceof Function) {
-					func = el
-				} else {
-					func = (e) => el.equals(e)
-				}
-
-				let count = 0
-
-				for (let i = 0; i < this.length; i++) {
-					if (func(this[i], i, this)) {
-						count++
-					}
-				}
-
-				return count
+				return this.filter(e => e.isIn(that))
 			},
 			configurable: true
 		}
@@ -1113,6 +1165,8 @@ load = function load() {
 	alias(Array.prototype, "flx", "findLastIndex")
 	alias(Array.prototype, "fl", "flat")
 	alias(Array.prototype, "fld", "flatDeep")
+	alias(Array.prototype, "flm", "flatMap")
+	alias(Array.prototype, "fm", "flatMap")
 	alias(Array.prototype, "for", "forEach")
 	alias(Array.prototype, "h", "includes")
 	alias(String.prototype, "h", "includes")
@@ -1147,6 +1201,7 @@ load = function load() {
 	alias(String.prototype, "rep", "repeat")
 	alias(String.prototype, "re", "replace")
 	alias(String.prototype, "rea", "replaceAll")
+	alias(String.prototype, "_", "reverse")
 	alias(Array.prototype, "_", "reverse")
 	alias(Array.prototype, "rl", "rotateLeft")
 	alias(Array.prototype, "rr", "rotateRight")
