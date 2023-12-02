@@ -1950,6 +1950,14 @@ I = async function I(num) {
 	defaultPartNum = 1
 }
 
+II = async function II(num) {
+	if (window.aocTimeout) {
+		clearTimeout(window.aocTimeout)
+	}
+
+	window.aocTimeout = setTimeout(() => I(num), new Date().setHours(21, 0, 2, 0) - new Date().getTime())
+}
+
 PtArray = PointArray = class PointArray extends Array {
 	static convert(arr) {
 		if (!(arr instanceof PointArray)) {
@@ -2120,6 +2128,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+        s: {
+            value: function s(split = /\s+/g, limit) {
+                return this.split(split, limit)
+            },
+            configurable: true
+        },
 		splitEvery: {
 			value: function splitEvery(n) {
 				let arr = [""]
@@ -3166,7 +3180,6 @@ load = function load() {
 	alias(Array.prototype, "snd", "sortNumDesc")
 	alias(Array.prototype, "spl", "splice")
 	alias(Array.prototype, "s", "split")
-	alias(String.prototype, "s", "split")
 	alias(Array.prototype, "sv", "splitEvery")
 	alias(String.prototype, "sv", "splitEvery")
 	alias(Array.prototype, "so", "splitOn")
@@ -3253,9 +3266,9 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		}
 	}
 
-	const year = "2021"
+	const year = "2023"
 
-	for (let i = +process.argv[3] || 1; i <= 25; i++) {
+	for (let i = +process.argv[3] || 1; i <= 2; i++) {
 		const func = require(`./${year}/${i}.js`)
 		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8")
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")

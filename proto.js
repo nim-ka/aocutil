@@ -168,6 +168,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+        s: {
+            value: function s(split = /\s+/g, limit) {
+                return this.split(split, limit)
+            },
+            configurable: true
+        },
 		splitEvery: {
 			value: function splitEvery(n) {
 				let arr = [""]
@@ -1214,7 +1220,6 @@ load = function load() {
 	alias(Array.prototype, "snd", "sortNumDesc")
 	alias(Array.prototype, "spl", "splice")
 	alias(Array.prototype, "s", "split")
-	alias(String.prototype, "s", "split")
 	alias(Array.prototype, "sv", "splitEvery")
 	alias(String.prototype, "sv", "splitEvery")
 	alias(Array.prototype, "so", "splitOn")

@@ -230,3 +230,11 @@ I = async function I(num) {
 	defaultPartNum = 1
 }
 
+II = async function II(num) {
+	if (window.aocTimeout) {
+		clearTimeout(window.aocTimeout)
+	}
+
+	window.aocTimeout = setTimeout(() => I(num), new Date().setHours(21, 0, 2, 0) - new Date().getTime())
+}
+
