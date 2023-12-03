@@ -784,6 +784,16 @@ load = function load() {
 				return res
 			},
 			configurable: true
+		},
+		dict: {
+			value: function dict(func, obj = {}) {
+				for (let i = 0; i < this.length; i++) {
+					func(obj, this[i], i, this)
+				}
+				
+				return obj
+			},
+			configurable: true
 		}
 	})
 

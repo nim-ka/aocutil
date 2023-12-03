@@ -2744,6 +2744,16 @@ load = function load() {
 				return res
 			},
 			configurable: true
+		},
+		dict: {
+			value: function dict(func, obj = {}) {
+				for (let i = 0; i < this.length; i++) {
+					func(obj, this[i], i, this)
+				}
+				
+				return obj
+			},
+			configurable: true
 		}
 	})
 
@@ -3268,7 +3278,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 
 	const year = "2023"
 
-	for (let i = +process.argv[3] || 1; i <= 2; i++) {
+	for (let i = +process.argv[3] || 1; i <= 3; i++) {
 		const func = require(`./${year}/${i}.js`)
 		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8")
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")
