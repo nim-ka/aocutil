@@ -1931,7 +1931,7 @@ A = function A(ans, part = 0) {
 			}
 		}
 
-		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, "").replace(/rank \d+/g, "???"))
+		console.log(text.match(/<article([\s\S]+?)article>/)[0].replace(/<.+?>/g, "").replace(/rank \d+/g, "???").replace(/ and gained \d+ points!/g, "."))
 	})
 
 	return ans
