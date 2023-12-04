@@ -3278,8 +3278,14 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 
 	const year = "2023"
 
-	for (let i = +process.argv[3] || 1; i <= 3; i++) {
-		const func = require(`./${year}/${i}.js`)
+	for (let i = +process.argv[3] || 1; i <= 25; i++) {
+		let jsPath = `./${year}/${i}.js`
+
+		if (!fs.existsSync(jsPath)) {
+			break
+		}
+
+		const func = require(jsPath)
 		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8")
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")
 
