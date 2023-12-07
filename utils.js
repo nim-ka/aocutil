@@ -85,7 +85,7 @@ utils = {
 	lock: (obj, val) => {
 		let proxy
 
-		let func = val instanceof Function ? val : () => val
+		let func = functifyVal(val)
 
 		return proxy = new Proxy(obj, {
 			get(obj, prop) {

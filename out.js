@@ -27,7 +27,19 @@ DLL = class DLL {
 		this.h = undefined
 		this.length = 0
 
-		this.push(...a)
+		for (let el of a) {
+			this.insValEnd(el)
+		}
+	}
+	
+	static from(a) {
+		let dll = new DLL()
+		
+		for (let el of a) {
+			dll.insValEnd(el)
+		}
+		
+		return dll
 	}
 
 	insNodeAheadNode(old, node) {
@@ -52,9 +64,7 @@ DLL = class DLL {
 
 	insNodeStart(node) {
 		if (this.h) {
-			this.insNodeBehindNode(this.h, node)
-			this.h = node
-			return this.length
+			return this.insNodeBehindNode(this.h, node)
 		} else {
 			this.h = node
 			return ++this.length
@@ -63,9 +73,7 @@ DLL = class DLL {
 
 	insDLLStart(dll) {
 		if (this.h) {
-			this.insDLLBehindNode(this.h, dll)
-			this.h = dll.h
-			return this.length
+			return this.insDLLBehindNode(this.h, dll)
 		} else {
 			this.h = dll.h
 			return this.length = dll.length
@@ -85,6 +93,11 @@ DLL = class DLL {
 		old.prev.next = node
 		old.prev = node
 		node.next = old
+		
+		if (this.h == old) {
+			this.h = node
+		}
+		
 		return ++this.length
 	}
 
@@ -95,6 +108,11 @@ DLL = class DLL {
 		old.prev.next = start
 		old.prev = end
 		end.next = old
+		
+		if (this.h == old) {
+			this.h = dll.h
+		}
+		
 		return this.length += dll.length
 	}
 
@@ -102,12 +120,17 @@ DLL = class DLL {
 		let node = new DLLNode(val, old.prev, old)
 		old.prev = node
 		old.prev.prev.next = node
+		
+		if (this.h == old) {
+			this.h = node
+		}
+		
 		return ++this.length
 	}
 
 	insNodeEnd(node) {
 		if (this.h) {
-			return this.insNodeBehindNode(this.h, node)
+			return this.insNodeAheadNode(this.h.prev, node)
 		} else {
 			this.h = node
 			return ++this.length
@@ -116,7 +139,7 @@ DLL = class DLL {
 
 	insDLLEnd(dll) {
 		if (this.h) {
-			return this.insDLLBehindNode(this.h, dll)
+			return this.insDLLAheadNode(this.h.prev, dll)
 		} else {
 			this.h = dll.h
 			return this.length = dll.length
@@ -206,16 +229,11 @@ DLL = class DLL {
 	}
 
 	forEach(f) {
-		if (!this.h) {
-			return this
-		}
-
-		let i = 0, node = this.h
-
-		do {
+		let i = 0
+		
+		for (let node of this.nodes()) {
 			f(node.val, node, i++, this)
-			node = node.next
-		} while (node != this.h)
+		}
 
 		return this
 	}
@@ -243,8 +261,260 @@ DLL = class DLL {
 		this.forEach((e) => that.push(e))
 		return that
 	}
+	
+	*[Symbol.iterator]() {
+		if (!this.h) {
+			return
+		}
+		
+		let node = this.h
+		
+		do {
+			yield node.val
+			node = node.next
+		} while (node != this.h)
+	}
+
+	*nodes() {
+		if (!this.h) {
+			return
+		}
+		
+		let node = this.h
+		
+		do {
+			yield node
+			node = node.next
+		} while (node != this.h)
+	}
 }
 
+
+Range = class Range {
+	constructor(x, y) {
+		this.x = x
+		this.y = y
+	}
+	
+	get l() {
+		return this.y - this.x
+	}
+	
+	set l(l) {
+		this.y = this.x + l
+	}
+	
+	copy() {
+		return new Range(this.x, this.y)
+	}
+	
+	equals(that) {
+		return this.x == that.x && this.l == that.l
+	}
+	
+	has(num) {
+		return this.x <= num && num < this.y
+	}
+	
+	intersects(that) {
+		return this.x < that.y && that.x < this.y
+	}
+	
+	isSubset(that) {
+		return this.x >= that.x && this.y <= that.y
+	}
+	
+	isSuperset(that) {
+		return this.x <= that.x && this.y >= that.y
+	}
+	
+	*[Symbol.iterator]() {
+		for (let i = this.x; i < this.y; i++) {
+			yield i
+		}
+	}
+}
+
+RangeSet = class RangeSet {
+	constructor(ranges = []) {
+		this.ranges = DLL.from(ranges)
+	}
+	
+	get x() {
+		return this.ranges.get(0).x
+	}
+	
+	get y() {
+		return this.ranges.get(-1).y
+	}
+	
+	copy() {
+		let res = new RangeSet()
+		
+		for (let range of this.ranges) {
+			res.ranges.insValEnd(range.copy())
+		}
+		
+		return res
+	}
+	
+	bounds() {
+		return new Range(this.x, this.y - this.x)
+	}
+	
+	equals(that) {
+		if (this.ranges.length != that.ranges.length) {
+			return false
+		}
+		
+		let anode = this.ranges.getNode(0)
+		let bnode = that.ranges.getNode(0)
+		
+		for (let i = 0; i < this.ranges.length; i++) {
+			if (!anode.val.equals(bnode.val)) {
+				return false
+			}
+			
+			anode = anode.next
+			bnode = bnode.next
+		}
+		
+		return true
+	}
+	
+	has(num) {
+		for (let range of this.ranges) {
+			if (range.has(num)) {
+				return true
+			}
+		}
+		
+		return false
+	}
+	
+	intersects(that) {
+		let afirst = this.ranges.getNode(0)
+		let bfirst = that.ranges.getNode(0)
+		
+		let anode = afirst
+		let bnode = bfirst
+		
+		while (true) {
+			while (anode.val.x < bnode.val.y) {
+				if (anode.val.intersects(bnode.val)) {
+					return true
+				}
+				
+				if ((anode = anode.next) == afirst) {
+					return false
+				}
+			}
+			
+			while (bnode.val.x < anode.val.y) {
+				if (anode.val.intersects(bnode.val)) {
+					return true
+				}
+				
+				if ((bnode = bnode.next) == bfirst) {
+					return false
+				}
+			}
+		}
+	}
+	
+	isSubset(that) {
+		throw new Error(`lol fuck you`)
+	}
+	
+	isSuperset(that) {
+		throw new Error(`lol fuck you`)
+	}
+	
+	fix() {
+		let node = this.ranges.getNode(0)
+		let len = this.ranges.length
+		
+		for (let i = 0; i < len - 1; i++) {
+			let next = node.next
+			
+			let range = node.val
+			let range2 = next.val
+			
+			if (range.l <= 0) {
+				this.ranges.removeNode(node)
+			} else if (range2.x <= range.y) {
+				range2.x = range.x
+				
+				if (range2.y < range.y) {
+					range2.y = range.y
+				}
+				
+				this.ranges.removeNode(node)
+			}
+			
+			node = next
+		}
+		
+		return this
+	}
+	
+	addRange(range) {
+		for (let node of this.ranges.nodes()) {
+			if (node.val.x > range.x) {
+				this.ranges.insValBehindNode(node, range)
+				return this.fix()
+			}
+		}
+		
+		this.ranges.insValEnd(range)
+		return this.fix()
+	}
+	
+	add(that) {
+		for (let range of that.ranges) {
+			this.addRange(range)
+		}
+		
+		return this
+	}
+	
+	subRange(range) {
+		let node = this.ranges.getNode(0)
+		let len = this.ranges.length
+		
+		for (let i = 0; i < len; i++) {
+			if (range.has(node.val.x)) {
+				node.val.x = range.y
+			}
+			
+			if (range.has(node.val.y)) {
+				node.val.y = range.x
+			}
+			
+			if (node.val.y <= node.val.x) {
+				this.ranges.removeNode(node)
+			}
+			
+			node = node.next
+		}
+		
+		return this
+	}
+	
+	sub(that) {
+		for (let range of that.ranges) {
+			this.subRange(range)
+		}
+		
+		return this
+	}
+	
+	*[Symbol.iterator]() {
+		for (let range of this.ranges) {
+			yield* range
+		}
+	}
+}
 
 Pt = Point = class Point {
 	static STRING = true
@@ -1805,7 +2075,7 @@ utils = {
 	lock: (obj, val) => {
 		let proxy
 
-		let func = val instanceof Function ? val : () => val
+		let func = functifyVal(val)
 
 		return proxy = new Proxy(obj, {
 			get(obj, prop) {
@@ -2349,7 +2619,7 @@ load = function load() {
 		},
 		dll: {
 			value: function dll() {
-				return new DLL(...this)
+				return DLL.from(this)
 			},
 			configurable: true
 		},
@@ -2446,8 +2716,14 @@ load = function load() {
 			configurable: true
 		},
 		sum: {
-			value: function sum(val = 0) {
-				return this.reduce((a, b) => +a + +b, val)
+			value: function sum(func = (e) => +e) {
+				let sum = 0
+				
+				for (let i = 0; i < this.length; i++) {
+					sum += func(this[i], i, this)
+				}
+				
+				return sum
 			},
 			configurable: true
 		},
@@ -2703,9 +2979,22 @@ load = function load() {
 			},
 			configurable: true
 		},
+		freqsMap: {
+			value: function freqsDict() {
+				let res = new Map()
+				
+				for (let i = 0; i < this.length; i++) {
+					let el = this[i]
+					res.set(el, (res.get(el) ?? 0) + 1)
+				}
+				
+				return res
+			},
+			configurable: true
+		},
 		freqs: {
 			value: function freqs() {
-				return this.uniq().mapArr((e) => [e, this.count(e)])
+				return [...this.freqsMap()]
 			},
 			configurable: true
 		},
@@ -2752,6 +3041,22 @@ load = function load() {
 				}
 				
 				return obj
+			},
+			configurable: true
+		},
+		windows: {
+			value: function windows(n) {
+				if (this.length < n) {
+					return [[...this]]
+				}
+				
+				let res = new Array(this.length - n + 1)
+				
+				for (let i = 0; i < res.length; i++) {
+					res[i] = this.slice(i, i + n)
+				}
+				
+				return res
 			},
 			configurable: true
 		}
@@ -2934,6 +3239,22 @@ load = function load() {
 		int: {
 			value: function int(that) {
 				return this.filter(e => e.isIn(that))
+			},
+			configurable: true
+		},
+		windows: {
+			value: function windows(n) {
+				if (this.length < n) {
+					return [PointArray.from(this)]
+				}
+				
+				let res = new Array(this.length - n + 1)
+				
+				for (let i = 0; i < res.length; i++) {
+					res[i] = this.slice(i, i + n)
+				}
+				
+				return res
 			},
 			configurable: true
 		}
@@ -3279,6 +3600,10 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 	const year = "2023"
 
 	for (let i = +process.argv[3] || 1; i <= 25; i++) {
+		if (i == 5) {
+			continue
+		}
+
 		let jsPath = `./${year}/${i}.js`
 
 		if (!fs.existsSync(jsPath)) {

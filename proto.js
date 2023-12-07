@@ -389,7 +389,7 @@ load = function load() {
 		},
 		dll: {
 			value: function dll() {
-				return new DLL(...this)
+				return DLL.from(this)
 			},
 			configurable: true
 		},
@@ -486,8 +486,14 @@ load = function load() {
 			configurable: true
 		},
 		sum: {
-			value: function sum(val = 0) {
-				return this.reduce((a, b) => +a + +b, val)
+			value: function sum(func = (e) => +e) {
+				let sum = 0
+				
+				for (let i = 0; i < this.length; i++) {
+					sum += func(this[i], i, this)
+				}
+				
+				return sum
 			},
 			configurable: true
 		},
@@ -743,9 +749,22 @@ load = function load() {
 			},
 			configurable: true
 		},
+		freqsMap: {
+			value: function freqsDict() {
+				let res = new Map()
+				
+				for (let i = 0; i < this.length; i++) {
+					let el = this[i]
+					res.set(el, (res.get(el) ?? 0) + 1)
+				}
+				
+				return res
+			},
+			configurable: true
+		},
 		freqs: {
 			value: function freqs() {
-				return this.uniq().mapArr((e) => [e, this.count(e)])
+				return [...this.freqsMap()]
 			},
 			configurable: true
 		},
@@ -792,6 +811,22 @@ load = function load() {
 				}
 				
 				return obj
+			},
+			configurable: true
+		},
+		windows: {
+			value: function windows(n) {
+				if (this.length < n) {
+					return [[...this]]
+				}
+				
+				let res = new Array(this.length - n + 1)
+				
+				for (let i = 0; i < res.length; i++) {
+					res[i] = this.slice(i, i + n)
+				}
+				
+				return res
 			},
 			configurable: true
 		}
@@ -974,6 +1009,22 @@ load = function load() {
 		int: {
 			value: function int(that) {
 				return this.filter(e => e.isIn(that))
+			},
+			configurable: true
+		},
+		windows: {
+			value: function windows(n) {
+				if (this.length < n) {
+					return [PointArray.from(this)]
+				}
+				
+				let res = new Array(this.length - n + 1)
+				
+				for (let i = 0; i < res.length; i++) {
+					res[i] = this.slice(i, i + n)
+				}
+				
+				return res
 			},
 			configurable: true
 		}

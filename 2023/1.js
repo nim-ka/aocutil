@@ -20,10 +20,10 @@ const lookup = {
 }
 
 function day1(input, part2) {
-	return input.split("\n").map((line) => {
+	return input.split("\n").sum((line) => {
 		let matches = [...line.matchAll(new RegExp(`(?=(${part2 ? Object.keys(lookup).join("|") : "[1-9]"}))`, "g"))]
 		return lookup[matches[0][1]] * 10 + lookup[matches.at(-1)[1]]
-	}).sum()
+	})
 }
 
 if (typeof window == "undefined") {

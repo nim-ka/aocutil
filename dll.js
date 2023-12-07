@@ -27,7 +27,19 @@ DLL = class DLL {
 		this.h = undefined
 		this.length = 0
 
-		this.push(...a)
+		for (let el of a) {
+			this.insValEnd(el)
+		}
+	}
+	
+	static from(a) {
+		let dll = new DLL()
+		
+		for (let el of a) {
+			dll.insValEnd(el)
+		}
+		
+		return dll
 	}
 
 	insNodeAheadNode(old, node) {
@@ -52,9 +64,7 @@ DLL = class DLL {
 
 	insNodeStart(node) {
 		if (this.h) {
-			this.insNodeBehindNode(this.h, node)
-			this.h = node
-			return this.length
+			return this.insNodeBehindNode(this.h, node)
 		} else {
 			this.h = node
 			return ++this.length
@@ -63,9 +73,7 @@ DLL = class DLL {
 
 	insDLLStart(dll) {
 		if (this.h) {
-			this.insDLLBehindNode(this.h, dll)
-			this.h = dll.h
-			return this.length
+			return this.insDLLBehindNode(this.h, dll)
 		} else {
 			this.h = dll.h
 			return this.length = dll.length
@@ -85,6 +93,11 @@ DLL = class DLL {
 		old.prev.next = node
 		old.prev = node
 		node.next = old
+		
+		if (this.h == old) {
+			this.h = node
+		}
+		
 		return ++this.length
 	}
 
@@ -95,6 +108,11 @@ DLL = class DLL {
 		old.prev.next = start
 		old.prev = end
 		end.next = old
+		
+		if (this.h == old) {
+			this.h = dll.h
+		}
+		
 		return this.length += dll.length
 	}
 
@@ -102,12 +120,17 @@ DLL = class DLL {
 		let node = new DLLNode(val, old.prev, old)
 		old.prev = node
 		old.prev.prev.next = node
+		
+		if (this.h == old) {
+			this.h = node
+		}
+		
 		return ++this.length
 	}
 
 	insNodeEnd(node) {
 		if (this.h) {
-			return this.insNodeBehindNode(this.h, node)
+			return this.insNodeAheadNode(this.h.prev, node)
 		} else {
 			this.h = node
 			return ++this.length
@@ -116,7 +139,7 @@ DLL = class DLL {
 
 	insDLLEnd(dll) {
 		if (this.h) {
-			return this.insDLLBehindNode(this.h, dll)
+			return this.insDLLAheadNode(this.h.prev, dll)
 		} else {
 			this.h = dll.h
 			return this.length = dll.length
@@ -206,16 +229,11 @@ DLL = class DLL {
 	}
 
 	forEach(f) {
-		if (!this.h) {
-			return this
-		}
-
-		let i = 0, node = this.h
-
-		do {
+		let i = 0
+		
+		for (let node of this.nodes()) {
 			f(node.val, node, i++, this)
-			node = node.next
-		} while (node != this.h)
+		}
 
 		return this
 	}
@@ -242,6 +260,32 @@ DLL = class DLL {
 		let that = new DLL()
 		this.forEach((e) => that.push(e))
 		return that
+	}
+	
+	*[Symbol.iterator]() {
+		if (!this.h) {
+			return
+		}
+		
+		let node = this.h
+		
+		do {
+			yield node.val
+			node = node.next
+		} while (node != this.h)
+	}
+
+	*nodes() {
+		if (!this.h) {
+			return
+		}
+		
+		let node = this.h
+		
+		do {
+			yield node
+			node = node.next
+		} while (node != this.h)
 	}
 }
 
