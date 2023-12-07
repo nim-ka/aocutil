@@ -101,33 +101,7 @@ RangeSet = class RangeSet {
 	}
 	
 	intersects(that) {
-		let afirst = this.ranges.getNode(0)
-		let bfirst = that.ranges.getNode(0)
 		
-		let anode = afirst
-		let bnode = bfirst
-		
-		while (true) {
-			while (anode.val.x < bnode.val.y) {
-				if (anode.val.intersects(bnode.val)) {
-					return true
-				}
-				
-				if ((anode = anode.next) == afirst) {
-					return false
-				}
-			}
-			
-			while (bnode.val.x < anode.val.y) {
-				if (anode.val.intersects(bnode.val)) {
-					return true
-				}
-				
-				if ((bnode = bnode.next) == bfirst) {
-					return false
-				}
-			}
-		}
 	}
 	
 	isSubset(that) {
@@ -138,83 +112,56 @@ RangeSet = class RangeSet {
 		throw new Error(`lol fuck you`)
 	}
 	
-	fix() {
-		let node = this.ranges.getNode(0)
-		let len = this.ranges.length
+	reduce() {
 		
-		for (let i = 0; i < len - 1; i++) {
-			let next = node.next
-			
-			let range = node.val
-			let range2 = next.val
-			
-			if (range.l <= 0) {
-				this.ranges.removeNode(node)
-			} else if (range2.x <= range.y) {
-				range2.x = range.x
-				
-				if (range2.y < range.y) {
-					range2.y = range.y
-				}
-				
-				this.ranges.removeNode(node)
-			}
-			
-			node = next
-		}
-		
-		return this
 	}
 	
-	addRange(range) {
+	addRangeMut(range) {
 		for (let node of this.ranges.nodes()) {
-			if (node.val.x > range.x) {
+			if (node.val.x < range.x) {
 				this.ranges.insValBehindNode(node, range)
-				return this.fix()
+				return this
 			}
 		}
 		
 		this.ranges.insValEnd(range)
-		return this.fix()
+		return this
+	}
+	
+	addRange(range) {
+		let res = new RangeSet()
+		let added = false
+		
+		for (let node of this.ranges.nodes()) {
+			if (!added && node.val.x < range.x) {
+				res.ranges.insValEnd(range)
+				added = true
+			}
+			
+			res.ranges.insValEnd(node.val)
+		}
+		
+		if (!added) {
+			res.ranges.insValEnd(range)
+		}
+		
+		return res
 	}
 	
 	add(that) {
-		for (let range of that.ranges) {
-			this.addRange(range)
-		}
 		
-		return this
+	}
+	
+	subRangeMut(range) {
+		
 	}
 	
 	subRange(range) {
-		let node = this.ranges.getNode(0)
-		let len = this.ranges.length
 		
-		for (let i = 0; i < len; i++) {
-			if (range.has(node.val.x)) {
-				node.val.x = range.y
-			}
-			
-			if (range.has(node.val.y)) {
-				node.val.y = range.x
-			}
-			
-			if (node.val.y <= node.val.x) {
-				this.ranges.removeNode(node)
-			}
-			
-			node = node.next
-		}
-		
-		return this
 	}
 	
 	sub(that) {
-		for (let range of that.ranges) {
-			this.subRange(range)
-		}
 		
-		return this
 	}
 	
 	*[Symbol.iterator]() {

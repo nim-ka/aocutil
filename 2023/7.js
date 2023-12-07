@@ -1,6 +1,27 @@
-function type(card) {
-	let freqs = card.freqs()
-	return freqs.maxVal((e) => e[1]) * 6 - freqs.length
+function value(hand, ranks) {
+	let freqs = new Map()
+	let max = 0
+
+	for (let card of hand) {
+		let count = (freqs.get(card) ?? 0) + 1
+		freqs.set(card, count)
+
+		if (max < count && card != "_") {
+			max = count
+		}
+	}
+
+	max += freqs.get("_") ?? 0
+	freqs.delete("_")
+
+	let value = (max << 3) - (freqs.size || 1)
+
+	for (let card of hand) {
+		value <<= 4
+		value |= ranks[card]
+	}
+
+	return value
 }
 
 function day7(input, part2) {
@@ -24,50 +45,27 @@ function day7(input, part2) {
 		ranks["J"] = 1
 	}
 
-	return input.split("\n").map((line) => line.split(" ")).sort(([a], [b]) => {
-		let fa = a.freqsMap()
-		let fb = b.freqsMap()
+	let hands = input.split("\n").map((line) => line.split(" "))
+	let sorted = []
 
+	out: for (let [hand, score] of hands) {
 		if (part2) {
-			if (fa.size > 1) {
-				let ja = fa.get("J") ?? 0
-				fa.delete("J")
-				fa.forEach((v, k) => fa.set(k, v + ja))
-			}
-
-			if (fb.size > 1) {
-				let jb = fb.get("J") ?? 0
-				fb.delete("J")
-				fb.forEach((v, k) => fb.set(k, v + jb))
-			}
+			hand = hand.replaceAll("J", "_")
 		}
 
-		let ta = [...fa].maxVal((e) => e[1]) * 6 - fa.size
-		let tb = [...fb].maxVal((e) => e[1]) * 6 - fb.size
+		let newValue = value(hand, ranks)
 
-		if (ta < tb) {
-			return -1
-		}
-
-		if (ta > tb) {
-			return 1
-		}
-
-		for (let i = 0; i < a.length; i++) {
-			let ra = ranks[a[i]]
-			let rb = ranks[b[i]]
-
-			if (ra < rb) {
-				return -1
-			}
-
-			if (rb < ra) {
-				return 1
+		for (let i = 0; i < sorted.length; i++) {
+			if (sorted[i][0] > newValue) {
+				sorted.splice(i, 0, [newValue, +score])
+				continue out
 			}
 		}
 
-		return 0
-	}).sum(([_, score], i) => score * (i + 1))
+		sorted.push([newValue, +score])
+	}
+
+	return sorted.sum(([_, score], i) => score * (i + 1))
 }
 
 if (typeof window == "undefined") {

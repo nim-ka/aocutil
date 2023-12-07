@@ -474,14 +474,14 @@ load = function load() {
 			configurable: true
 		},
 		sortNumAsc: {
-			value: function sortNumAsc() {
-				return this.sort((a, b) => a - b)
+			value: function sortNumAsc(func = (e) => e) {
+				return this.sort((a, b) => func(a) - func(b))
 			},
 			configurable: true
 		},
 		sortNumDesc: {
-			value: function sortNumAsc() {
-				return this.sort((a, b) => b - a)
+			value: function sortNumAsc(func = (e) => e) {
+				return this.sort((a, b) => func(b) - func(a))
 			},
 			configurable: true
 		},
@@ -750,7 +750,7 @@ load = function load() {
 			configurable: true
 		},
 		freqsMap: {
-			value: function freqsDict() {
+			value: function freqsMap() {
 				let res = new Map()
 				
 				for (let i = 0; i < this.length; i++) {
@@ -762,9 +762,36 @@ load = function load() {
 			},
 			configurable: true
 		},
+		freqsDict: {
+			value: function freqsDict() {
+				let res = {}
+				
+				for (let i = 0; i < this.length; i++) {
+					let el = this[i]
+					res[el] = (res[el] ?? 0) + 1
+				}
+				
+				return res
+			},
+			configurable: true
+		},
 		freqs: {
 			value: function freqs() {
 				return [...this.freqsMap()]
+			},
+			configurable: true
+		},
+		sortFreqAsc: {
+			value: function sortFreqAsc() {
+				let freqs = this.freqsDict()
+				return this.sort((a, b) => freqs[a] - freqs[b])
+			},
+			configurable: true
+		},
+		sortFreqDesc: {
+			value: function sortFreqDesc() {
+				let freqs = this.freqsDict()
+				return this.sort((a, b) => freqs[b] - freqs[a])
 			},
 			configurable: true
 		},

@@ -393,33 +393,7 @@ RangeSet = class RangeSet {
 	}
 	
 	intersects(that) {
-		let afirst = this.ranges.getNode(0)
-		let bfirst = that.ranges.getNode(0)
 		
-		let anode = afirst
-		let bnode = bfirst
-		
-		while (true) {
-			while (anode.val.x < bnode.val.y) {
-				if (anode.val.intersects(bnode.val)) {
-					return true
-				}
-				
-				if ((anode = anode.next) == afirst) {
-					return false
-				}
-			}
-			
-			while (bnode.val.x < anode.val.y) {
-				if (anode.val.intersects(bnode.val)) {
-					return true
-				}
-				
-				if ((bnode = bnode.next) == bfirst) {
-					return false
-				}
-			}
-		}
 	}
 	
 	isSubset(that) {
@@ -430,83 +404,56 @@ RangeSet = class RangeSet {
 		throw new Error(`lol fuck you`)
 	}
 	
-	fix() {
-		let node = this.ranges.getNode(0)
-		let len = this.ranges.length
+	reduce() {
 		
-		for (let i = 0; i < len - 1; i++) {
-			let next = node.next
-			
-			let range = node.val
-			let range2 = next.val
-			
-			if (range.l <= 0) {
-				this.ranges.removeNode(node)
-			} else if (range2.x <= range.y) {
-				range2.x = range.x
-				
-				if (range2.y < range.y) {
-					range2.y = range.y
-				}
-				
-				this.ranges.removeNode(node)
-			}
-			
-			node = next
-		}
-		
-		return this
 	}
 	
-	addRange(range) {
+	addRangeMut(range) {
 		for (let node of this.ranges.nodes()) {
-			if (node.val.x > range.x) {
+			if (node.val.x < range.x) {
 				this.ranges.insValBehindNode(node, range)
-				return this.fix()
+				return this
 			}
 		}
 		
 		this.ranges.insValEnd(range)
-		return this.fix()
+		return this
+	}
+	
+	addRange(range) {
+		let res = new RangeSet()
+		let added = false
+		
+		for (let node of this.ranges.nodes()) {
+			if (!added && node.val.x < range.x) {
+				res.ranges.insValEnd(range)
+				added = true
+			}
+			
+			res.ranges.insValEnd(node.val)
+		}
+		
+		if (!added) {
+			res.ranges.insValEnd(range)
+		}
+		
+		return res
 	}
 	
 	add(that) {
-		for (let range of that.ranges) {
-			this.addRange(range)
-		}
 		
-		return this
+	}
+	
+	subRangeMut(range) {
+		
 	}
 	
 	subRange(range) {
-		let node = this.ranges.getNode(0)
-		let len = this.ranges.length
 		
-		for (let i = 0; i < len; i++) {
-			if (range.has(node.val.x)) {
-				node.val.x = range.y
-			}
-			
-			if (range.has(node.val.y)) {
-				node.val.y = range.x
-			}
-			
-			if (node.val.y <= node.val.x) {
-				this.ranges.removeNode(node)
-			}
-			
-			node = node.next
-		}
-		
-		return this
 	}
 	
 	sub(that) {
-		for (let range of that.ranges) {
-			this.subRange(range)
-		}
 		
-		return this
 	}
 	
 	*[Symbol.iterator]() {
@@ -2704,14 +2651,14 @@ load = function load() {
 			configurable: true
 		},
 		sortNumAsc: {
-			value: function sortNumAsc() {
-				return this.sort((a, b) => a - b)
+			value: function sortNumAsc(func = (e) => e) {
+				return this.sort((a, b) => func(a) - func(b))
 			},
 			configurable: true
 		},
 		sortNumDesc: {
-			value: function sortNumAsc() {
-				return this.sort((a, b) => b - a)
+			value: function sortNumAsc(func = (e) => e) {
+				return this.sort((a, b) => func(b) - func(a))
 			},
 			configurable: true
 		},
@@ -2980,7 +2927,7 @@ load = function load() {
 			configurable: true
 		},
 		freqsMap: {
-			value: function freqsDict() {
+			value: function freqsMap() {
 				let res = new Map()
 				
 				for (let i = 0; i < this.length; i++) {
@@ -2992,9 +2939,36 @@ load = function load() {
 			},
 			configurable: true
 		},
+		freqsDict: {
+			value: function freqsDict() {
+				let res = {}
+				
+				for (let i = 0; i < this.length; i++) {
+					let el = this[i]
+					res[el] = (res[el] ?? 0) + 1
+				}
+				
+				return res
+			},
+			configurable: true
+		},
 		freqs: {
 			value: function freqs() {
 				return [...this.freqsMap()]
+			},
+			configurable: true
+		},
+		sortFreqAsc: {
+			value: function sortFreqAsc() {
+				let freqs = this.freqsDict()
+				return this.sort((a, b) => freqs[a] - freqs[b])
+			},
+			configurable: true
+		},
+		sortFreqDesc: {
+			value: function sortFreqDesc() {
+				let freqs = this.freqsDict()
+				return this.sort((a, b) => freqs[b] - freqs[a])
 			},
 			configurable: true
 		},
@@ -3583,18 +3557,34 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 	const fs = require("fs")
 
 	function test(name, answer, func, ...args) {
-		console.time(name)
 		let res = func(...args)
-		console.timeEnd(name)
-
 		console.log(`${name}: Got ${res}, expected ${answer}`)
 
-		if (res == answer) {
-			console.log(`${name}: SUCCESS`)
-		} else {
-			console.error(`${name}: FAIL`)
-			process.exit(1)
+		if (res != answer) {
+			console.log(`${name}: FAIL`)
+			return false
 		}
+
+		let time = 0
+
+		for (let i = -1; i < 100; i++) {
+			let startTime = performance.now()
+			let newRes = func(...args)
+			let endTime = performance.now()
+
+			if (newRes != res) {
+				console.log(`${name}: FAIL`)
+				return false
+			}
+
+			if (i >= 0) {
+				time = ((time * i) + (endTime - startTime)) / (i + 1)
+			}
+		}
+
+		console.log(`${name}: ${time.toFixed(3)}ms`)
+
+		return true
 	}
 
 	const year = "2023"
@@ -3615,8 +3605,13 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")
 
 		if (i != 25) {
-			test(`${year} day ${i} part 1`, answers[0], func, input, false)
-			test(`${year} day ${i} part 2`, answers[1], func, input, true)
+			if (!test(`${year} day ${i} part 1`, answers[0], func, input, false)) {
+				break
+			}
+
+			if (!test(`${year} day ${i} part 2`, answers[1], func, input, true)) {
+				break
+			}
 		} else {
 			test(`${year} day ${i}`, answers[0], func, input)
 		}
