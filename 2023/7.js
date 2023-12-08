@@ -13,7 +13,7 @@ const ranks = {
 	"2": 2
 }
 
-const value = utils.memoize(function(hand) {
+function value(hand) {
 	let freqs = new Map()
 	let max = 0
 
@@ -37,7 +37,7 @@ const value = utils.memoize(function(hand) {
 	}
 
 	return value
-})
+}
 
 function day7(input, part2) {
 	ranks["J"] = part2 ? 1 : 11
