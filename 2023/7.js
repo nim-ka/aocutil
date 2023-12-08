@@ -1,4 +1,19 @@
-function value(hand, ranks) {
+const ranks = {
+	"A": 14,
+	"K": 13,
+	"Q": 12,
+	"T": 10,
+	"9": 9,
+	"8": 8,
+	"7": 7,
+	"6": 6,
+	"5": 5,
+	"4": 4,
+	"3": 3,
+	"2": 2
+}
+
+const value = utils.memoize(function(hand) {
 	let freqs = new Map()
 	let max = 0
 
@@ -22,28 +37,10 @@ function value(hand, ranks) {
 	}
 
 	return value
-}
+})
 
 function day7(input, part2) {
-	let ranks = {
-		"A": 14,
-		"K": 13,
-		"Q": 12,
-		"J": 11,
-		"T": 10,
-		"9": 9,
-		"8": 8,
-		"7": 7,
-		"6": 6,
-		"5": 5,
-		"4": 4,
-		"3": 3,
-		"2": 2
-	}
-
-	if (part2) {
-		ranks["J"] = 1
-	}
+	ranks["J"] = part2 ? 1 : 11
 
 	let hands = input.split("\n").map((line) => line.split(" "))
 	let sorted = []
