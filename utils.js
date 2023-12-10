@@ -1,6 +1,8 @@
 utils = {
 	log: (e, ...args) => (console.log(e instanceof Grid ? e.toString() : e, ...args), e),
 	logCopy: (e, ...args) => (console.log(e instanceof Grid ? e.toString() : e.copyDeep(), ...args), e),
+	condLog: (e, ...args) => globalThis.a.length == globalThis.inputLength ? e : utils.log(e, ...args),
+	condLogCopy: (e, ...args) => globalThis.a.length == globalThis.inputLength ? e : utils.logCopy(e, ...args),
 	fetchText: (...args) => fetch(...args).then((e) => e.text()),
 	fetchEval: (...args) => utils.fetchText(...args).then((e) => eval(e)),
 	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
@@ -152,6 +154,8 @@ O = utils.getObject
 
 L = utils.log
 LC = utils.logCopy
+KL = utils.condLog
+KLC = utils.condLogCopy
 
 R = utils.range = utils.signAgnosticInclusiveRange
 

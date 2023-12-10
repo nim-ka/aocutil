@@ -11,12 +11,18 @@ Grid = class Grid {
 	set h(val) { this.height = val }
 
 	forEach(func) {
-		this.data.map((r, y) => r.map((e, x) => func(e, new Point(x, y), this)))
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				func(this.get(pt), pt, this)
+			}
+		}
+		
 		return this
 	}
 
 	map(func) { return new Grid(this.width, this.height).mapMut((e, pt) => func(this.get(pt), pt, this)) }
-	mapMut(func) { return this.forEach((e, pt, grid) => grid.set(pt, func(e, pt, grid))) }
+	mapMut(func) { return this.forEach((e, pt, grid) => grid.set(pt, func(e, pt.copy(), grid))) }
 
 	fill(n) { return this.mapMut(() => n) }
 
@@ -138,6 +144,10 @@ Grid = class Grid {
 
 	getColumns() {
 		return this.data.transpose()
+	}
+	
+	expand(n, fill = this.get(new Point(0, 0))) {
+		return new Grid(this.width + n * 2, this.height + n * 2).mapMut((e, pt) => this.getDef(new Point(pt.x - n, pt.y - n), fill))
 	}
 
 	findIndex(el) {

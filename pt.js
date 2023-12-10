@@ -120,6 +120,17 @@ Pt = Point = class Point {
 	downright() { return new Point(this.x + 1, this.y + 1, this.z) }
 	above() { return new Point(this.x, this.y, this.z - 1) }
 	below() { return new Point(this.x, this.y, this.z + 1) }
+	
+	upMut() { this.y -= 1; return this }
+	downMut() { this.y += 1; return this }
+	leftMut() { this.x -= 1; return this }
+	rightMut() { this.x += 1; return this }
+	upleftMut() { this.x -= 1; this.y -= 1; return this }
+	uprightMut() { this.x += 1; this.y -= 1; return this }
+	downleftMut() { this.x -= 1; this.y += 1; return this }
+	downrightMut() { this.x += 1; this.y += 1; return this }
+	aboveMut() { this.z -= 1; return this }
+	belowMut() { this.z += 1; return this }
 
 	u() { return this.up() }
 	d() { return this.down() }
@@ -422,10 +433,10 @@ Point.NONE = new Point(null, null)
 Point.ZERO = new Point(0, 0)
 Point.ORIGIN = Point.ZERO
 
-Point.UP = Point.ZERO.up()
-Point.LEFT = Point.ZERO.left()
-Point.DOWN = Point.ZERO.down()
-Point.RIGHT = Point.ZERO.right()
+Point.NORTH = Point.UP = Point.ZERO.up()
+Point.WEST = Point.LEFT = Point.ZERO.left()
+Point.SOUTH = Point.DOWN = Point.ZERO.down()
+Point.EAST = Point.RIGHT = Point.ZERO.right()
 
 P = function P(...args) {
 	return new Point(...args)

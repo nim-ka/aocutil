@@ -585,6 +585,17 @@ Pt = Point = class Point {
 	downright() { return new Point(this.x + 1, this.y + 1, this.z) }
 	above() { return new Point(this.x, this.y, this.z - 1) }
 	below() { return new Point(this.x, this.y, this.z + 1) }
+	
+	upMut() { this.y -= 1; return this }
+	downMut() { this.y += 1; return this }
+	leftMut() { this.x -= 1; return this }
+	rightMut() { this.x += 1; return this }
+	upleftMut() { this.x -= 1; this.y -= 1; return this }
+	uprightMut() { this.x += 1; this.y -= 1; return this }
+	downleftMut() { this.x -= 1; this.y += 1; return this }
+	downrightMut() { this.x += 1; this.y += 1; return this }
+	aboveMut() { this.z -= 1; return this }
+	belowMut() { this.z += 1; return this }
 
 	u() { return this.up() }
 	d() { return this.down() }
@@ -887,10 +898,10 @@ Point.NONE = new Point(null, null)
 Point.ZERO = new Point(0, 0)
 Point.ORIGIN = Point.ZERO
 
-Point.UP = Point.ZERO.up()
-Point.LEFT = Point.ZERO.left()
-Point.DOWN = Point.ZERO.down()
-Point.RIGHT = Point.ZERO.right()
+Point.NORTH = Point.UP = Point.ZERO.up()
+Point.WEST = Point.LEFT = Point.ZERO.left()
+Point.SOUTH = Point.DOWN = Point.ZERO.down()
+Point.EAST = Point.RIGHT = Point.ZERO.right()
 
 P = function P(...args) {
 	return new Point(...args)
@@ -910,12 +921,18 @@ Grid = class Grid {
 	set h(val) { this.height = val }
 
 	forEach(func) {
-		this.data.map((r, y) => r.map((e, x) => func(e, new Point(x, y), this)))
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				func(this.get(pt), pt, this)
+			}
+		}
+		
 		return this
 	}
 
 	map(func) { return new Grid(this.width, this.height).mapMut((e, pt) => func(this.get(pt), pt, this)) }
-	mapMut(func) { return this.forEach((e, pt, grid) => grid.set(pt, func(e, pt, grid))) }
+	mapMut(func) { return this.forEach((e, pt, grid) => grid.set(pt, func(e, pt.copy(), grid))) }
 
 	fill(n) { return this.mapMut(() => n) }
 
@@ -1037,6 +1054,10 @@ Grid = class Grid {
 
 	getColumns() {
 		return this.data.transpose()
+	}
+	
+	expand(n, fill = this.get(new Point(0, 0))) {
+		return new Grid(this.width + n * 2, this.height + n * 2).mapMut((e, pt) => this.getDef(new Point(pt.x - n, pt.y - n), fill))
 	}
 
 	findIndex(el) {
@@ -1938,6 +1959,8 @@ IntcodeVM.INSTRS[IntcodeVM.OP_HLT] = {
 utils = {
 	log: (e, ...args) => (console.log(e instanceof Grid ? e.toString() : e, ...args), e),
 	logCopy: (e, ...args) => (console.log(e instanceof Grid ? e.toString() : e.copyDeep(), ...args), e),
+	condLog: (e, ...args) => globalThis.a.length == globalThis.inputLength ? e : utils.log(e, ...args),
+	condLogCopy: (e, ...args) => globalThis.a.length == globalThis.inputLength ? e : utils.logCopy(e, ...args),
 	fetchText: (...args) => fetch(...args).then((e) => e.text()),
 	fetchEval: (...args) => utils.fetchText(...args).then((e) => eval(e)),
 	signAgnosticInclusiveRange: (a, b, s = Math.sign(a - b)) => Array((a - b) * s + 1).fill().map((_, i) => a - i * s),
@@ -2089,6 +2112,8 @@ O = utils.getObject
 
 L = utils.log
 LC = utils.logCopy
+KL = utils.condLog
+KLC = utils.condLogCopy
 
 R = utils.range = utils.signAgnosticInclusiveRange
 
@@ -2256,7 +2281,9 @@ load = function load() {
 	Object.defineProperties(globalThis, {
 		input: {
 			get: function input() {
-				return document.body.innerText.trimEnd()
+				let res = document.body.innerText.trimEnd()
+				globalThis.inputLength = res.length
+				return res
 			},
 			configurable: true
 		}

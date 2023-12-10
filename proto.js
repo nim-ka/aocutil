@@ -79,7 +79,9 @@ load = function load() {
 	Object.defineProperties(globalThis, {
 		input: {
 			get: function input() {
-				return document.body.innerText.trimEnd()
+				let res = document.body.innerText.trimEnd()
+				globalThis.inputLength = res.length
+				return res
 			},
 			configurable: true
 		}
