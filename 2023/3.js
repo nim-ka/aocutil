@@ -1,60 +1,91 @@
+let digits = "0123456789"
+
+function isSymbol(char) {
+	return char != "." && !digits.includes(char)
+}
+
 function day3(input, part2) {
 	let grid = Grid.fromStr(input)
-	let digits = "0123456789"
 
-	let numbers = new Set()
-	let sum = 0
+	let building = false
+	let numStart
+	let numEnd
+	let cur = ""
+
+	let numbers = new Map()
 
 	grid.forEach((e, pt) => {
-		if (part2 && e != "*") {
-			return
+		if (!building && digits.includes(e)) {
+			building = true
+			numStart = pt
 		}
 
-		if (e == "." || digits.includes(e)) {
-			return
-		}
+		if (building) {
+			if (pt.y != numStart.y || !digits.includes(e)) {
+				let symbols = []
 
-		let nearNumbers = new Map()
+				for (let y = numStart.y - 1; y <= numStart.y + 1; y++) {
+					for (let x = numStart.x - 1; x <= numEnd.x + 1; x++) {
+						if (y == numStart.y && x >= numStart.x && x <= numEnd.x) {
+							continue
+						}
 
-		for (let neighbor of grid.getAllNeighbors(pt)) {
-			if (digits.includes(grid.get(neighbor))) {
-				nearNumbers.delete(neighbor.left().toString())
-				nearNumbers.set(neighbor.toString(), neighbor)
-			}
-		}
+						let pt = new Point(x, y)
 
-		if (part2 && nearNumbers.size != 2) {
-			return
-		}
-
-		let toAdd = 0
-
-		for (let [_, pt] of nearNumbers) {
-			let cur
-
-			while (digits.includes(cur = grid.getDef(pt = pt.left(), "."))) {}
-
-			let number = ""
-
-			while (digits.includes(cur = grid.getDef(pt = pt.right(), "."))) {
-				number += cur
-			}
-
-			let key = pt.toString()
-
-			if (!numbers.has(key)) {
-				if (part2) {
-					toAdd = (toAdd || 1) * +number
-				} else {
-					toAdd += +number
+						if (isSymbol(grid.getDef(pt, "."))) {
+							symbols.push(pt)
+						}
+					}
 				}
 
-				numbers.add(key)
+				if (symbols.length) {
+					numbers.set(symbols, +cur)
+				}
+
+				building = false
+				cur = ""
+			} else {
+				cur += e
+				numEnd = pt
 			}
 		}
-
-		sum += toAdd
 	})
+
+	if (!part2) {
+		let sum = 0
+
+		for (let num of numbers.values()) {
+			sum += num
+		}
+
+		return sum
+	}
+
+	let gears = new Map()
+
+	for (let [symbols, num] of numbers) {
+		for (let symbol of symbols) {
+			if (grid.get(symbol) != "*") {
+				continue
+			}
+
+			let key = symbol.toString()
+
+			if (!gears.has(key)) {
+				gears.set(key, [])
+			}
+
+			gears.get(key).push(num)
+		}
+	}
+
+	let sum = 0
+
+	for (let nums of gears.values()) {
+		if (nums.length == 2) {
+			sum += nums[0] * nums[1]
+		}
+	}
 
 	return sum
 }
