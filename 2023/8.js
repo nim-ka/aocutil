@@ -4,22 +4,11 @@ function day8(input, part2) {
 	let nodes = []
 
 	for (let i = 0; i < paths.length; i += 3) {
-		if (part2 ? paths[i].endsWith("A") : paths[i] == "AAA") {
+		if (part2 ? paths[i][2] == "A" : paths[i] == "AAA") {
 			nodes.push(paths[i])
 		}
 
-		let left = paths[i + 1]
-		let right = paths[i + 2]
-
-		if (part2 && left.endsWith("Z")) {
-			left = "ZZZ"
-		}
-
-		if (part2 && right.endsWith("Z")) {
-			right = "ZZZ"
-		}
-
-		cxns[paths[i]] = [left, right]
+		cxns[paths[i]] = [paths[i + 1], paths[i + 2]]
 	}
 
 	let count = 1
@@ -27,7 +16,7 @@ function day8(input, part2) {
 	for (let node of nodes) {
 		let i = 0
 
-		while (node != "ZZZ") {
+		while (part2 ? node[2] != "Z" : node != "ZZZ") {
 			node = cxns[node][+(steps[i++ % steps.length] == "R")]
 		}
 
