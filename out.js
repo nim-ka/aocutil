@@ -1997,9 +1997,9 @@ utils = {
 
 		return a
 	},
-	gcd: (...args) => args.length ? args.reduce(utils.gcd2) : 0,
+	gcd: (...args) => args.reduce(utils.gcd2, 0),
 	lcm2: (a, b) => a && b ? a * (b / utils.gcd2(a, b)) : 0,
-	lcm: (...args) => args.length ? args.reduce(utils.lcm2) : 0,
+	lcm: (...args) => args.reduce(utils.lcm2, 1),
 	isPrime: (n) => {
 		for (let i = 2; i * i <= n; i++) {
 			if (n % i == 0) {
@@ -2133,7 +2133,11 @@ for (let i of Object.getOwnPropertyNames(Math)) {
 
 defaultPartNum = 1
 
-A = function A(ans, part = 0) {
+A = function A(ans, part = 0, k) {
+	if (k) {
+		throw "Third argument in submission function."
+	}
+	
 	if (part < 1000 && typeof ans != "number") {
 		console.warn("Tried to submit non-number; cancelled. To override, add 1000 to part number.")
 		return
@@ -2689,6 +2693,38 @@ load = function load() {
 			},
 			configurable: true
 		},
+		insertSortedAsc: {
+			value: function insertSortedAsc(val, func = (e) => e) {
+				let key = func(val)
+				
+				for (let i = 0; i < this.length; i++) {
+					if (func(this[i]) > key) {
+						this.splice(i, 0, val)
+						return this.length
+					}
+				}
+				
+				this.push(val)
+				return this.length
+			},
+			configurable: true
+		},
+		insertSortedDesc: {
+			value: function insertSortedDesc(val, func = (e) => e) {
+				let key = func(val)
+				
+				for (let i = 0; i < this.length; i++) {
+					if (func(this[i]) < key) {
+						this.splice(i, 0, val)
+						return this.length
+					}
+				}
+				
+				this.push(val)
+				return this.length
+			},
+			configurable: true
+		},
 		sum: {
 			value: function sum(func = (e) => +e) {
 				let sum = 0
@@ -2704,6 +2740,18 @@ load = function load() {
 		mult: {
 			value: function mult(val = 1) {
 				return this.reduce((a, b) => a * b, val)
+			},
+			configurable: true
+		},
+		lcm: {
+			value: function lcm() {
+				return this.reduce(utils.lcm2, 1)
+			},
+			configurable: true
+		},
+		gcd: {
+			value: function gcd() {
+				return this.reduce(utils.gcd2, 0)
 			},
 			configurable: true
 		},

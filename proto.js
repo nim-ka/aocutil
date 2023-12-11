@@ -487,6 +487,38 @@ load = function load() {
 			},
 			configurable: true
 		},
+		insertSortedAsc: {
+			value: function insertSortedAsc(val, func = (e) => e) {
+				let key = func(val)
+				
+				for (let i = 0; i < this.length; i++) {
+					if (func(this[i]) > key) {
+						this.splice(i, 0, val)
+						return this.length
+					}
+				}
+				
+				this.push(val)
+				return this.length
+			},
+			configurable: true
+		},
+		insertSortedDesc: {
+			value: function insertSortedDesc(val, func = (e) => e) {
+				let key = func(val)
+				
+				for (let i = 0; i < this.length; i++) {
+					if (func(this[i]) < key) {
+						this.splice(i, 0, val)
+						return this.length
+					}
+				}
+				
+				this.push(val)
+				return this.length
+			},
+			configurable: true
+		},
 		sum: {
 			value: function sum(func = (e) => +e) {
 				let sum = 0
@@ -502,6 +534,18 @@ load = function load() {
 		mult: {
 			value: function mult(val = 1) {
 				return this.reduce((a, b) => a * b, val)
+			},
+			configurable: true
+		},
+		lcm: {
+			value: function lcm() {
+				return this.reduce(utils.lcm2, 1)
+			},
+			configurable: true
+		},
+		gcd: {
+			value: function gcd() {
+				return this.reduce(utils.gcd2, 0)
 			},
 			configurable: true
 		},
