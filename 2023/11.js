@@ -28,7 +28,6 @@ function day11(input, part2) {
 
 	let xdists = px.sum((x) => xs[x] - xs[px[0]])
 	let ydists = py.sum((y) => ys[y] - ys[py[0]])
-
 	let sum = xdists + ydists
 
 	for (let i = 1; i < px.length; i++) {
