@@ -21,12 +21,11 @@ function value(hand, part2) {
 	for (let card of hand) {
 		if (part2 && card == "J") {
 			jacks++
-			continue
+		} else {
+			let count = (freqs.get(card) ?? 0) + 1
+			freqs.set(card, count)
+			max = Math.max(max, count)
 		}
-
-		let count = (freqs.get(card) ?? 0) + 1
-		freqs.set(card, count)
-		max = Math.max(max, count)
 	}
 
 	let value = ((max + jacks) << 3) - (freqs.size || 1)
