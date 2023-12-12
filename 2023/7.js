@@ -13,23 +13,23 @@ const ranks = {
 	"2": 2
 }
 
-function value(hand) {
+function value(hand, part2) {
 	let freqs = new Map()
 	let max = 0
+	let jacks = 0
 
 	for (let card of hand) {
+		if (part2 && card == "J") {
+			jacks++
+			continue
+		}
+
 		let count = (freqs.get(card) ?? 0) + 1
 		freqs.set(card, count)
-
-		if (max < count && card != "_") {
-			max = count
-		}
+		max = Math.max(max, count)
 	}
 
-	max += freqs.get("_") ?? 0
-	freqs.delete("_")
-
-	let value = (max << 3) - (freqs.size || 1)
+	let value = ((max + jacks) << 3) - (freqs.size || 1)
 
 	for (let card of hand) {
 		value <<= 4
@@ -44,12 +44,7 @@ function day7(input, part2) {
 
 	return input.split("\n").map((line) => {
 		let [hand, score] = line.split(" ")
-
-		if (part2) {
-			hand = hand.replaceAll("J", "_")
-		}
-
-		return [value(hand, ranks), +score]
+		return [value(hand, part2), +score]
 	}).sortNumAsc((e) => e[0]).sum(([_, score], i) => score * (i + 1))
 }
 
