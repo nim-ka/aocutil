@@ -28,14 +28,12 @@ function value(hand, part2) {
 		}
 	}
 
-	let value = ((max + jacks) << 3) - (freqs.size || 1)
-
-	for (let card of hand) {
-		value <<= 4
-		value |= ranks[card]
-	}
-
-	return value
+	return (((max + jacks) << 3) - (freqs.size || 1)) << 20
+		| ranks[hand[0]] << 16
+		| ranks[hand[1]] << 12
+		| ranks[hand[2]] << 8
+		| ranks[hand[3]] << 4
+		| ranks[hand[4]]
 }
 
 function day7(input, part2) {
