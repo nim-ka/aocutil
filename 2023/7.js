@@ -42,27 +42,15 @@ function value(hand) {
 function day7(input, part2) {
 	ranks["J"] = part2 ? 1 : 11
 
-	let hands = input.split("\n").map((line) => line.split(" "))
-	let sorted = []
+	return input.split("\n").map((line) => {
+		let [hand, score] = line.split(" ")
 
-	out: for (let [hand, score] of hands) {
 		if (part2) {
 			hand = hand.replaceAll("J", "_")
 		}
 
-		let newValue = value(hand, ranks)
-
-		for (let i = 0; i < sorted.length; i++) {
-			if (sorted[i][0] > newValue) {
-				sorted.splice(i, 0, [newValue, +score])
-				continue out
-			}
-		}
-
-		sorted.push([newValue, +score])
-	}
-
-	return sorted.sum(([_, score], i) => score * (i + 1))
+		return [value(hand, ranks), +score]
+	}).sortNumAsc((e) => e[0]).sum(([_, score], i) => score * (i + 1))
 }
 
 if (typeof window == "undefined") {
