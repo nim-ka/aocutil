@@ -1,8 +1,4 @@
-let digits = "0123456789"
-
-function isSymbol(char) {
-	return char != "." && !digits.includes(char)
-}
+let digitChars = new Set(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
 
 function day3(input, part2) {
 	let grid = Grid.fromStr(input)
@@ -15,13 +11,13 @@ function day3(input, part2) {
 	let numbers = new Map()
 
 	grid.forEach((e, pt) => {
-		if (!building && digits.includes(e)) {
+		if (!building && digitChars.has(e)) {
 			building = true
 			numStart = pt
 		}
 
 		if (building) {
-			if (pt.y != numStart.y || !digits.includes(e)) {
+			if (pt.y != numStart.y || !digitChars.has(e)) {
 				let symbols = []
 
 				for (let y = numStart.y - 1; y <= numStart.y + 1; y++) {
@@ -31,8 +27,9 @@ function day3(input, part2) {
 						}
 
 						let pt = new Point(x, y)
+						let val = grid.getDef(pt, ".")
 
-						if (isSymbol(grid.getDef(pt, "."))) {
+						if (val != "." && !digitChars.has(e)) {
 							symbols.push(pt)
 						}
 					}
