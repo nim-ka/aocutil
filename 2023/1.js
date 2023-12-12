@@ -20,9 +20,12 @@ const lookup = {
 }
 
 function day1(input, part2) {
+	let capture = part2 ? "[1-9]|one|two|three|four|five|six|seven|eight|nine" : "[1-9]"
+	let regex = new RegExp(`(?=(${capture})).*(${capture})`)
+
 	return input.split("\n").sum((line) => {
-		let matches = [...line.matchAll(new RegExp(`(?=(${part2 ? Object.keys(lookup).join("|") : "[1-9]"}))`, "g"))]
-		return lookup[matches[0][1]] * 10 + lookup[matches.at(-1)[1]]
+		let matches = line.match(regex)
+		return lookup[matches[1]] * 10 + lookup[matches[2]]
 	})
 }
 
