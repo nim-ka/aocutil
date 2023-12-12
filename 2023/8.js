@@ -3,6 +3,8 @@ function day8(input, part2) {
 	let cxns = {}
 	let nodes = []
 
+	steps = steps.split("").map((e) => +(e == "R"))
+
 	for (let i = 0; i < paths.length; i += 3) {
 		if (part2 ? paths[i][2] == "A" : paths[i] == "AAA") {
 			nodes.push(paths[i])
@@ -11,16 +13,20 @@ function day8(input, part2) {
 		cxns[paths[i]] = [paths[i + 1], paths[i + 2]]
 	}
 
-	let count = 1
+	let count = steps.length
 
 	for (let node of nodes) {
-		let i = 0
+		let cycles = 0
 
-		while (part2 ? node[2] != "Z" : node != "ZZZ") {
-			node = cxns[node][+(steps[i++ % steps.length] == "R")]
+		while (node[2] != "Z") {
+			for (let step of steps) {
+				node = cxns[node][step]
+			}
+
+			cycles++
 		}
 
-		count = count.lcm(i)
+		count = count.lcm(cycles)
 	}
 
 	return count
