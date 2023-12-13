@@ -301,7 +301,10 @@ Grid = class Grid {
 	}
 
 	reflectX() {
-		this.data = this.data.map((row) => row.reverse())
+		for (let i = 0; i < this.data.length; i++) {
+			this.data[i].reverse()
+		}
+		
 		return this
 	}
 
