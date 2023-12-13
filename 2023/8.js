@@ -19,8 +19,8 @@ function day8(input, part2) {
 		let cycles = 0
 
 		while (node[2] != "Z") {
-			for (let step of steps) {
-				node = cxns[node][step]
+			for (let i = 0; i < steps.length; i++) {
+				node = cxns[node][steps[i]]
 			}
 
 			cycles++

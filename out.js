@@ -932,7 +932,17 @@ Grid = class Grid {
 	}
 
 	map(func) { return new Grid(this.width, this.height).mapMut((e, pt) => func(this.get(pt), pt, this)) }
-	mapMut(func) { return this.forEach((e, pt, grid) => grid.set(pt, func(e, pt.copy(), grid))) }
+	
+	mapMut(func) {
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				this.set(pt, func(this.get(pt), pt.copy(), this))
+			}
+		}
+		
+		return this
+	}
 
 	fill(n) { return this.mapMut(() => n) }
 
@@ -944,8 +954,15 @@ Grid = class Grid {
 		if (arr.length != this.height) {
 			console.warn(`Grid.fillFromArr: Column size ${arr.length} does not match grid height ${this.height}`)
 		}
+		
+		
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				this.data[y][x] = arr[y][x]
+			}
+		}
 
-		return this.mapMut((_, pt) => arr[pt.y][pt.x])
+		return this
 	}
 
 	fillFromStr(str, sep = "") { return this.fillFromArr(str.split("\n").map((line) => line.split(sep))) }
@@ -1081,15 +1098,34 @@ Grid = class Grid {
 
 	findIndices(el) {
 		let func = functify(el)
-
 		let points = new PointArray()
-		this.forEach((e, pt, grid) => func(e, pt, grid) ? points.push(pt) : 0)
+		
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				if (func(this.get(pt), pt, this)) {
+					points.push(pt)
+				}
+			}
+		}
 
 		return points
 	}
 
 	findAll(func) {
-		return this.findIndices(func).mapArr((pt) => this.get(pt))
+		let vals = new PointArray()
+		
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				let val = this.get(pt)
+				if (func(val, pt, this)) {
+					vals.push(val)
+				}
+			}
+		}
+
+		return vals
 	}
 
 	filter(func) {
