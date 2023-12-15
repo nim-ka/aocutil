@@ -902,6 +902,28 @@ load = function load() {
 				return res
 			},
 			configurable: true
+		},
+		reverseRange: {
+			value: function reverseRange(start, end) {
+				let res = this.slice()
+				
+				for (let i = start; i < end; i++) {
+					res[i] = this[start + end - i - 1]
+				}
+				
+				return res
+			},
+			configurable: true
+		},
+		reverseRangeMut: {
+			value: function reverseRangeMut(start, end) {
+				for (let i = start, j = end - 1; i <= j; i++, j--) {
+					[this[i], this[j]] = [this[j], this[i]]
+				}
+				
+				return this
+			},
+			configurable: true
 		}
 	})
 

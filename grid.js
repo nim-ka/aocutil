@@ -217,6 +217,10 @@ Grid = class Grid {
 
 		return vals
 	}
+	
+	findAllIndices(el) {
+		return this.findIndices(el)
+	}
 
 	filter(func) {
 		return this.findAll(func)
@@ -327,6 +331,44 @@ Grid = class Grid {
 		}
 
 		return end || visited
+	}
+	
+	bfs2(pt, func, neighbors = "getAdjNeighbors", limit = 1000) {
+		let toVisit = new BinHeap((a, b) => a.dist < b.dist || a.dist == b.dist && a.readingOrderCompare(b) < 0)
+		
+		let visited = new Set()
+		let count = 0
+		let end
+		
+		let start = pt.copy()
+		start.dist = 0
+		start.last = null
+		toVisit.insert(start)
+		
+		out: while (toVisit.data.length > 0 && count++ < limit) {
+			let pt = toVisit.extract()
+			let res = func(this.get(pt), pt, this, visited)
+			
+			if (res == Grid.BFS_END) {
+				return pt
+			}
+			
+			if (res == Grid.BFS_CONTINUE) {
+				for (let neighbor of this[neighbors](pt).filter((pt) => !visited.has(pt.toString()))) {
+					neighbor.dist = pt.dist + 1
+					neighbor.last = pt
+					toVisit.insert(neighbor)
+				}
+			}
+			
+			visited.add(pt.toString())
+		}
+
+		if (count >= limit) {
+			console.warn("Limit reached. Aborted.")
+		}
+
+		return visited
 	}
 
 	transpose() {

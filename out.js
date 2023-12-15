@@ -823,7 +823,9 @@ Pt = Point = class Point {
 	dist(pt) { return this.sub(pt).mag() }
 
 	manhattanMag() { return Math.abs(this.x) + Math.abs(this.y) + (this.is3D ? Math.abs(this.z) : 0) }
-	manhattanDist(pt) { return this.sub(pt).manhattanMag() }
+	manhattanDist(pt) { return Math.abs(this.x - pt.x) + Math.abs(this.y - pt.y) + (this.is3D ? Math.abs(this.z - pt.z) : 0) }
+	
+	dot(pt) { return this.x * pt.x + this.y * pt.y + (this.is3D ? this.z * pt.z : 0) }
 
 	lineTo(that, halfOpen = false) {
 		if (this.is3D != that.is3D) {
@@ -1127,6 +1129,10 @@ Grid = class Grid {
 
 		return vals
 	}
+	
+	findAllIndices(el) {
+		return this.findIndices(el)
+	}
 
 	filter(func) {
 		return this.findAll(func)
@@ -1237,6 +1243,44 @@ Grid = class Grid {
 		}
 
 		return end || visited
+	}
+	
+	bfs2(pt, func, neighbors = "getAdjNeighbors", limit = 1000) {
+		let toVisit = new BinHeap((a, b) => a.dist < b.dist || a.dist == b.dist && a.readingOrderCompare(b) < 0)
+		
+		let visited = new Set()
+		let count = 0
+		let end
+		
+		let start = pt.copy()
+		start.dist = 0
+		start.last = null
+		toVisit.insert(start)
+		
+		out: while (toVisit.data.length > 0 && count++ < limit) {
+			let pt = toVisit.extract()
+			let res = func(this.get(pt), pt, this, visited)
+			
+			if (res == Grid.BFS_END) {
+				return pt
+			}
+			
+			if (res == Grid.BFS_CONTINUE) {
+				for (let neighbor of this[neighbors](pt).filter((pt) => !visited.has(pt.toString()))) {
+					neighbor.dist = pt.dist + 1
+					neighbor.last = pt
+					toVisit.insert(neighbor)
+				}
+			}
+			
+			visited.add(pt.toString())
+		}
+
+		if (count >= limit) {
+			console.warn("Limit reached. Aborted.")
+		}
+
+		return visited
 	}
 
 	transpose() {
@@ -3145,6 +3189,28 @@ load = function load() {
 				}
 				
 				return res
+			},
+			configurable: true
+		},
+		reverseRange: {
+			value: function reverseRange(start, end) {
+				let res = this.slice()
+				
+				for (let i = start; i < end; i++) {
+					res[i] = this[start + end - i - 1]
+				}
+				
+				return res
+			},
+			configurable: true
+		},
+		reverseRangeMut: {
+			value: function reverseRangeMut(start, end) {
+				for (let i = start, j = end - 1; i <= j; i++, j--) {
+					[this[i], this[j]] = [this[j], this[i]]
+				}
+				
+				return this
 			},
 			configurable: true
 		}
