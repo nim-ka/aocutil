@@ -907,15 +907,19 @@ Point.EAST = Point.RIGHT = Point.ZERO.right()
 
 Point.UP.ccwConst = Point.LEFT
 Point.UP.cwConst = Point.RIGHT
+Point.UP.negConst = Point.DOWN
 
 Point.LEFT.ccwConst = Point.DOWN
 Point.LEFT.cwConst = Point.UP
+Point.LEFT.negConst = Point.RIGHT
 
 Point.DOWN.ccwConst = Point.RIGHT
 Point.DOWN.cwConst = Point.LEFT
+Point.DOWN.negConst = Point.UP
 
 Point.RIGHT.ccwConst = Point.UP
 Point.RIGHT.cwConst = Point.DOWN
+Point.RIGHT.negConst = Point.LEFT
 
 Point.DIRS = [Point.UP, Point.LEFT, Point.DOWN, Point.RIGHT]
 
@@ -1505,9 +1509,9 @@ Node = class Node {
 		this.searchData = new SearchData()
 	}
 
-	addCxn(node, weight = 1) { this.cxns.push(new Cxn(node, weight)) }
-	mapCxnsMut(func) { this.cxns = this.cxns.map(func) }
-	filterCxnsMut(func) { this.cxns = this.cxns.filter(func) }
+	addCxn(node, weight = 1) { this.cxns.push(new Cxn(node, weight)); return this }
+	mapCxnsMut(func) { this.cxns = this.cxns.map(func); return this }
+	filterCxnsMut(func) { this.cxns = this.cxns.filter(func); return this }
 	getWeightTo(node) { return this.cxns.find((cxn) => cxn.dest == node)?.weight }
 
 	unwrap() {
@@ -1557,6 +1561,7 @@ Node = class Node {
 
 			if (isDest(min)) {
 				if (!Node.SUPPRESS_PRINTING) {
+					console.log(i, heap.data.length, minDist)
 					console.timeEnd("search")
 				}
 
@@ -3789,6 +3794,7 @@ if (typeof window != "undefined") {
 
 if (typeof window == "undefined" && process.argv[2] == "test") {
 	const fs = require("fs")
+	const debug = process.argv.includes("debug")
 
 	function test(name, answer, func, ...args) {
 		let res = func(...args)
@@ -3797,6 +3803,10 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		if (res != answer) {
 			console.log(`${name}: FAIL`)
 			return false
+		}
+
+		if (debug) {
+			return true
 		}
 
 		let killTime = performance.now() + 30 * 1000

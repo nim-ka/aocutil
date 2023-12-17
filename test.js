@@ -1,5 +1,6 @@
 if (typeof window == "undefined" && process.argv[2] == "test") {
 	const fs = require("fs")
+	const debug = process.argv.includes("debug")
 
 	function test(name, answer, func, ...args) {
 		let res = func(...args)
@@ -8,6 +9,10 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		if (res != answer) {
 			console.log(`${name}: FAIL`)
 			return false
+		}
+
+		if (debug) {
+			return true
 		}
 
 		let killTime = performance.now() + 30 * 1000

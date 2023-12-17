@@ -26,18 +26,17 @@ function day17(input, part2) {
 
 			for (let dir of [-1, 1]) {
 				for (let i = dir, dist = 0; -maxWalk <= i && i <= maxWalk; i += dir) {
-					let newPt = hor ?
-						new Point(x, y + i) :
-						new Point(x + i, y)
+					let newX = hor ? x : x + i
+					let newY = hor ? y + i : y
 
-					if (!grid.contains(newPt)) {
+					if (newX < 0 || newX >= grid.width || newY < 0 || newY >= grid.height) {
 						break
 					}
 
-					dist += grid.get(newPt)
+					dist += grid.data[newY][newX]
 
 					if (i >= minWalk || i <= -minWalk) {
-						let state = newPt.x << 16 | newPt.y << 8 | !hor
+						let state = newX << 16 | newY << 8 | !hor
 						node.addCxn(nodes[state] ??= new Node(state), dist)
 					}
 				}

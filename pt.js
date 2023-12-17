@@ -442,15 +442,19 @@ Point.EAST = Point.RIGHT = Point.ZERO.right()
 
 Point.UP.ccwConst = Point.LEFT
 Point.UP.cwConst = Point.RIGHT
+Point.UP.negConst = Point.DOWN
 
 Point.LEFT.ccwConst = Point.DOWN
 Point.LEFT.cwConst = Point.UP
+Point.LEFT.negConst = Point.RIGHT
 
 Point.DOWN.ccwConst = Point.RIGHT
 Point.DOWN.cwConst = Point.LEFT
+Point.DOWN.negConst = Point.UP
 
 Point.RIGHT.ccwConst = Point.UP
 Point.RIGHT.cwConst = Point.DOWN
+Point.RIGHT.negConst = Point.LEFT
 
 Point.DIRS = [Point.UP, Point.LEFT, Point.DOWN, Point.RIGHT]
 
