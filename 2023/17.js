@@ -1,36 +1,45 @@
-function encode(state) {
-	return state.pos.x << 16 | state.pos.y << 8 | (state.dir.x + 1) << 6 | (state.dir.y + 1) << 4 | state.counter
-}
-
-function add_cxn(node, nodes, grid, newDir, newCounter) {
-	let state = node.val
-	let newPos = state.pos.add(newDir)
-
-	if (grid.contains(newPos)) {
-		let newState = { pos: newPos, dir: newDir, counter: newCounter }
-		node.addCxn(nodes[encode(newState)] ??= new Node(newState), grid.get(newPos))
-	}
-}
-
 function day17(input, part2) {
 	Node.SUPPRESS_PRINTING = true
 
 	let grid = Grid.fromStr(input).num()
-	let dest = grid.bottomright()
 
-	let start = new Node({ pos: grid.topleft(), dir: Point.RIGHT, counter: 1 })
-	let nodes = {}
+	let minWalk = part2 ? 4 : 1
+	let maxWalk = part2 ? 10 : 3
 
-	return start.dijkstraTo(
-		(node) => node.val.pos.equals(dest),
+	let start1 = new Node(grid.topleft().encode() << 1 | 0)
+	let start2 = new Node(grid.topleft().encode() << 1 | 1)
+	let end = new Node(grid.bottomright().encode() << 1)
+
+	let nodes = {
+		[start1.val]: start1,
+		[start2.val]: start2,
+		[end.val | 0]: end,
+		[end.val | 1]: end
+	}
+
+	return new Node().addCxn(start1, 0).addCxn(start2, 0).dijkstraTo(
+		end,
 		(node) => {
-			if (node.val.counter < (part2 ? 10 : 3)) {
-				add_cxn(node, nodes, grid, node.val.dir, node.val.counter + 1)
-			}
+			let hor = node.val & 1
+			let pt = Point.decode(node.val >> 1)
 
-			if (node.val.counter > (part2 ? 3 : 0)) {
-				add_cxn(node, nodes, grid, node.val.dir.ccwConst, 1)
-				add_cxn(node, nodes, grid, node.val.dir.cwConst, 1)
+			for (let dir of [-1, 1]) {
+				for (let i = dir, dist = 0; -maxWalk <= i && i <= maxWalk; i += dir) {
+					let newPt = hor ?
+						new Point(pt.x, pt.y + i) :
+						new Point(pt.x + i, pt.y)
+
+					if (!grid.contains(newPt)) {
+						break
+					}
+
+					dist += grid.get(newPt)
+
+					if (i >= minWalk || i <= -minWalk) {
+						let state = newPt.encode() << 1 | !hor
+						node.addCxn(nodes[state] ??= new Node(state), dist)
+					}
+				}
 			}
 		}).searchData.dist
 }
@@ -38,3 +47,4 @@ function day17(input, part2) {
 if (typeof window == "undefined") {
 	module.exports = day17
 }
+
