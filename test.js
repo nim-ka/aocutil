@@ -10,9 +10,11 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 			return false
 		}
 
-		let time = 0
+		let killTime = performance.now() + 30 * 1000
+		let avgTime = 0
+		let i
 
-		for (let i = -1; i < 100; i++) {
+		for (i = -1; i < 100; i++) {
 			let startTime = performance.now()
 			let newRes = func(...args)
 			let endTime = performance.now()
@@ -23,11 +25,17 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 			}
 
 			if (i >= 0) {
-				time = ((time * i) + (endTime - startTime)) / (i + 1)
+				avgTime = ((avgTime * i) + (endTime - startTime)) / (i + 1)
+			}
+
+			if (endTime > killTime) {
+				i++
+				break
 			}
 		}
 
-		console.log(`${name}: ${time.toFixed(3)}ms`)
+		let colorCode = avgTime < 5 ? "32" : avgTime < 1000 ? "33" : "31"
+		console.log(`${name}: \x1b[${colorCode}m${avgTime.toFixed(3)}ms\x1b[0m (avg over ${i} runs)`)
 
 		return true
 	}

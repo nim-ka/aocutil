@@ -12,8 +12,7 @@ Pt = Point = class Point {
 
 	static encode2D(pt, width = 15) {
 		if (pt.is3D) {
-			console.error(`Point.encode2D: Use encode3D for 3D points`)
-			return
+			throw `Point.encode2D: Use encode3D for 3D points`
 		}
 
 		let x = Math.abs(pt.x)
@@ -22,8 +21,7 @@ Pt = Point = class Point {
 		let ny = y != pt.y
 
 		if (x >= 1 << width || y >= 1 << width) {
-			console.error(`Point.encode2D: Tried to encode point out of range: ${pt.x}, ${pt.y}`)
-			return
+			throw `Point.encode2D: Tried to encode point out of range: ${pt.x}, ${pt.y}`
 		}
 
 		return ((ny << 1 | nx) << width | y) << width | x
@@ -31,8 +29,7 @@ Pt = Point = class Point {
 
 	static encode3D(pt, width = 9) {
 		if (!pt.is3D) {
-			console.error(`Point.encode3D: Use encode2D for 2D points`)
-			return
+			throw `Point.encode3D: Use encode2D for 2D points`
 		}
 
 		let x = Math.abs(pt.x)
@@ -43,8 +40,7 @@ Pt = Point = class Point {
 		let nz = z != pt.z
 
 		if (x >= 1 << width || y >= 1 << width || z >= 1 << width) {
-			console.error(`Point.encode3D: Tried to encode point out of range: ${pt.x}, ${pt.y}, ${pt.z}`)
-			return
+			throw `Point.encode3D: Tried to encode point out of range: ${pt.x}, ${pt.y}, ${pt.z}`
 		}
 
 		return (((nz << 2 | ny << 1 | nx) << width | z) << width | y) << width | x
@@ -172,8 +168,7 @@ Pt = Point = class Point {
 
 	getUnfilteredWingNeighborsIncSelf() {
 		if (!this.is3D) {
-			console.error("Can't get wing neighbors of 2D point")
-			return
+			throw "Can't get wing neighbors of 2D point"
 		}
 
 		return new PointArray(
@@ -264,8 +259,7 @@ Pt = Point = class Point {
 
 	cw90() {
 		if (this.is3D) {
-			console.error("Point.cw90: Can't rotate 3D point")
-			return
+			throw "Point.cw90: Can't rotate 3D point"
 		}
 
 		return new Point(-this.y, this.x)
@@ -273,8 +267,7 @@ Pt = Point = class Point {
 
 	cw90Mut() {
 		if (this.is3D) {
-			console.error("Point.cw90Mut: Can't rotate 3D point")
-			return
+			throw "Point.cw90Mut: Can't rotate 3D point"
 		}
 
 		[this.x, this.y] = [-this.y, this.x]
@@ -283,8 +276,7 @@ Pt = Point = class Point {
 
 	ccw90() {
 		if (this.is3D) {
-			console.error("Point.ccw90: Can't rotate 3D point")
-			return
+			throw "Point.ccw90: Can't rotate 3D point"
 		}
 
 		return new Point(this.y, -this.x)
@@ -292,8 +284,7 @@ Pt = Point = class Point {
 
 	ccw90Mut() {
 		if (this.is3D) {
-			console.error("Point.ccw90Mut: Can't rotate 3D point")
-			return
+			throw "Point.ccw90Mut: Can't rotate 3D point"
 		}
 
 		[this.x, this.y] = [this.y, -this.x]
@@ -362,42 +353,35 @@ Pt = Point = class Point {
 	
 	dot(pt) { return this.x * pt.x + this.y * pt.y + (this.is3D ? this.z * pt.z : 0) }
 
-	lineTo(that, halfOpen = false) {
+	*lineTo(that, halfOpen = false) {
 		if (this.is3D != that.is3D) {
-			console.error(`Point.lineTo: Tried to make line between 2D point and 3D point: ${this.toString}; ${that.toString}`)
-			return
+			throw `Point.lineTo: Tried to make line between 2D point and 3D point: ${this.toString}; ${that.toString}`
 		}
 
 		if (this.equals(that)) {
-			return [this.copy()]
+			yield this.copy()
+			return
 		}
-
-		let line = new PointArray()
 
 		let dir = new Point(
 			Math.sign(that.x - this.x),
 			Math.sign(that.y - this.y),
 			this.is3D ? Math.sign(that.z - this.z) : undefined)
 
-		let movement = dir.x == 0 ? dir.y == 0 ? "z" : "y" : "x"
+		if (!that.sub(this).normMut().equals(dir)) {
+			throw `Point.lineTo: Line not straight: ${this.toString()}; ${that.toString()}`
+		}
 
 		let pt = this.copy()
 
 		while (!that.equals(pt)) {
-			if (that[movement] == pt[movement]) {
-				console.error(`Point.lineTo: Line not straight: ${this.toString()}; ${that.toString()}`)
-				return
-			}
-
-			line.push(pt)
+			yield pt
 			pt = pt.add(dir)
 		}
 
 		if (!halfOpen) {
-			line.push(pt)
+			yield pt
 		}
-
-		return line
 	}
 
 	readingOrderCompare(pt) {
@@ -420,6 +404,22 @@ Pt = Point = class Point {
 
 	copy() { return new Point(this.x, this.y, this.z) }
 	toString() { return this.x + "," + this.y + (this.is3D ? "," + this.z : "") }
+	
+	static fromString(str) {
+		let [x, y, z] = str.split(",")
+		return new Point(+x, +y, z && +z)
+	}
+	
+	setFromString(str) {
+		let [x, y, z] = str.split(",")
+		
+		this.is3D = z != undefined
+		this.x = +x
+		this.y = +y
+		this.z = +z
+		
+		return this
+	}
 
 	[Symbol.toPrimitive]() {
 		if (Point.STRING) {
@@ -439,6 +439,20 @@ Point.NORTH = Point.UP = Point.ZERO.up()
 Point.WEST = Point.LEFT = Point.ZERO.left()
 Point.SOUTH = Point.DOWN = Point.ZERO.down()
 Point.EAST = Point.RIGHT = Point.ZERO.right()
+
+Point.UP.ccwConst = Point.LEFT
+Point.UP.cwConst = Point.RIGHT
+
+Point.LEFT.ccwConst = Point.DOWN
+Point.LEFT.cwConst = Point.UP
+
+Point.DOWN.ccwConst = Point.RIGHT
+Point.DOWN.cwConst = Point.LEFT
+
+Point.RIGHT.ccwConst = Point.UP
+Point.RIGHT.cwConst = Point.DOWN
+
+Point.DIRS = [Point.UP, Point.LEFT, Point.DOWN, Point.RIGHT]
 
 P = function P(...args) {
 	return new Point(...args)

@@ -27,18 +27,22 @@ BinHeap = class BinHeap {
 	}
 
 	up(idx) {
-		while (this.getParent(idx) != idx && !this.cond(this.data[this.getParent(idx)], this.data[idx])) {
-			let tmp = this.data[this.getParent(idx)]
-			this.data[this.getParent(idx)] = this.data[idx]
-			this.data[idx] = tmp
-			idx = this.getParent(idx)
+		while (idx > 0) {
+			let parent = idx / 2 | 0
+			
+			if (this.cond(this.data[parent], this.data[idx])) {
+				break
+			}
+			
+			[this.data[parent], this.data[idx]] = [this.data[idx], this.data[parent]]
+			idx = parent
 		}
 	}
 
 	down(idx) {
 		let largest = idx
-		let left = this.getChildLeft(idx)
-		let right = this.getChildRight(idx)
+		let left = 2 * idx
+		let right = 2 * idx + 1
 
 		if (left < this.data.length && this.cond(this.data[left], this.data[largest])) {
 			largest = left
@@ -49,10 +53,7 @@ BinHeap = class BinHeap {
 		}
 
 		if (largest != idx) {
-			let tmp = this.data[largest]
-			this.data[largest] = this.data[idx]
-			this.data[idx] = tmp
-
+			[this.data[largest], this.data[idx]] = [this.data[idx], this.data[largest]]
 			this.down(largest)
 		}
 	}

@@ -225,8 +225,8 @@ A = function A(ans, part = 0, k) {
 	return ans
 }
 
-B = function B(ans, part = 0) {
-	return A(ans, part + 2)
+B = function B(ans, part = 2) {
+	return A(ans, part)
 }
 
 I = async function I(num) {

@@ -37,16 +37,16 @@ Grid = class Grid {
 	fill(n) { return this.mapMut(() => n) }
 
 	fillFromArr(arr) {
-		if (arr[0].length != this.width) {
-			console.warn(`Grid.fillFromArr: Row size ${arr[0].length} does not match grid width ${this.width}`)
-		}
-
 		if (arr.length != this.height) {
-			console.warn(`Grid.fillFromArr: Column size ${arr.length} does not match grid height ${this.height}`)
+			throw `Grid.fillFromArr: Column size ${arr.length} does not match grid height ${this.height}`
 		}
 		
 		
 		for (let y = 0; y < this.height; y++) {
+			if (arr[y].length != this.width) {
+				throw `Grid.fillFromArr: Row ${y} has size ${arr[y].length} instead of grid width ${this.width}`
+			}
+			
 			for (let x = 0; x < this.width; x++) {
 				this.data[y][x] = arr[y][x]
 			}
@@ -97,7 +97,7 @@ Grid = class Grid {
 		if (this.contains(pt)) {
 			return this.data[pt.y][pt.x]
 		} else {
-			console.error("Grid.get: Grid does not contain point " + pt.toString() + ":\n" + this.toString())
+			console.error("Grid.get: Grid does not contain point " + pt.toString() + ":\n" + this.toString().slice(0, 300))
 			throw [this.width, this.height]
 		}
 	}
@@ -119,7 +119,7 @@ Grid = class Grid {
 			this.data[pt.y][pt.x] = val
 			return this
 		} else {
-			console.error("Grid.set: does not contain point " + pt.toString() + ":\n" + this.toString())
+			console.error("Grid.set: does not contain point " + pt.toString() + ":\n" + this.toString().slice(0, 300))
 			throw [this.width, this.height]
 		}
 	}
@@ -132,7 +132,7 @@ Grid = class Grid {
 		if (x >= 0 && x < this.width) {
 			return this.data.map((row) => row[x])
 		} else {
-			console.error("Grid.getColumn: does not contain column " + x.toString() + ":\n" + this.toString())
+			console.error("Grid.getColumn: does not contain column " + x.toString() + ":\n" + this.toString().slice(0, 300))
 			throw [this.width, this.height]
 		}
 	}
@@ -141,7 +141,7 @@ Grid = class Grid {
 		if (y >= 0 && y < this.height) {
 			return this.data[y]
 		} else {
-			console.error("Grid.getRow: does not contain row " + y.toString() + ":\n" + this.toString())
+			console.error("Grid.getRow: does not contain row " + y.toString() + ":\n" + this.toString().slice(0, 300))
 			throw [this.width, this.height]
 		}
 	}
@@ -150,7 +150,7 @@ Grid = class Grid {
 		if (pt2.x >= pt1.x && pt2.y >= pt2.y) {
 			return new Grid(pt2.x - pt1.x + 1, pt2.y - pt1.y + 1).mapMut((_, pt) => this.get(pt.add(pt1)))
 		} else {
-			console.error("Grid.getSection: Second point " + pt2.toString() + " behind first point " + pt1.toString() + ":\n" + this.toString())
+			console.error("Grid.getSection: Second point " + pt2.toString() + " behind first point " + pt1.toString() + ":\n" + this.toString().slice(0, 300))
 			throw [this.width, this.height]
 		}
 	}
@@ -261,6 +261,16 @@ Grid = class Grid {
 	}
 
 	contains(pt) { return !pt.is3D && pt.x >= 0 && pt.x < this.width && pt.y >= 0 && pt.y < this.height }
+	
+	topleft() { return new Point(0, 0) }
+	topright() { return new Point(this.width - 1, 0) }
+	bottomleft() { return new Point(0, this.height - 1) }
+	bottomright() { return new Point(this.width - 1, this.height - 1) }
+	
+	tl() { return new Point(0, 0) }
+	tr() { return new Point(this.width - 1, 0) }
+	bl() { return new Point(0, this.height - 1) }
+	br() { return new Point(this.width - 1, this.height - 1) }
 
 	getAdjNeighbors(pt) { return pt.getUnfilteredAdjNeighbors().filter((pt) => this.contains(pt)) }
 	getAdjNeighborsIncSelf(pt) { return pt.getUnfilteredAdjNeighborsIncSelf().filter((pt) => this.contains(pt)) }
@@ -293,47 +303,12 @@ Grid = class Grid {
 	static BFS_CONTINUE = 0
 	static BFS_STOP = 1
 	static BFS_END = 2
-
-	bfs(pt, func, neighbors = "getAdjNeighborsThat", limit = 1000) {
-		let visited = new PointArray()
-		let toVisit = new PointArray(pt)
-		let count = 0
-		let end
-
-		toVisit[0].path = new PointArray(pt)
-
-		out: while (toVisit.length > 0 && count++ < limit) {
-			let newToVisit = new PointArray()
-
-			toVisit.sort()
-
-			for (let i = 0; i < toVisit.length; i++) {
-				let v = toVisit[i]
-
-				v.result = func(this.get(v), v, this, visited)
-
-				if (v.result == Grid.BFS_CONTINUE) {
-					newToVisit.pushUniq(...this[neighbors](v, (pt) => !pt.isIn(visited)).map((pt) => (pt.path = [...v.path, pt], pt)))
-				}
-
-				if (v.result == Grid.BFS_END) {
-					end = v
-					break out
-				}
-			}
-
-			visited.pushUniq(...toVisit)
-			toVisit = newToVisit
-		}
-
-		if (count >= limit) {
-			console.warn("Limit reached. Aborted.")
-		}
-
-		return end || visited
-	}
 	
-	bfs2(pt, func, neighbors = "getAdjNeighbors", limit = 1000) {
+	static CONT = Grid.BFS_CONTINUE
+	static STOP = Grid.BFS_STOP
+	static END = Grid.BFS_END
+	
+	bfs(pt, func, neighbors = "getAdjNeighbors", limit = 1000) {
 		let toVisit = new BinHeap((a, b) => a.dist < b.dist || a.dist == b.dist && a.readingOrderCompare(b) < 0)
 		
 		let visited = new Set()
@@ -423,7 +398,31 @@ Grid = class Grid {
 	}
 
 	copy() { return this.map((e) => e) }
-	toString(sep = "", pts = [], ptkey = "P") { return this.data.map((r, y) => r.map((e, x) => new Point(x, y).isIn(pts) ? ptkey : e ?? " ").join(sep)).join("\n") }
+	
+	toString(sep = "", pts = undefined, ptkey = "#") {
+		let str = ""
+		
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				if (pts && new Point(x, y).isIn(pts)) {
+					str += ptkey
+				} else {
+					str += this.data[y][x]
+				}
+				
+				if (x < this.width - 1) {
+					str += sep
+				}
+			}
+			
+			if (y < this.height - 1) {
+				str += "\n"
+			}
+		}
+		
+		return str
+	}
+	
 	print(sep, pts, ptkey) { console.log(this.toString(sep, pts, ptkey)) }
 }
 

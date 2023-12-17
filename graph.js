@@ -21,7 +21,7 @@ SearchData = class SearchData {
 			this.custom = custom
 		}
 
-		return { dist: this.dist, last: this.last, custom: this.custom }
+		return this
 	}
 
 	update(id, dist = Infinity, last = undefined, custom = {}) {
@@ -92,7 +92,7 @@ Node = class Node {
 		}
 
 		let i = 0
-
+		
 		this.searchData.update(id, 0, undefined, true)
 
 		while (heap.data.length) {
@@ -125,8 +125,8 @@ Node = class Node {
 				}
 			})
 
-			if (++i % 10000 == 0) {
-				console.log(heap.data.length, minDist)
+			if (!Node.SUPPRESS_PRINTING && ++i % 10000 == 0) {
+				console.log(i, heap.data.length, minDist)
 			}
 		}
 

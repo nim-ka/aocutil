@@ -924,7 +924,21 @@ load = function load() {
 				return this
 			},
 			configurable: true
-		}
+		},
+		intersects: {
+			value: function intersects(that) {
+				let set = new Set(that)
+				
+				for (let el of this) {
+					if (set.has(el)) {
+						return true
+					}
+				}
+				
+				return false
+			},
+			configurable: true
+		},
 	})
 
 	Object.defineProperties(PointArray.prototype, {
@@ -1122,7 +1136,21 @@ load = function load() {
 				return res
 			},
 			configurable: true
-		}
+		},
+		intersects: {
+			value: function intersects(that) {
+				for (let i = 0; i < this.length; i++) {
+					for (let j = 0; j < that.length; j++) {
+						if (this[i].equals(that[j])) {
+							return true
+						}
+					}
+				}
+				
+				return false
+			},
+			configurable: true
+		},
 	})
 
 	Object.defineProperties(Set.prototype, {
@@ -1279,6 +1307,18 @@ load = function load() {
 				}
 
 				return true
+			},
+			configurable: true
+		},
+		intersects: {
+			value: function intersects(that) {
+				for (let val of this) {
+					if (that.has(val)) {
+						return true
+					}
+				}
+				
+				return false
 			},
 			configurable: true
 		},
