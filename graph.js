@@ -64,7 +64,7 @@ Node = class Node {
 		return path
 	}
 
-	dijkstraTo(dest, addCxns, heapCond = (p, c, pdist, cdist) => pdist < cdist) {
+	dijkstraTo(dest, addCxns, heapCond = (p, c, pdist, cdist) => pdist <= cdist) {
 		let isDest
 
 		if (dest instanceof Node) {
@@ -74,7 +74,7 @@ Node = class Node {
 		} else if (dest instanceof Function) {
 			isDest = dest
 		} else {
-			console.error("Node.dijkstraTo: Unrecognized destination type")
+			throw "Node.dijkstraTo: Unrecognized destination type"
 		}
 
 		let id = Symbol()

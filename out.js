@@ -571,45 +571,45 @@ Pt = Point = class Point {
 	indexIn(arr) { return arr.findIndex((pt) => this.equals(pt)) }
 	lastIndexIn(arr) { return arr.findLastIndex((pt) => this.equals(pt)) }
 
-	up() { return new Point(this.x, this.y - 1, this.z) }
-	down() { return new Point(this.x, this.y + 1, this.z) }
-	left() { return new Point(this.x - 1, this.y, this.z) }
-	right() { return new Point(this.x + 1, this.y, this.z) }
-	upleft() { return new Point(this.x - 1, this.y - 1, this.z) }
-	upright() { return new Point(this.x + 1, this.y - 1, this.z) }
-	downleft() { return new Point(this.x - 1, this.y + 1, this.z) }
-	downright() { return new Point(this.x + 1, this.y + 1, this.z) }
-	above() { return new Point(this.x, this.y, this.z - 1) }
-	below() { return new Point(this.x, this.y, this.z + 1) }
+	up(n = 1) { return new Point(this.x, this.y - n, this.z) }
+	down(n = 1) { return new Point(this.x, this.y + n, this.z) }
+	left(n = 1) { return new Point(this.x - n, this.y, this.z) }
+	right(n = 1) { return new Point(this.x + n, this.y, this.z) }
+	upleft(n = 1) { return new Point(this.x - n, this.y - n, this.z) }
+	upright(n = 1) { return new Point(this.x + n, this.y - n, this.z) }
+	downleft(n = 1) { return new Point(this.x - n, this.y + n, this.z) }
+	downright(n = 1) { return new Point(this.x + n, this.y + n, this.z) }
+	above(n = 1) { return new Point(this.x, this.y, this.z - n) }
+	below(n = 1) { return new Point(this.x, this.y, this.z + n) }
 	
-	upMut() { this.y -= 1; return this }
-	downMut() { this.y += 1; return this }
-	leftMut() { this.x -= 1; return this }
-	rightMut() { this.x += 1; return this }
-	upleftMut() { this.x -= 1; this.y -= 1; return this }
-	uprightMut() { this.x += 1; this.y -= 1; return this }
-	downleftMut() { this.x -= 1; this.y += 1; return this }
-	downrightMut() { this.x += 1; this.y += 1; return this }
-	aboveMut() { this.z -= 1; return this }
-	belowMut() { this.z += 1; return this }
+	upMut(n = 1) { this.y -= n; return this }
+	downMut(n = 1) { this.y += n; return this }
+	leftMut(n = 1) { this.x -= n; return this }
+	rightMut(n = 1) { this.x += n; return this }
+	upleftMut(n = 1) { this.x -= n; this.y -= n; return this }
+	uprightMut(n = 1) { this.x += n; this.y -= n; return this }
+	downleftMut(n = 1) { this.x -= n; this.y += n; return this }
+	downrightMut(n = 1) { this.x += n; this.y += n; return this }
+	aboveMut(n = 1) { this.z -= n; return this }
+	belowMut(n = 1) { this.z += n; return this }
 
-	u() { return this.up() }
-	d() { return this.down() }
-	l() { return this.left() }
-	r() { return this.right() }
-	ul() { return this.upleft() }
-	ur() { return this.upright() }
-	dl() { return this.downleft() }
-	dr() { return this.downright() }
+	u(n) { return this.up(n) }
+	d(n) { return this.down(n) }
+	l(n) { return this.left(n) }
+	r(n) { return this.right(n) }
+	ul(n) { return this.upleft(n) }
+	ur(n) { return this.upright(n) }
+	dl(n) { return this.downleft(n) }
+	dr(n) { return this.downright(n) }
 
-	n() { return this.up() }
-	s() { return this.down() }
-	w() { return this.left() }
-	e() { return this.right() }
-	nw() { return this.upleft() }
-	ne() { return this.upright() }
-	sw() { return this.downleft() }
-	se() { return this.downright() }
+	n(n) { return this.up(n) }
+	s(n) { return this.down(n) }
+	w(n) { return this.left(n) }
+	e(n) { return this.right(n) }
+	nw(n) { return this.upleft(n) }
+	ne(n) { return this.upright(n) }
+	sw(n) { return this.downleft(n) }
+	se(n) { return this.downright(n) }
 
 	getUnfilteredAdjNeighborsIncSelf() {
 		if (!this.is3D) {
@@ -1524,7 +1524,7 @@ Node = class Node {
 		return path
 	}
 
-	dijkstraTo(dest, addCxns, heapCond = (p, c, pdist, cdist) => pdist < cdist) {
+	dijkstraTo(dest, addCxns, heapCond = (p, c, pdist, cdist) => pdist <= cdist) {
 		let isDest
 
 		if (dest instanceof Node) {
@@ -1534,7 +1534,7 @@ Node = class Node {
 		} else if (dest instanceof Function) {
 			isDest = dest
 		} else {
-			console.error("Node.dijkstraTo: Unrecognized destination type")
+			throw "Node.dijkstraTo: Unrecognized destination type"
 		}
 
 		let id = Symbol()
