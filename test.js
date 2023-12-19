@@ -48,10 +48,6 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 	const year = "2023"
 
 	for (let i = +process.argv[3] || 1; i <= 25; i++) {
-		if (i == 5) {
-			continue
-		}
-
 		let jsPath = `./${year}/${i}.js`
 
 		if (!fs.existsSync(jsPath)) {

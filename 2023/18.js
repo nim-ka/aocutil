@@ -1,6 +1,7 @@
 function day18(input, part2) {
 	let cur = Point.ORIGIN
 	let points = [cur]
+	let perimeter = 0
 
 	for (let line of input.split("\n")) {
 		let [dir, num, hex] = line.split(" ")
@@ -10,20 +11,19 @@ function day18(input, part2) {
 			num = parseInt(hex.slice(2, 7), 16)
 		}
 
-		points.push(cur = cur[dir.toLowerCase()](+num))
+		num = +num
+		perimeter += num
+		points.push(cur = cur[dir.toLowerCase()](num))
 	}
 
 	points.push(Point.ORIGIN)
 
 	let doubleArea = 0
-	let perimeter = 0
 
 	for (let i = 0; i < points.length - 1; i++) {
 		let a = points[i]
 		let b = points[i + 1]
-
 		doubleArea += a.x * b.y - b.x * a.y
-		perimeter += a.manhattanDist(b)
 	}
 
 	return (doubleArea + perimeter) / 2 + 1

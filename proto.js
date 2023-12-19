@@ -887,19 +887,29 @@ load = function load() {
 			},
 			configurable: true
 		},
-		windows: {
-			value: function windows(n) {
+		windowsGen: {
+			value: function *windowsGen(n, wrap = false) {
 				if (this.length < n) {
-					return [[...this]]
+					yield [...this]
 				}
 				
-				let res = new Array(this.length - n + 1)
+				let count = wrap ? this.length : this.length - n + 1
 				
-				for (let i = 0; i < res.length; i++) {
-					res[i] = this.slice(i, i + n)
+				for (let i = 0; i < count; i++) {
+					let res = new Array(n)
+					
+					for (let j = 0; j < n; j++) {
+						res[j] = this[(i + j) % this.length]
+					}
+					
+					yield res
 				}
-				
-				return res
+			},
+			configurable: true,
+		},
+		windows: {
+			value: function windows(n, wrap) {
+				return [...this.windowsGen(n, wrap)]
 			},
 			configurable: true
 		},
@@ -936,6 +946,24 @@ load = function load() {
 				}
 				
 				return false
+			},
+			configurable: true
+		},
+		shoelaceArea: {
+			value: function shoelaceArea() {
+				return utils.shoelaceArea(this)
+			},
+			configurable: true
+		},
+		perimeter: {
+			value: function perimeter() {
+				return utils.perimeter(this)
+			},
+			configurable: true
+		},
+		manhattanPerimeter: {
+			value: function manhattanPerimeter() {
+				return utils.manhattanPerimeter(this)
 			},
 			configurable: true
 		},
@@ -1121,21 +1149,25 @@ load = function load() {
 			},
 			configurable: true
 		},
-		windows: {
-			value: function windows(n) {
+		windowsGen: {
+			value: function *windowsGen(n, wrap = false) {
 				if (this.length < n) {
-					return [PointArray.from(this)]
+					yield PointArray.from(this)
 				}
 				
-				let res = new Array(this.length - n + 1)
+				let count = wrap ? this.length : this.length - n + 1
 				
-				for (let i = 0; i < res.length; i++) {
-					res[i] = this.slice(i, i + n)
+				for (let i = 0; i < count; i++) {
+					let res = new PointArray(n)
+					
+					for (let j = 0; j < n; j++) {
+						res[j] = this[(i + j) % this.length]
+					}
+					
+					yield res
 				}
-				
-				return res
 			},
-			configurable: true
+			configurable: true,
 		},
 		intersects: {
 			value: function intersects(that) {

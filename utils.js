@@ -138,6 +138,39 @@ utils = {
 		}
 
 		return lastYes
+	},
+	shoelaceArea: (arr) => {
+		let area = 0
+		
+		for (let i = 0; i < arr.length; i++) {
+			let a = arr[i]
+			let b = arr[(i + 1) % arr.length]
+			area += a.x * b.y - b.x * a.y
+		}
+		
+		return area / 2
+	},
+	perimeter: (arr) => {
+		let sum = 0
+		
+		for (let i = 0; i < arr.length; i++) {
+			let a = arr[i]
+			let b = arr[(i + 1) % arr.length]
+			sum += a.dist(b)
+		}
+		
+		return sum
+	},
+	manhattanPerimeter: (arr) => {
+		let sum = 0
+		
+		for (let i = 0; i < arr.length; i++) {
+			let a = arr[i]
+			let b = arr[(i + 1) % arr.length]
+			sum += a.manhattanDist(b)
+		}
+		
+		return sum
 	}
 }
 

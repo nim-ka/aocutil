@@ -345,8 +345,8 @@ Pt = Point = class Point {
 	norm() { return this.mult(1 / this.mag()) }
 	normMut() { return this.multMut(1 / this.mag()) }
 
-	squaredDist(pt) { return this.sub(pt).squaredMag() }
-	dist(pt) { return this.sub(pt).mag() }
+	squaredDist(pt) { return (this.x - pt.x) * (this.x - pt.x) + (this.y - pt.y) * (this.y - pt.y) + (this.is3D ? (this.z - pt.z) * (this.z - pt.z) : 0) }
+	dist(pt) { return Math.sqrt(this.squaredDist(pt)) }
 
 	manhattanMag() { return Math.abs(this.x) + Math.abs(this.y) + (this.is3D ? Math.abs(this.z) : 0) }
 	manhattanDist(pt) { return Math.abs(this.x - pt.x) + Math.abs(this.y - pt.y) + (this.is3D ? Math.abs(this.z - pt.z) : 0) }

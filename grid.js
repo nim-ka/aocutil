@@ -345,6 +345,16 @@ Grid = class Grid {
 
 		return visited
 	}
+	
+	floodfill(pt, oldVal, newVal, neighbors, limit) {
+		this.bfs(pt, (e, pt) => e == oldVal ? (this.set(pt, newVal), Grid.BFS_CONTINUE) : Grid.BFS_STOP, neighbors, limit)
+		return this
+	}
+	
+	floodfillExc(pt, newVal, neighbors, limit) {
+		this.bfs(pt, (e, pt) => e != newVal ? (this.set(pt, newVal), Grid.BFS_CONTINUE) : Grid.BFS_STOP, neighbors, limit)
+		return this
+	}
 
 	transpose() {
 		this.data = this.data.transpose()

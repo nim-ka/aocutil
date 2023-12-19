@@ -1,12 +1,15 @@
-function encode_beam_state(state) {
-	return state.pos.toString() + ";" + state.dir.toString()
+function encode_beam_state(pos, dir) {
+	return pos.x << 16 | pos.y << 8 | dir
 }
 
-function decode_beam_state(str) {
-	let [posStr, dirStr] = str.split(";")
+function decode_beam_state(enc) {
+	let px = enc >> 16
+	let py = enc >> 8 & 0xff
+	let dir = enc & 0xff
+
 	return {
-		pos: Point.fromString(posStr),
-		dir: Point.fromString(dirStr)
+		pos: new Point(px, py),
+		dir: dir
 	}
 }
 
@@ -17,15 +20,15 @@ function day16(input, part2) {
 	let maxId = 0
 
 	for (let i = 0; i < grid.width; i++) {
-		beams.set(encode_beam_state({ pos: new Point(0, i), dir: Point.RIGHT }), new Set([maxId++]))
+		beams.set(encode_beam_state(new Point(0, i), 3), new Set([maxId++]))
 
 		if (!part2) {
 			break
 		}
 
-		beams.set(encode_beam_state({ pos: new Point(i, 0), dir: Point.DOWN }), new Set([maxId++]))
-		beams.set(encode_beam_state({ pos: new Point(grid.width - 1, i), dir: Point.LEFT }), new Set([maxId++]))
-		beams.set(encode_beam_state({ pos: new Point(i, grid.height - 1), dir: Point.UP }), new Set([maxId++]))
+		beams.set(encode_beam_state(new Point(i, 0), 2), new Set([maxId++]))
+		beams.set(encode_beam_state(new Point(grid.width - 1, i), 1), new Set([maxId++]))
+		beams.set(encode_beam_state(new Point(i, grid.height - 1), 0), new Set([maxId++]))
 	}
 
 	let changed = true
@@ -35,39 +38,48 @@ function day16(input, part2) {
 		changed = false
 
 		for (let [enc, ids] of beams) {
-			let state = decode_beam_state(enc)
-			let tile = grid.get(state.pos)
-			let dirs
+			let { pos, dir } = decode_beam_state(enc)
+			let tile = grid.get(pos)
+			let dir1 = null
+			let dir2 = null
 
-			let oldIds = reached.get(state.pos)
+			let oldIds = reached.get(pos)
 			if (!ids.isSubsetOf(oldIds)) {
 				oldIds.unionMut(ids)
 				changed = true
 			}
 
-			if (tile == "|" && state.dir.x) {
-				dirs = [Point.UP, Point.DOWN]
-			} else if (tile == "-" && state.dir.y) {
-				dirs = [Point.LEFT, Point.RIGHT]
+			if (tile == "|" && (dir == 1 || dir == 3)) {
+				dir1 = 0
+				dir2 = 2
+			} else if (tile == "-" && (dir == 0 || dir == 2)) {
+				dir1 = 1
+				dir2 = 3
 			} else if (tile == "\\") {
-				dirs = [new Point(state.dir.y, state.dir.x)]
+				dir1 = [1, 0, 3, 2][dir]
 			} else if (tile == "/") {
-				dirs = [new Point(-state.dir.y, -state.dir.x)]
+				dir1 = [3, 2, 1, 0][dir]
 			} else {
-				dirs = [state.dir]
+				dir1 = dir
 			}
 
-			for (let dir of dirs) {
-				let newPos = state.pos.add(dir)
+			let newPos = pos.add(Point.DIRS[dir1])
+
+			if (grid.contains(newPos)) {
+				let newState = encode_beam_state(newPos, dir1)
+				let newIds = beams.get(newState) ?? new Set()
+				beams.set(newState, newIds.unionMut(ids))
+			}
+
+			if (dir2 != null) {
+				newPos = pos.add(Point.DIRS[dir2])
 
 				if (grid.contains(newPos)) {
-					let newState = encode_beam_state({ pos: newPos, dir: dir })
+					let newState = encode_beam_state(newPos, dir2)
 					let newIds = beams.get(newState) ?? new Set()
 					beams.set(newState, newIds.unionMut(ids))
 				}
 			}
-
-			beams.delete(state)
 		}
 	}
 

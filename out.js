@@ -308,6 +308,10 @@ Range = class Range {
 		return new Range(this.x, this.y)
 	}
 	
+	set() {
+		return new RangeSet([this])
+	}
+	
 	equals(that) {
 		return this.x == that.x && this.l == that.l
 	}
@@ -316,8 +320,20 @@ Range = class Range {
 		return this.x <= num && num < this.y
 	}
 	
+	isValid() {
+		return this.y > this.x
+	}
+	
 	intersects(that) {
 		return this.x < that.y && that.x < this.y
+	}
+	
+	intersection(that) {
+		if (!this.intersects(that)) {
+			return null
+		}
+		
+		return new Range(Math.max(this.x, that.x), Math.min(this.y, that.y))
 	}
 	
 	isSubset(that) {
@@ -332,6 +348,10 @@ Range = class Range {
 		for (let i = this.x; i < this.y; i++) {
 			yield i
 		}
+	}
+	
+	toString() {
+		return `[${this.x}, ${this.y})`
 	}
 }
 
@@ -367,6 +387,10 @@ RangeSet = class RangeSet {
 			return false
 		}
 		
+		if (this.ranges.length == 0 || that.ranges.length == 0) {
+			return this.ranges.length == that.ranges.length
+		}
+		
 		let anode = this.ranges.getNode(0)
 		let bnode = that.ranges.getNode(0)
 		
@@ -393,7 +417,28 @@ RangeSet = class RangeSet {
 	}
 	
 	intersects(that) {
+		if (!this.ranges.length) {
+			return false
+		}
 		
+		let start = this.ranges.getNode(0)
+		let cur = start
+		
+		for (let range of that.ranges) {
+			while (cur.val.y < range.x) {
+				cur = cur.next
+				
+				if (cur == start) {
+					return false
+				}
+			}
+			
+			if (cur.val.intersects(range)) {
+				return true
+			}
+		}
+		
+		return false
 	}
 	
 	isSubset(that) {
@@ -404,13 +449,52 @@ RangeSet = class RangeSet {
 		throw new Error(`lol fuck you`)
 	}
 	
-	reduce() {
+	reduceMut() {
+		if (this.ranges.length < 2) {
+			return this
+		}
 		
+		let start = this.ranges.getNode(0)
+		let cur = start
+		
+		while (cur.next != start) {
+			if (cur.val.y >= cur.next.val.x) {
+				cur.val = new Range(cur.val.x, Math.max(cur.val.y, cur.next.val.y))
+				this.ranges.removeNode(cur.next)
+			} else {
+				cur = cur.next
+			}
+		}
+		
+		return this
+	}
+	
+	reduce() {
+		if (this.ranges.length < 2) {
+			return this.copy()
+		}
+		
+		let res = new RangeSet()
+		let last
+		
+		for (let range of this.ranges) {
+			if (last && last.y >= range.x) {
+				last.y = Math.max(last.y, range.y)
+			} else {
+				res.ranges.insValEnd(last = range.copy())
+			}
+		}
+		
+		return res
 	}
 	
 	addRangeMut(range) {
+		if (!range.isValid()) {
+			return this
+		}
+		
 		for (let node of this.ranges.nodes()) {
-			if (node.val.x < range.x) {
+			if (range.x < node.val.x) {
 				this.ranges.insValBehindNode(node, range)
 				return this
 			}
@@ -421,45 +505,176 @@ RangeSet = class RangeSet {
 	}
 	
 	addRange(range) {
+		if (!range.isValid()) {
+			return this
+		}
+		
 		let res = new RangeSet()
 		let added = false
 		
 		for (let node of this.ranges.nodes()) {
-			if (!added && node.val.x < range.x) {
-				res.ranges.insValEnd(range)
+			if (!added && range.x < node.val.x) {
+				res.ranges.insValEnd(range.copy())
 				added = true
 			}
 			
-			res.ranges.insValEnd(node.val)
+			res.ranges.insValEnd(node.val.copy())
 		}
 		
 		if (!added) {
-			res.ranges.insValEnd(range)
+			res.ranges.insValEnd(range.copy())
 		}
 		
 		return res
 	}
 	
-	add(that) {
+	addMut(that) {
+		for (let range of that.ranges) {
+			this.addRangeMut(range)
+		}
 		
+		return this
+	}
+	
+	add(that) {
+		if (this.ranges.length == 0) {
+			return that.copy()
+		}
+		
+		let res = new RangeSet()
+		
+		let start = this.ranges.getNode(0)
+		let cur = start
+		let addedAll = false
+		
+		for (let range of that.ranges) {
+			while (!addedAll && cur.val.x < range.x) {
+				res.ranges.insValEnd(cur.val.copy())
+				cur = cur.next
+				
+				if (cur == start) {
+					addedAll = true
+				}
+			}
+			
+			res.ranges.insValEnd(range.copy())
+		}
+		
+		while (cur != start) {
+			res.ranges.insValEnd(cur.val.copy())
+			cur = cur.next
+		}
+		
+		return res
 	}
 	
 	subRangeMut(range) {
+		let cur
 		
+		while (this.ranges.length) {
+			cur = (cur ?? this.ranges.getNode(0)).prev
+			
+			if (range.intersects(cur.val)) {
+				let left = new Range(cur.val.x, range.x)
+				let right = new Range(range.y, cur.val.y)
+				
+				if (right.isValid()) {
+					this.ranges.insValAheadNode(cur, right)
+				}
+				
+				if (left.isValid()) {
+					cur.val = left
+				} else {
+					let next = cur.next
+					this.ranges.removeNode(cur)
+					cur = next
+				}
+			}
+			
+			if (this.ranges.length && cur == this.ranges.getNode(0)) {
+				break
+			}
+		}
+		
+		return this
 	}
 	
 	subRange(range) {
+		let res = new RangeSet()
+		let cur
 		
+		while (this.ranges.length) {
+			cur = (cur ?? this.ranges.getNode(0)).prev
+			
+			if (range.intersects(cur.val)) {
+				let left = new Range(cur.val.x, range.x)
+				let right = new Range(range.y, cur.val.y)
+				
+				if (right.isValid()) {
+					res.addRangeMut(right)
+				}
+				
+				if (left.isValid()) {
+					res.addRangeMut(left)
+				}
+			} else {
+				res.ranges.insValStart(cur.val)
+			}
+			
+			if (this.ranges.length && cur == this.ranges.getNode(0)) {
+				break
+			}
+		}
+		
+		return res
+	}
+	
+	subMut(that) {
+		for (let range of that.ranges) {
+			this.subRangeMut(range)
+		}
+		
+		return this
 	}
 	
 	sub(that) {
+		let res = this.copy()
 		
+		for (let range of that.ranges) {
+			res.subRangeMut(range)
+		}
+		
+		return res
+	}
+	
+	count() {
+		let sum = 0
+		
+		for (let range of this.reduce().ranges) {
+			sum += range.l
+		}
+		
+		return sum
 	}
 	
 	*[Symbol.iterator]() {
-		for (let range of this.ranges) {
+		for (let range of this.reduce().ranges) {
 			yield* range
 		}
+	}
+	
+	toString() {
+		let str = ""
+		
+		for (let node of this.ranges.nodes()) {
+			str += node.val.toString()
+			
+			if (node.next != this.ranges.getNode(0)) {
+				str += "; "
+			}
+		}
+		
+		return str
 	}
 }
 
@@ -810,8 +1025,8 @@ Pt = Point = class Point {
 	norm() { return this.mult(1 / this.mag()) }
 	normMut() { return this.multMut(1 / this.mag()) }
 
-	squaredDist(pt) { return this.sub(pt).squaredMag() }
-	dist(pt) { return this.sub(pt).mag() }
+	squaredDist(pt) { return (this.x - pt.x) * (this.x - pt.x) + (this.y - pt.y) * (this.y - pt.y) + (this.is3D ? (this.z - pt.z) * (this.z - pt.z) : 0) }
+	dist(pt) { return Math.sqrt(this.squaredDist(pt)) }
 
 	manhattanMag() { return Math.abs(this.x) + Math.abs(this.y) + (this.is3D ? Math.abs(this.z) : 0) }
 	manhattanDist(pt) { return Math.abs(this.x - pt.x) + Math.abs(this.y - pt.y) + (this.is3D ? Math.abs(this.z - pt.z) : 0) }
@@ -1274,6 +1489,16 @@ Grid = class Grid {
 		}
 
 		return visited
+	}
+	
+	floodfill(pt, oldVal, newVal, neighbors, limit) {
+		this.bfs(pt, (e, pt) => e == oldVal ? (this.set(pt, newVal), Grid.BFS_CONTINUE) : Grid.BFS_STOP, neighbors, limit)
+		return this
+	}
+	
+	floodfillExc(pt, newVal, neighbors, limit) {
+		this.bfs(pt, (e, pt) => e != newVal ? (this.set(pt, newVal), Grid.BFS_CONTINUE) : Grid.BFS_STOP, neighbors, limit)
+		return this
 	}
 
 	transpose() {
@@ -2198,6 +2423,39 @@ utils = {
 		}
 
 		return lastYes
+	},
+	shoelaceArea: (arr) => {
+		let area = 0
+		
+		for (let i = 0; i < arr.length; i++) {
+			let a = arr[i]
+			let b = arr[(i + 1) % arr.length]
+			area += a.x * b.y - b.x * a.y
+		}
+		
+		return area / 2
+	},
+	perimeter: (arr) => {
+		let sum = 0
+		
+		for (let i = 0; i < arr.length; i++) {
+			let a = arr[i]
+			let b = arr[(i + 1) % arr.length]
+			sum += a.dist(b)
+		}
+		
+		return sum
+	},
+	manhattanPerimeter: (arr) => {
+		let sum = 0
+		
+		for (let i = 0; i < arr.length; i++) {
+			let a = arr[i]
+			let b = arr[(i + 1) % arr.length]
+			sum += a.manhattanDist(b)
+		}
+		
+		return sum
 	}
 }
 
@@ -3195,19 +3453,29 @@ load = function load() {
 			},
 			configurable: true
 		},
-		windows: {
-			value: function windows(n) {
+		windowsGen: {
+			value: function *windowsGen(n, wrap = false) {
 				if (this.length < n) {
-					return [[...this]]
+					yield [...this]
 				}
 				
-				let res = new Array(this.length - n + 1)
+				let count = wrap ? this.length : this.length - n + 1
 				
-				for (let i = 0; i < res.length; i++) {
-					res[i] = this.slice(i, i + n)
+				for (let i = 0; i < count; i++) {
+					let res = new Array(n)
+					
+					for (let j = 0; j < n; j++) {
+						res[j] = this[(i + j) % this.length]
+					}
+					
+					yield res
 				}
-				
-				return res
+			},
+			configurable: true,
+		},
+		windows: {
+			value: function windows(n, wrap) {
+				return [...this.windowsGen(n, wrap)]
 			},
 			configurable: true
 		},
@@ -3244,6 +3512,24 @@ load = function load() {
 				}
 				
 				return false
+			},
+			configurable: true
+		},
+		shoelaceArea: {
+			value: function shoelaceArea() {
+				return utils.shoelaceArea(this)
+			},
+			configurable: true
+		},
+		perimeter: {
+			value: function perimeter() {
+				return utils.perimeter(this)
+			},
+			configurable: true
+		},
+		manhattanPerimeter: {
+			value: function manhattanPerimeter() {
+				return utils.manhattanPerimeter(this)
 			},
 			configurable: true
 		},
@@ -3429,21 +3715,25 @@ load = function load() {
 			},
 			configurable: true
 		},
-		windows: {
-			value: function windows(n) {
+		windowsGen: {
+			value: function *windowsGen(n, wrap = false) {
 				if (this.length < n) {
-					return [PointArray.from(this)]
+					yield PointArray.from(this)
 				}
 				
-				let res = new Array(this.length - n + 1)
+				let count = wrap ? this.length : this.length - n + 1
 				
-				for (let i = 0; i < res.length; i++) {
-					res[i] = this.slice(i, i + n)
+				for (let i = 0; i < count; i++) {
+					let res = new PointArray(n)
+					
+					for (let j = 0; j < n; j++) {
+						res[j] = this[(i + j) % this.length]
+					}
+					
+					yield res
 				}
-				
-				return res
 			},
-			configurable: true
+			configurable: true,
 		},
 		intersects: {
 			value: function intersects(that) {
@@ -3842,10 +4132,6 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 	const year = "2023"
 
 	for (let i = +process.argv[3] || 1; i <= 25; i++) {
-		if (i == 5) {
-			continue
-		}
-
 		let jsPath = `./${year}/${i}.js`
 
 		if (!fs.existsSync(jsPath)) {
