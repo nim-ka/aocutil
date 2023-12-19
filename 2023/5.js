@@ -21,7 +21,7 @@ function day5(input, part2) {
 		}
 
 		for (let range of ranges.ranges) {
-			let set = new RangeSet([range])
+			let outside = new RangeSet([range])
 
 			for (let { src, dest } of map) {
 				let offset = dest.x - src.x
@@ -29,11 +29,11 @@ function day5(input, part2) {
 
 				if (inside) {
 					newRanges.addRangeMut(new Range(inside.x + offset, inside.y + offset))
-					set.subRangeMut(inside)
+					outside.subRangeMut(inside)
 				}
 			}
 
-			for (let newRange of set.ranges) {
+			for (let newRange of outside.ranges) {
 				newRanges.addRangeMut(newRange)
 			}
 		}
