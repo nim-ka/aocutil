@@ -2,7 +2,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 	const fs = require("fs")
 	const debug = process.argv.includes("debug")
 
-	function test(name, answer, func, ...args) {
+	const test = function(name, answer, func, ...args) {
 		let res = func(...args)
 		console.log(`${name}: Got ${res}, expected ${answer}`)
 

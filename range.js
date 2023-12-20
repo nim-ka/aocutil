@@ -149,6 +149,14 @@ RangeSet = class RangeSet {
 		return false
 	}
 	
+	intersectionMut(that) {
+		return this.subMut(this.sub(that))
+	}
+	
+	intersection(that) {
+		return this.sub(this.sub(that))
+	}
+	
 	isSubset(that) {
 		throw new Error(`lol fuck you`)
 	}

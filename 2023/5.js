@@ -21,7 +21,7 @@ function day5(input, part2) {
 		}
 
 		for (let range of ranges.ranges) {
-			let outside = new RangeSet([range])
+			let outside = range.set()
 
 			for (let { src, dest } of map) {
 				let offset = dest.x - src.x

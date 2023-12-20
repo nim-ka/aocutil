@@ -441,6 +441,14 @@ RangeSet = class RangeSet {
 		return false
 	}
 	
+	intersectionMut(that) {
+		return this.subMut(this.sub(that))
+	}
+	
+	intersection(that) {
+		return this.sub(this.sub(that))
+	}
+	
 	isSubset(that) {
 		throw new Error(`lol fuck you`)
 	}
@@ -4086,7 +4094,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 	const fs = require("fs")
 	const debug = process.argv.includes("debug")
 
-	function test(name, answer, func, ...args) {
+	const test = function(name, answer, func, ...args) {
 		let res = func(...args)
 		console.log(`${name}: Got ${res}, expected ${answer}`)
 
