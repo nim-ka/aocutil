@@ -35,12 +35,13 @@ function day20(input, part2) {
 
 		for (ringSize = 0; node; ringSize++) {
 			let nexts = node.dests.map((e) => nodes[e])
+			let nextIdx = +(nexts[0].type == "&")
 
-			if (nexts.some((e) => e.type == "&")) {
+			if (nexts[1 - nextIdx]?.type == "&") {
 				num |= 1 << ringSize
 			}
 
-			node = nexts.find((e) => e.type == "%")
+			node = nexts[nextIdx]
 		}
 
 		cycleLens.push(num)
@@ -54,7 +55,7 @@ function day20(input, part2) {
 	let pulses = [presses * (cycleLens.length + 1), presses * cycleLens.length]
 
 	for (let len of cycleLens) {
-		let highs = ringSize - count_set_bits(len) + 3
+		let outs = ringSize - count_set_bits(len) + 3
 		let bitCount = 0
 
 		for (let i = 0; i < ringSize; i++) {
@@ -63,7 +64,7 @@ function day20(input, part2) {
 
 			bitCount += bit
 			pulses[0] += n * (bitCount * 2 + !bit)
-			pulses[1] += n * (bitCount * highs + bit)
+			pulses[1] += n * (bitCount * outs + bit)
 		}
 
 		pulses[0] -= count_set_bits(presses)
