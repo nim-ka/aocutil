@@ -403,7 +403,7 @@ Grid = class Grid {
 
 	graphify(neighbors = "getAdjNeighbors", cxn = (node, cxnNode) => node.addCxn(cxnNode, cxnNode.val)) {
 		this.mapMut((e) => new Node(e))
-		this.forEach((e, pt) => this[neighbors](pt).forEach((pt) => cxn(e, this.get(pt))))
+		this.forEach((e, pt) => this[neighbors](pt).forEach((pt2) => cxn(e, this.get(pt2), pt, pt2)))
 		return this
 	}
 
@@ -434,6 +434,14 @@ Grid = class Grid {
 	}
 	
 	print(sep, pts, ptkey) { console.log(this.toString(sep, pts, ptkey)) }
+	
+	*[Symbol.iterator]() {
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				yield this.data[y][x]
+			}
+		}
+	}
 }
 
 G = function G(...args) {
