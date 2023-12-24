@@ -74,60 +74,44 @@ function day24(input, part2) {
 				//   px0 py0 pz0 => 0 0 0
 				//   vx vy vz => 1 1 1 (this simplifies a ridiculous amount of shit what)
 				//   z = 0 obviously for the initial line finding
-				let tx0 = vx0 - vx
-				let ty0 = vy0 - vy
-				let tz0 = vz0 - vz
+				let a0 = (vz0-vz) - (vy0-vy)
+				let b0 = (vx0-vx) - (vz0-vz)
 
-				let tx1 = vx1 - vx
-				let ty1 = vy1 - vy
-				let tz1 = vz1 - vz
-
-				let tx2 = vx2 - vx
-				let ty2 = vy2 - vy
-				let tz2 = vz2 - vz
-
-				let a0 = tz0 - ty0
-				let b0 = tx0 - tz0
-
-				let a1 = tz1 - ty1
-				let b1 = tx1 - tz1
+				let a1 = (vz1-vz) - (vy1-vy)
+				let b1 = (vx1-vx) - (vz1-vz)
 
 				let d = a0*b1 - b0*a1
 				if (d == 0) {
 					continue
 				}
 
-				let a2 = tz2 - ty2
-				let b2 = tx2 - tz2
-
-				let c0 = ty0 - tx0
-				let c1 = ty1 - tx1
-				let c2 = ty2 - tx2
-
-				let d1 = px1*(a1/d) + py1*(b1/d) + pz1*(c1/d)
-				let d2 = px2*(a2/d) + py2*(b2/d) + pz2*(c2/d)
-
-				let x = -b0*d1
-				let y = a0*d1
-				let z = 0
-				if (Math.abs(a2*(x/d) + b2*(y/d) - d2) > epsilon) {
-					continue
-				}
-
+				let c0 = (vy0-vy) - (vx0-vx)
+				let c1 = (vy1-vy) - (vx1-vx)
+				let c2 = (vy2-vy) - (vx2-vx)
 				if (c0 == 0 || c1 == 0 || c2 == 0) {
 					continue
 				}
 
-				let k0 = tx0*(y/c0) - ty0*(x/c0)
-				let k1 = tx1*((y-py1)/c1) - ty1*((x-px1)/c1)
-				//let k2 = tx2*((y-py2)/c2) - ty2*((x-px2)/c2)
-				if (Math.abs(k0 - k1) > epsilon /*|| Math.abs(k0 - k2) > epsilon*/) {
+				let d1 = px1*(a1/d) + py1*(b1/d) + pz1*(c1/d)
+				let x = -b0*d1
+				let y = a0*d1
+
+				let k0 = (-x/c0)*(vy0 - vy) - (-y/c0)*(vx0 - vx)
+				let k1 = (px1/c1 - x/c1)*(vy1 - vy) - (py1/c1 - y/c1)*(vx1 - vx)
+
+				if (Math.abs(k0 - k1) > epsilon) {
 					continue
 				}
 
-				let nx = x + k0 + offpx
-				let ny = y + k0 + offpy
-				let nz = z + k0 + offpz
+				let k2 = (px2/c2 - x/c2)*(vy2 - vy) - (py2/c2 - y/c2)*(vx2 - vx)
+
+				if (Math.abs(k0 - k2) > epsilon) {
+					continue
+				}
+
+				let nx = k0 + offpx + x
+				let ny = k0 + offpy + y
+				let nz = k0 + offpz
 				return Math.round(nx + ny + nz)
 			}
 		}
