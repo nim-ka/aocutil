@@ -24,7 +24,6 @@ function day24(input, part2) {
 				}
 
 				let tx = a.px + na*a.vx
-
 				if (Math.sign(tx - b.px) != Math.sign(b.vx)) {
 					continue
 				}
@@ -78,16 +77,12 @@ function day24(input, part2) {
 				let ty0 = vy0 - vy
 				let tz0 = vz0 - vz
 
+				let a0 = tz0 - ty0
+				let b0 = tx0 - tz0
+
 				let tx1 = vx1 - vx
 				let ty1 = vy1 - vy
 				let tz1 = vz1 - vz
-
-				let tx2 = vx2 - vx
-				let ty2 = vy2 - vy
-				let tz2 = vz2 - vz
-
-				let a0 = tz0 - ty0
-				let b0 = tx0 - tz0
 
 				let a1 = tz1 - ty1
 				let b1 = tx1 - tz1
@@ -97,10 +92,13 @@ function day24(input, part2) {
 					continue
 				}
 
+				let tx2 = vx2 - vx
+				let ty2 = vy2 - vy
+				let tz2 = vz2 - vz
+
 				let a2 = tz2 - ty2
 				let b2 = tx2 - tz2
 
-				let c0 = ty0 - tx0
 				let c1 = ty1 - tx1
 				let c2 = ty2 - tx2
 
@@ -109,25 +107,24 @@ function day24(input, part2) {
 
 				let x = -b0*d1
 				let y = a0*d1
-				let z = 0
 				if (Math.abs(a2*(x/d) + b2*(y/d) - d2) > epsilon) {
 					continue
 				}
 
+				let c0 = ty0 - tx0
 				if (c0 == 0 || c1 == 0 || c2 == 0) {
 					continue
 				}
 
 				let k0 = tx0*(y/c0) - ty0*(x/c0)
 				let k1 = tx1*((y-py1)/c1) - ty1*((x-px1)/c1)
-				//let k2 = tx2*((y-py2)/c2) - ty2*((x-px2)/c2)
-				if (Math.abs(k0 - k1) > epsilon /*|| Math.abs(k0 - k2) > epsilon*/) {
+				if (Math.abs(k0 - k1) > epsilon) {
 					continue
 				}
 
-				let nx = x + k0 + offpx
-				let ny = y + k0 + offpy
-				let nz = z + k0 + offpz
+				let nx = k0 + offpx + x
+				let ny = k0 + offpy + y
+				let nz = k0 + offpz
 				return Math.round(nx + ny + nz)
 			}
 		}
