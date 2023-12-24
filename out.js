@@ -1464,7 +1464,7 @@ Grid = class Grid {
 	bfs(pt, func, neighbors = "getAdjNeighbors", limit = 1000) {
 		let toVisit = new BinHeap((a, b) => a.dist < b.dist || a.dist == b.dist && a.readingOrderCompare(b) < 0)
 		
-		let visited = new Set()
+		let visited = new NumericPointSet()
 		let count = 0
 		let end
 		
@@ -1482,14 +1482,14 @@ Grid = class Grid {
 			}
 			
 			if (res == Grid.BFS_CONTINUE) {
-				for (let neighbor of this[neighbors](pt).filter((pt) => !visited.has(pt.toString()))) {
+				for (let neighbor of this[neighbors](pt).filter((pt) => !visited.has(pt))) {
 					neighbor.dist = pt.dist + 1
 					neighbor.last = pt
 					toVisit.insert(neighbor)
 				}
 			}
 			
-			visited.add(pt.toString())
+			visited.add(pt)
 		}
 
 		if (count >= limit) {
