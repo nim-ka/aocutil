@@ -66,7 +66,50 @@ Node = class Node {
 		return path
 	}
 	
-	explore(addCxns, visited = new Set(), heapCond = (p, c, pdist, cdist) => pdist <= cdist) {
+	exploreBfs(addCxns, visited = new Set()) {
+		let id = Symbol()
+		
+		let queue = [this]
+		
+		if (Node.DEBUG) {
+			console.time("exploreBfs")
+		}
+		
+		let i = 0
+		
+		this.searchData.update(id, 0, undefined, true)
+		
+		while (queue.length) {
+			let cur = queue.shift()
+			let depth = cur.searchData.get(id).dist
+			
+			visited.add(cur)
+
+			if (addCxns && cur.cxns.size == 0) {
+				addCxns(cur)
+			}
+
+			for (let [dest] of cur.cxns) {
+				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
+				if (!visited) {
+					dest.searchData.update(id, depth + 1, cur, true)
+					queue.push(dest)
+				}
+			}
+
+			if (Node.DEBUG && ++i % 10000 == 0) {
+				console.log(i, queue.length)
+			}
+		}
+
+		if (Node.DEBUG) {
+			console.timeEnd("exploreBfs")
+		}
+		
+		return visited
+	}
+	
+	exploreDijkstra(addCxns, visited = new Set(), heapCond = (p, c, pdist, cdist) => pdist <= cdist) {
 		let id = Symbol()
 
 		let heap = new BinHeap((p, c) => {
@@ -89,7 +132,7 @@ Node = class Node {
 			let min = heap.extract()
 			let minDist = min.searchData.get(id).dist
 			
-			visited?.add(min)
+			visited.add(min)
 
 			if (addCxns && min.cxns.size == 0) {
 				addCxns(min)
@@ -112,8 +155,118 @@ Node = class Node {
 				console.log(i, heap.data.length, minDist)
 			}
 		}
+
+		if (Node.DEBUG) {
+			console.timeEnd("explore")
+		}
 		
 		return visited
+	}
+	
+	exploreDfs(addCxns, visited = new Set()) {
+		let id = Symbol()
+		
+		let queue = [this]
+		
+		if (Node.DEBUG) {
+			console.time("exploreDfs")
+		}
+		
+		let i = 0
+		
+		this.searchData.update(id, 0, undefined, true)
+		
+		while (queue.length) {
+			let cur = queue.pop()
+			let depth = cur.searchData.get(id).dist
+			
+			visited.add(cur)
+
+			if (addCxns && cur.cxns.size == 0) {
+				addCxns(cur)
+			}
+
+			for (let [dest] of cur.cxns) {
+				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
+				if (!visited) {
+					dest.searchData.update(id, depth + 1, cur, true)
+					queue.push(dest)
+				}
+			}
+
+			if (Node.DEBUG && ++i % 10000 == 0) {
+				console.log(i, queue.length)
+			}
+		}
+
+		if (Node.DEBUG) {
+			console.timeEnd("exploreDfs")
+		}
+		
+		return visited
+	}
+	
+	bfs(dest, addCxns, visited) {
+		let isDest
+
+		if (dest instanceof Node) {
+			isDest = (node) => node == dest
+		} else if (dest instanceof Array) {
+			isDest = (node) => dest.includes(node)
+		} else if (dest instanceof Function) {
+			isDest = dest
+		} else {
+			throw "Node.bfs: Unrecognized destination type"
+		}
+		
+		let id = Symbol()
+		
+		let queue = [this]
+		
+		if (Node.DEBUG) {
+			console.time("bfs")
+		}
+		
+		let i = 0
+		
+		this.searchData.update(id, 0, undefined, true)
+		
+		while (queue.length) {
+			let cur = queue.shift()
+			let depth = cur.searchData.get(id).dist
+			
+			visited?.add(cur)
+
+			if (isDest(cur)) {
+				if (Node.DEBUG) {
+					console.log(i, queue.length)
+					console.timeEnd("bfs")
+				}
+
+				return cur
+			}
+
+			if (addCxns && cur.cxns.size == 0) {
+				addCxns(cur)
+			}
+
+			for (let [dest] of cur.cxns) {
+				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
+				if (!visited) {
+					dest.searchData.update(id, depth + 1, cur, true)
+					queue.push(dest)
+				}
+			}
+
+			if (Node.DEBUG && ++i % 10000 == 0) {
+				console.log(i, queue.length)
+			}
+		}
+
+		if (Node.DEBUG) {
+			console.timeEnd("bfs")
+			console.warn("Node.bfs: Could not find a path")
+		}
 	}
 
 	dijkstra(dest, addCxns, visited, heapCond = (p, c, pdist, cdist) => pdist <= cdist) {
@@ -236,7 +389,6 @@ Node = class Node {
 
 			for (let [dest] of cur.cxns) {
 				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				
 				if (!visited) {
 					dest.searchData.update(id, depth + 1, cur, true)
 					queue.push(dest)
@@ -254,10 +406,10 @@ Node = class Node {
 		}
 	}
 	
-	furthest(addCxns) {
+	furthestBfs(addCxns) {
 		let max = this
 		
-		for (let node of this.explore()) {
+		for (let node of this.exploreBfs()) {
 			if (max.searchData.dist < node.searchData.dist) {
 				max = node
 			}
@@ -266,10 +418,22 @@ Node = class Node {
 		return max
 	}
 	
-	furthests(addCxns) {
+	furthestDijkstra(addCxns) {
+		let max = this
+		
+		for (let node of this.exploreDijkstra()) {
+			if (max.searchData.dist < node.searchData.dist) {
+				max = node
+			}
+		}
+		
+		return max
+	}
+	
+	furthestsBfs(addCxns) {
 		let max = [this]
 		
-		for (let node of this.explore()) {
+		for (let node of this.exploreBfs()) {
 			let maxDist = max[0].searchData.dist
 			let dist = node.searchData.dist
 			
@@ -284,9 +448,24 @@ Node = class Node {
 		
 		return max
 	}
-
-	createGfx(...args) {
-		return this.gfx = new GraphicalNode(this, ...args)
+	
+	furthestsDijkstra(addCxns) {
+		let max = [this]
+		
+		for (let node of this.exploreDijkstra()) {
+			let maxDist = max[0].searchData.dist
+			let dist = node.searchData.dist
+			
+			if (maxDist < dist) {
+				max = [node]
+			}
+			
+			if (maxDist == dist) {
+				max.push(node)
+			}
+		}
+		
+		return max
 	}
 }
 
@@ -298,10 +477,12 @@ Graph = class Graph extends Map {
 			let [src, dests] = line.split(sep1)
 			
 			for (let dest of dests.split(sep2)) {
-				graph.getDef(src).addCxn(graph.getDef(dest))
+				let srcNode = graph.getDef(src)
+				let destNode = graph.getDef(dest)
 				
+				srcNode.addCxn(destNode)
 				if (symmetric) {
-					graph.getDef(dest).addCxn(graph.getDef(src))
+					destNode.addCxn(srcNode)
 				}
 			}
 		}

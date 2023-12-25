@@ -40,21 +40,30 @@ BinHeap = class BinHeap {
 	}
 
 	down(idx) {
-		let largest = idx
-		let left = 2 * idx
-		let right = 2 * idx + 1
+		while (true) {
+			let largest = idx
+			
+			let left = 2 * idx
+			let right = 2 * idx + 1
+			
+			if (right >= this.data.length) {
+				return
+			}
 
-		if (left < this.data.length && this.cond(this.data[left], this.data[largest])) {
-			largest = left
-		}
+			if (right != this.data.length && this.cond(this.data[left], this.data[largest])) {
+				largest = left
+			}
 
-		if (right < this.data.length && this.cond(this.data[right], this.data[largest])) {
-			largest = right
-		}
+			if (this.cond(this.data[right], this.data[largest])) {
+				largest = right
+			}
+			
+			if (largest == idx) {
+				return
+			}
 
-		if (largest != idx) {
 			[this.data[largest], this.data[idx]] = [this.data[idx], this.data[largest]]
-			this.down(largest)
+			idx = largest
 		}
 	}
 

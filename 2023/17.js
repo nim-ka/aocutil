@@ -17,7 +17,7 @@ function day17(input, part2) {
 		[end.val | 1]: end
 	}
 
-	return new Node().addCxn(start1, 0).addCxn(start2, 0).dijkstraTo(
+	return new Node().addCxn(start1, 0).addCxn(start2, 0).dijkstra(
 		end,
 		(node) => {
 			let x = node.val >> 16
