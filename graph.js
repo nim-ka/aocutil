@@ -65,6 +65,56 @@ Node = class Node {
 
 		return path
 	}
+	
+	explore(addCxns, visited = new Set(), heapCond = (p, c, pdist, cdist) => pdist <= cdist) {
+		let id = Symbol()
+
+		let heap = new BinHeap((p, c) => {
+			let pdist = p.searchData.get(id, Infinity, undefined, true).dist
+			let cdist = c.searchData.get(id, Infinity, undefined, true).dist
+			return heapCond(p, c, pdist, cdist)
+		})
+
+		heap.insert(this)
+
+		if (Node.DEBUG) {
+			console.time("explore")
+		}
+
+		let i = 0
+		
+		this.searchData.update(id, 0, undefined, true)
+
+		while (heap.data.length) {
+			let min = heap.extract()
+			let minDist = min.searchData.get(id).dist
+			
+			visited?.add(min)
+
+			if (addCxns && min.cxns.size == 0) {
+				addCxns(min)
+			}
+
+			for (let [dest, weight] of min.cxns) {
+				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
+				let dist = minDist + weight
+
+				if (dest.searchData.update(id, dist, min, true)) {
+					if (visited) {
+						heap.up(heap.data.indexOf(dest))
+					} else {
+						heap.insert(dest)
+					}
+				}
+			}
+
+			if (Node.DEBUG && ++i % 10000 == 0) {
+				console.log(i, heap.data.length, minDist)
+			}
+		}
+		
+		return visited
+	}
 
 	dijkstra(dest, addCxns, visited, heapCond = (p, c, pdist, cdist) => pdist <= cdist) {
 		let isDest
@@ -204,12 +254,22 @@ Node = class Node {
 		}
 	}
 	
-	furthest(addCxns, visited = new Set()) {
-		this.dijkstra(() => false, addCxns, visited)
+	furthest(addCxns) {
+		let max = this
 		
+		for (let node of this.explore()) {
+			if (max.searchData.dist < node.searchData.dist) {
+				max = node
+			}
+		}
+		
+		return max
+	}
+	
+	furthests(addCxns) {
 		let max = [this]
 		
-		for (let node of visited) {
+		for (let node of this.explore()) {
 			let maxDist = max[0].searchData.dist
 			let dist = node.searchData.dist
 			
@@ -284,12 +344,8 @@ Graph = class Graph extends Map {
 	}
 	
 	isConnected(key) {
-		let space = new Set()
 		let start = key ? this.get(key) : this.values().next().value
-		
-		start.dfs(() => false, undefined, space)
-		
-		return this.size == space.size
+		return this.size == start.explore().size
 	}
 }
 
