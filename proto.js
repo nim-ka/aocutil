@@ -586,6 +586,24 @@ load = function load() {
 			},
 			configurable: true
 		},
+		unorderedPairGen: {
+			value: function* unorderedPairGen(that = this) {
+				let len = Math.min(this.length, that.length)
+				
+				for (let i = 0; i < len - 1; i++) {
+					for (let j = i + 1; j < len; j++) {
+						yield [this[i], that[j]]
+					}
+				}
+			},
+			configurable: true
+		},
+		unorderedPair: {
+			value: function unorderedPair(that) {
+				return [...this.unorderedPairGen(that)]
+			},
+			configurable: true
+		},
 		interleave: {
 			value: function interleave(that) {
 				return [this, that].transpose().flat()
@@ -888,7 +906,7 @@ load = function load() {
 			configurable: true
 		},
 		windowsGen: {
-			value: function *windowsGen(n, wrap = false) {
+			value: function* windowsGen(n, wrap = false) {
 				if (this.length < n) {
 					yield [...this]
 				}
@@ -1075,13 +1093,25 @@ load = function load() {
 		pair: {
 			value: function pair(that = this) {
 				let len = Math.min(this.length, that.length)
-				let res = new PointArray(len)
+				let res = new Array(len)
 				
 				for (let i = 0; i < len; i++) {
-					res[i] = [this[i], that[i]]
+					res[i] = new PointArray(this[i], that[i])
 				}
 				
 				return res
+			},
+			configurable: true
+		},
+		unorderedPairGen: {
+			value: function* unorderedPairGen(that = this) {
+				let len = Math.min(this.length, that.length)
+				
+				for (let i = 0; i < len - 1; i++) {
+					for (let j = i + 1; j < len; j++) {
+						yield new PointArray(this[i], that[j])
+					}
+				}
 			},
 			configurable: true
 		},
@@ -1150,7 +1180,7 @@ load = function load() {
 			configurable: true
 		},
 		windowsGen: {
-			value: function *windowsGen(n, wrap = false) {
+			value: function* windowsGen(n, wrap = false) {
 				if (this.length < n) {
 					yield PointArray.from(this)
 				}

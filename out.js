@@ -1708,15 +1708,33 @@ BinHeap = class BinHeap {
 	}
 }
 
+Cxn = class Cxn {
+	constructor(src, dest, weight = 1) {
+		this.src = src
+		this.dest = dest
+		this.weight = weight
+		
+		this.deleted = false
+	}
+	
+	delete() {
+		this.src.removeCxn(this.dest)
+	}
+	
+	mirror() {
+		return this.dest.cxns.get(this.src)
+	}
+}
+
 SearchData = class SearchData {
-	constructor(id, dist = Infinity, last = undefined, custom = {}) {
+	constructor(id, dist = Infinity, last = undefined, custom = false) {
 		this.id = id
 		this.dist = dist
 		this.last = last
 		this.custom = custom
 	}
 
-	get(id, dist = Infinity, last = undefined, custom = {}) {
+	get(id, dist = Infinity, last = undefined, custom = false) {
 		if (this.id != id) {
 			this.id = id
 			this.dist = dist
@@ -1727,7 +1745,7 @@ SearchData = class SearchData {
 		return this
 	}
 
-	update(id, dist = Infinity, last = undefined, custom = {}) {
+	update(id, dist = Infinity, last = undefined, custom = false) {
 		if (this.id != id || this.dist > dist) {
 			this.id = id
 			this.dist = dist
@@ -1753,17 +1771,25 @@ Node = class Node {
 	}
 
 	addCxn(node, weight = 1) {
-		this.cxns.set(node, weight)
+		this.cxns.set(node, new Cxn(this, node, weight))
 		return this
 	}
 	
 	removeCxn(node) {
-		this.cxns.delete(node)
+		if (this.cxns.has(node)) {
+			this.cxns.get(node).deleted = true
+			this.cxns.delete(node)
+		}
+		
 		return this
 	}
 	
-	getWeightTo(node) {
+	getCxn(node) {
 		return this.cxns.get(node)
+	}
+	
+	getWeight(node) {
+		return this.getCxn(node).weight
 	}
 
 	unwrap() {
@@ -1800,8 +1826,7 @@ Node = class Node {
 			}
 
 			for (let [dest] of cur.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				if (!visited) {
+				if (!dest.searchData.get(id, Infinity, undefined, false).custom) {
 					dest.searchData.update(id, depth + 1, cur, true)
 					queue.push(dest)
 				}
@@ -1811,7 +1836,7 @@ Node = class Node {
 				console.log(i, queue.length)
 			}
 		}
-
+		
 		if (Node.DEBUG) {
 			console.timeEnd("exploreBfs")
 		}
@@ -1848,12 +1873,12 @@ Node = class Node {
 				addCxns(min)
 			}
 
-			for (let [dest, weight] of min.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				let dist = minDist + weight
+			for (let [dest, cxn] of min.cxns) {
+				let seen = dest.searchData.get(id, Infinity, undefined, false).custom
+				let dist = minDist + cxn.weight
 
 				if (dest.searchData.update(id, dist, min, true)) {
-					if (visited) {
+					if (seen) {
 						heap.up(heap.data.indexOf(dest))
 					} else {
 						heap.insert(dest)
@@ -1897,8 +1922,7 @@ Node = class Node {
 			}
 
 			for (let [dest] of cur.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				if (!visited) {
+				if (!dest.searchData.get(id, Infinity, undefined, false).custom) {
 					dest.searchData.update(id, depth + 1, cur, true)
 					queue.push(dest)
 				}
@@ -1961,8 +1985,7 @@ Node = class Node {
 			}
 
 			for (let [dest] of cur.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				if (!visited) {
+				if (!dest.searchData.get(id, Infinity, undefined, false).custom) {
 					dest.searchData.update(id, depth + 1, cur, true)
 					queue.push(dest)
 				}
@@ -2029,12 +2052,12 @@ Node = class Node {
 				addCxns(min)
 			}
 
-			for (let [dest, weight] of min.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				let dist = minDist + weight
+			for (let [dest, cxn] of min.cxns) {
+				let seen = dest.searchData.get(id, Infinity, undefined, false).custom
+				let dist = minDist + cxn.weight
 
 				if (dest.searchData.update(id, dist, min, true)) {
-					if (visited) {
+					if (seen) {
 						heap.up(heap.data.indexOf(dest))
 					} else {
 						heap.insert(dest)
@@ -2177,10 +2200,6 @@ Node = class Node {
 		
 		return max
 	}
-
-	createGfx(...args) {
-		return this.gfx = new GraphicalNode(this, ...args)
-	}
 }
 
 Graph = class Graph extends Map {
@@ -2208,7 +2227,7 @@ Graph = class Graph extends Map {
 		super()
 		
 		for (let node of nodes) {
-			let key = node.val
+			let key = node.name || node.val
 			
 			if (this.has(key)) {
 				console.error(this.get(key))
@@ -2220,12 +2239,53 @@ Graph = class Graph extends Map {
 		}
 	}
 	
+	copy() {
+		return new Graph(this)
+	}
+	
+	delete(key) {
+		let node = this.get(key)
+		
+		if (!node) {
+			return false
+		}
+		
+		for (let otherNode of this.values()) {
+			otherNode.removeCxn(node)
+		}
+		
+		return super.delete(key)
+	}
+	
+	deleteNode(node) {
+		return this.delete(node.name || node.val)
+	}
+	
 	getDef(key) {
 		if (!this.has(key)) {
-			this.set(key, new Node(key))
+			this.set(key, new Node(key, key))
 		}
 		
 		return this.get(key)
+	}
+	
+	getAssocMap() {
+		let assocMap = new Map()
+		
+		for (let cxn of this.cxns()) {
+			if (!assocMap.has(cxn.src)) {
+				assocMap.set(cxn.src, new Set())
+			}
+			
+			if (!assocMap.has(cxn.dest)) {
+				assocMap.set(cxn.dest, new Set())
+			}
+			
+			assocMap.get(cxn.src).add(cxn.dest)
+			assocMap.get(cxn.dest).add(cxn.src)
+		}
+		
+		return assocMap
 	}
 	
 	numCxns() {
@@ -2240,7 +2300,91 @@ Graph = class Graph extends Map {
 	
 	isConnected(key) {
 		let start = key ? this.get(key) : this.values().next().value
-		return this.size == start.explore().size
+		return this.size == start.exploreDfs().size
+	}
+	
+	isSymmetric() {
+		for (let cxn of this.cxns) {
+			if (cxn.mirror?.weight != cxn.weight) {
+				return false
+			}
+		}
+		
+		return true
+	}
+	
+	resetSearch() {
+		let id = Symbol()
+		
+		for (let node of this.values()) {
+			node.searchData.update(id)
+		}
+		
+		return this
+	}
+	
+	componentsUndirected() {
+		this.resetSearch()
+		
+		let res = []
+		
+		for (let node of this.values()) {
+			if (!node.searchData.custom) {
+				res.push(new Graph(node.exploreDfs()))
+			}
+		}
+		
+		return res
+	}
+	
+	componentsDirected() {
+		let components = this.componentsUndirected()
+		
+		for (let i = components.length - 1; i >= 0; i--) {
+			for (let node of components[i].values()) {
+				for (let j = i - 1; j >= 0; j--) {
+					Map.prototype.delete.call(components[j], node.name || node.val)
+				}
+			}
+		}
+		
+		return components.filter((e) => e.size)
+	}
+	
+	minimumSpanningTree() {
+		let id = Symbol()
+		
+		let heap = new BinHeap((p, c) => {
+			let pdist = p.searchData.get(id, Infinity, undefined, true).dist
+			let cdist = c.searchData.get(id, Infinity, undefined, true).dist
+			return pdist <= cdist
+		})
+		
+		for (let node of this.values()) {
+			heap.insert(node)
+		}
+		
+		let visited = new Set()
+		
+		while (heap.data.length) {
+			let node = heap.extract()
+			
+			visited.add(node)
+			
+			for (let [dest, cxn] of node.cxns) {
+				if (!visited.has(dest) && dest.searchData.update(id, cxn.weight, node, true)) {
+					heap.up(heap.data.indexOf(dest))
+				}
+			}
+		}
+		
+		return visited
+	}
+	
+	*cxns() {
+		for (let node of this.values()) {
+			yield* node.cxns.values()
+		}
 	}
 }
 
@@ -2840,6 +2984,1349 @@ IntcodeVM.INSTRS[IntcodeVM.OP_HLT] = {
 	arity: 0,
 	op: function() {
 		this.halt()
+	}
+}
+
+EventHandler = class EventHandler {
+	constructor(el) {
+		for (let type of this.constructor.EVT_TYPES) {
+			el.addEventListener(type, this)
+		}
+	}
+	
+	handleEvent(evt) {
+		if (this.constructor.EVT_TYPES.includes(evt.type)) {
+			this[evt.type](evt)
+			evt.preventDefault()
+		}
+	}
+}
+
+Keyboard = class Keyboard extends EventHandler {
+	static EVT_TYPES = [
+		"keydown",
+		"keyup"
+	]
+	
+	constructor(el) {
+		super(el)
+		
+		this.down = new Set()
+		this.press = new Set()
+	}
+	
+	resetFrame() {
+		this.press.clear()
+	}
+	
+	keydown(evt) {
+		this.down.add(evt.key)
+		this.press.add(evt.key)
+	}
+	
+	keyup(evt) {
+		this.down.delete(evt.key)
+		this.press.delete(evt.key)
+	}
+}
+
+Mouse = class Mouse extends EventHandler {
+	static EVT_TYPES = [
+		"mousemove",
+		"mouseenter",
+		"mouseleave",
+		"mouseup",
+		"mousedown"
+	]
+
+	constructor(el) {
+		super(el)
+		
+		this.x = 0
+		this.y = 0
+		
+		this.down = false
+		this.press = false
+		
+		this.resetFrame()
+	}
+	
+	resetFrame() {
+		if (!this.down) {
+			this.claimed = null
+		}
+		
+		this.used = false
+	}
+
+	mousemove(evt) {
+		this.x = evt.offsetX
+		this.y = evt.offsetY
+
+		this.press = false
+	}
+
+	mouseenter(evt) {
+		this.x = evt.offsetX
+		this.y = evt.offsetY
+
+		this.down = false
+		this.press = false
+	}
+
+	mouseleave(evt) {
+		this.x = evt.offsetX
+		this.y = evt.offsetY
+
+		this.down = false
+		this.press = false
+	}
+
+	mouseup(evt) {
+		this.x = evt.offsetX
+		this.y = evt.offsetY
+
+		this.down = false
+		this.press = false
+	}
+
+	mousedown(evt) {
+		this.x = evt.offsetX
+		this.y = evt.offsetY
+
+		this.down = true
+		this.press = true
+	}
+}
+
+CanvasElement = class CanvasElement {
+	static HIGHLIGHT_COLOR = "rgb(0, 0, 200)"
+	static STROKE_COLOR = "rgb(0, 0, 0)"
+	static TEXT_COLOR = "rgb(0, 0, 0)"
+	static FILL_COLOR = "rgb(255, 255, 255)"
+	static HOVER_COLOR = "rgb(235, 235, 235)"
+	static PRESS_COLOR = "rgb(235, 235, 235)"
+
+	static TEXT_SIZE = 18
+
+	constructor() {
+		this.pauseTimer = false
+		this.timer = 0
+
+		this.children = new Set()
+		this.parent = null
+		this.ctx = null
+		
+		this.totalChildren = 0
+	}
+
+	setCtx(ctx) {
+		this.ctx = ctx
+		this.reset()
+		return this
+	}
+	
+	remove() {
+		this.parent?.removeElement(this)
+	}
+
+	addElement(el) {
+		el.setCtx(this.ctx)
+		this.children.add(el)
+		el.parent = this
+		return this
+	}
+
+	removeElement(el) {
+		this.children.delete(el)
+		el.parent = null
+		return this
+	}
+
+	hasElement(el) {
+		return this.children.has(el)
+	}
+
+	clearElements(el) {
+		this.children.forEach((el) => el.parent = null)
+		this.children.clear()
+		return this
+	}
+
+	addTo(el) {
+		el.addElement(this)
+		return this
+	}
+
+	isIn(x, y) {
+		return false
+	}
+
+	reset() {
+		this.resetPre()
+
+		this.hover = false
+		this.press = false
+		this.highlight = false
+
+		for (let el of this.children) {
+			el.setCtx(this.ctx)
+		}
+
+		this.resetPost()
+	}
+
+	resetPre() {}
+	resetPost() {}
+
+	update(keyboard, mouse) {
+		this.totalChildren = 0
+		
+		this.keyboardUpdate(keyboard)
+		
+		if (mouse && (mouse.claimed == this || (!mouse.claimed && !mouse.used && this.isIn(mouse.x, mouse.y)))) {
+			mouse.used = true
+			
+			this.hover = true
+
+			this.mouseUpdate(mouse)
+
+			if (mouse.press) {
+				this.press = true
+				this.mouseClick(mouse)
+			} else if (!mouse.down && this.press) {
+				this.press = false
+				this.mouseRelease(mouse)
+			}
+		} else {
+			this.hover = false
+			this.press = false
+			this.highlight = false
+		}
+		
+		this.updatePre()
+
+		for (let el of this.children) {
+			el.update(keyboard, mouse)
+			this.totalChildren += el.totalChildren + 1
+		}
+
+		this.updatePost()
+
+		if (!this.pauseTimer) {
+			this.timer++
+		}
+	}
+
+	updatePre() {}
+	updatePost() {}
+	
+	keyboardUpdate(keyboard) {}
+
+	mouseUpdate(mouse) {}
+	mouseClick(mouse) {}
+	mouseRelease(mouse) {}
+
+	draw() {
+		this.drawPre()
+
+		for (let el of this.children) {
+			el.draw()
+		}
+
+		this.drawPost()
+	}
+
+	drawPre() {}
+	drawPost() {}
+	
+	drawTop() {
+		this.drawTopPre()
+
+		for (let el of this.children) {
+			el.drawTop()
+		}
+
+		this.drawTopPost()
+	}
+	
+	drawTopPre() {}
+	drawTopPost() {}
+
+	getStrokeColor() {
+		return this.highlight ? this.constructor.HIGHLIGHT_COLOR : this.constructor.STROKE_COLOR
+	}
+
+	getTextColor() {
+		return this.highlight ? this.constructor.HIGHLIGHT_COLOR : this.constructor.TEXT_COLOR
+	}
+
+	getFillColor() {
+		return this.press ? this.constructor.PRESS_COLOR :
+			this.hover ? this.constructor.HOVER_COLOR : this.constructor.FILL_COLOR
+	}
+
+	getTextSize() {
+		return this.constructor.TEXT_SIZE
+	}
+}
+
+CanvasController = class CanvasController extends CanvasElement {
+	static TARGET_FPS = 60
+
+	constructor(width, height, updateCallback = () => {}) {
+		super()
+
+		this.width = width
+		this.height = height
+		this.updateCallback = updateCallback
+
+		this.frameTimes = []
+
+		this.targetFps = CanvasController.TARGET_FPS
+		this.fps = this.targetFps
+		this.fpsSlope = 0
+
+		this.resetCanvas()
+	}
+
+	resetCanvas() {
+		this.canvas = document.getElementById("canvas")
+
+		if (this.canvas) {
+			let newCanvas = this.canvas.cloneNode()
+			this.canvas.replaceWith(newCanvas)
+			this.canvas = newCanvas
+		} else {
+			this.canvas = document.createElement("canvas")
+			this.canvas.id = "canvas"
+			document.body.appendChild(this.canvas)
+		}
+
+		this.canvas.width = this.width
+		this.canvas.height = this.height
+		
+		this.canvas.setAttribute("tabindex", 1)
+
+		this.keyboard = new Keyboard(this.canvas)
+		this.mouse = new Mouse(this.canvas)
+
+		this.setCtx(this.canvas.getContext("2d"))
+	}
+
+	updatePre() {
+		let oldTime = this.frameTimes[0]
+		let time = performance.now()
+
+		this.frameTimes.push(time)
+
+		if (this.frameTimes.length > 30) {
+			this.frameTimes.shift()
+		}
+
+		if (oldTime) {
+			let average = 1000 * this.frameTimes.length / (time - oldTime)
+			let change = this.fpsSlope + 0.1 * (average - (this.fps + this.fpsSlope))
+			this.fps = Math.max(this.fps + change, 0)
+			this.fpsSlope += 0.1 * (change - this.fpsSlope)
+		}
+		
+		this.keyboard.resetFrame()
+		this.mouse.resetFrame()
+	}
+
+	updatePost() {
+		this.updateCallback.call(this)
+		this.draw()
+		this.drawTop()
+	}
+
+	drawPre() {
+		this.ctx.fillStyle = "rgb(255, 255, 255)"
+		this.ctx.fillRect(0, 0, this.width, this.height)
+
+		this.ctx.strokeStyle = "rgb(0, 0, 0)"
+		this.ctx.lineWidth = 1
+		this.ctx.strokeRect(0, 0, this.width, this.height)
+	}
+
+	drawPost() {
+		this.ctx.fillStyle = "rgb(0, 0, 0)"
+		this.ctx.textAlign = "left"
+		this.ctx.textBaseline = "alphabetic"
+		this.ctx.font = "18px monospace"
+		this.ctx.fillText(this.fps.toPrecision(5), 5, 18)
+		this.ctx.fillText(this.totalChildren, 5, 36)
+		
+		this.ctx.textAlign = "right"
+		this.ctx.fillText(this.mouse.x + ", " + this.mouse.y, 1195, 18)
+	}
+
+	tick() {
+		this.update(this.keyboard, this.mouse)
+	}
+	
+	loop(id) {
+		if (window.currentControllerId == id) {
+			this.tick()
+			requestAnimationFrame(() => this.loop(id))
+		}
+	}
+	
+	start() {
+		this.loop(window.currentControllerId = Math.random())
+		return this
+	}
+}
+
+Button = class Button extends CanvasElement {
+	constructor(x, y, width, height, label, callback) {
+		super()
+
+		this.x = x
+		this.y = y
+		this.width = width
+		this.height = height
+		this.label = label
+		this.callback = callback.bind(this)
+	}
+
+	isIn(x, y) {
+		return x >= this.x && x <= this.x + this.width &&
+			y >= this.y && y <= this.y + this.height
+	}
+	
+	mouseClick(mouse) {
+		mouse.claimed = this
+	}
+
+	mouseRelease(mouse) {
+		this.callback()
+	}
+
+	drawTopPost() {
+		this.ctx.strokeStyle = this.getStrokeColor()
+		this.ctx.lineWidth = 1
+		this.ctx.textAlign = "center"
+		this.ctx.textBaseline = "middle"
+		this.ctx.font = `${this.getTextSize()}px monospace`
+
+		this.ctx.fillStyle = this.getStrokeColor()
+		this.ctx.beginPath()
+		this.ctx.roundRect(this.x + 3, this.y + 3, this.width, this.height, 5)
+		this.ctx.fill()
+		this.ctx.stroke()
+
+		let depression = this.getDepression()
+
+		this.ctx.fillStyle = this.getFillColor()
+		this.ctx.beginPath()
+		this.ctx.roundRect(this.x + depression, this.y + depression, this.width, this.height, 5)
+		this.ctx.fill()
+		this.ctx.stroke()
+
+		this.ctx.fillStyle = this.getTextColor()
+		this.ctx.fillText(this.label, this.x + this.width / 2 + depression, this.y + this.height / 2 + depression)
+	}
+	
+	// :(
+	getDepression() {
+		return this.press ? 2 : 0
+	}
+}
+
+ToggleButton = class ToggleButton extends Button {
+	static ACTIVE_COLOR = "rgb(215, 215, 255)"
+	
+	constructor(x, y, width, height, label, obj, prop, callback = () => {}) {
+		super(x, y, width, height, label, function() {
+			let orig = obj[prop]
+			callback.call(this, orig)
+			obj[prop] = !orig
+		})
+		
+		this.obj = obj
+		this.prop = prop
+	}
+	
+	getFillColor() {
+		return this.obj[this.prop] ? this.constructor.ACTIVE_COLOR : super.getFillColor()
+	}
+	
+	getDepression() {
+		return this.press ? 3 : this.obj[this.prop] ? 2 : 0
+	}
+}
+
+GraphicalCxn = class GraphicalCxn extends CanvasElement {
+	static HOVER_COLOR = "rgb(100, 0, 200)"
+	
+	static HITBOX_WIDTH = 5
+	
+	static ARROW_SIZE = 10
+	static ARROW_ANGLE = Math.PI / 8
+
+	static DUAL_CXN_SEP_ANGLE = 0.2
+	static WEIGHT_SEP_ANGLE = 0.5
+	
+	constructor(graphGfx, cxn, size) {
+		super()
+		
+		this.graphGfx = graphGfx
+		this.cxn = cxn
+		this.size = size
+		
+		this.angle = 0
+		
+		this.x1 = 0
+		this.y1 = 0
+		this.x2 = 0
+		this.y2 = 0
+		this.x3 = 0
+		this.y3 = 0
+		this.x4 = 0
+		this.y4 = 0
+		this.xm = 0
+		this.ym = 0
+		
+		this.vx1 = 0
+		this.vy1 = 0
+		this.vx2 = 0
+		this.vy2 = 0
+		this.vx3 = 0
+		this.vy3 = 0
+		this.vx4 = 0
+		this.vy4 = 0
+		this.vxm = 0
+		this.vym = 0
+		
+		this.vsize = 0
+		this.varrowsize = 0
+		this.vdist = 0
+	}
+	
+	remove() {
+		this.cxn.delete()
+		super.remove()
+	}
+	
+	isIn(x, y) {
+		if (!this.graphGfx.config.showCxns || !this.graphGfx.config.tangibleCxns) {
+			return false
+		}
+		
+		x -= this.vx1
+		y -= this.vy1
+		
+		let nx = x * Math.cos(-this.angle) - y * Math.sin(-this.angle)
+		let ny = x * Math.sin(-this.angle) + y * Math.cos(-this.angle)
+		
+		return nx > -this.constructor.HITBOX_WIDTH && nx < this.constructor.HITBOX_WIDTH + this.vdist &&
+			ny > -this.constructor.HITBOX_WIDTH && ny < this.constructor.HITBOX_WIDTH
+	}
+	
+	mouseRelease(mouse) {
+		if (this.graphGfx.pruning) {
+			this.remove()
+		}
+	}
+	
+	updatePost() {
+		if (this.cxn.deleted) {
+			this.remove()
+			return
+		}
+		
+		if (!this.graphGfx.config.showCxns) {
+			return
+		}
+		
+		this.highlight = this.graphGfx.dijkstraCxns.has(this.cxn)
+		
+		let thisNode = this.cxn.src.gfx
+		let thatNode = this.cxn.dest.gfx
+		
+		this.angle = Math.atan2(thatNode.y - thisNode.y, thatNode.x - thisNode.x)
+		
+		let shift = this.graphGfx.config.dualCxnSep && this.cxn.dest.cxns.has(this.cxn.src) ? this.constructor.DUAL_CXN_SEP_ANGLE : 0
+
+		this.x1 = thisNode.x + thisNode.size * Math.cos(this.angle + shift)
+		this.y1 = thisNode.y + thisNode.size * Math.sin(this.angle + shift)
+		
+		this.x2 = thatNode.x - thatNode.size * Math.cos(this.angle - shift)
+		this.y2 = thatNode.y - thatNode.size * Math.sin(this.angle - shift)
+		
+		this.x3 = this.x2 - this.constructor.ARROW_SIZE * Math.cos(this.angle + this.constructor.ARROW_ANGLE)
+		this.y3 = this.y2 - this.constructor.ARROW_SIZE * Math.sin(this.angle + this.constructor.ARROW_ANGLE)
+		
+		this.x4 = this.x2 - this.constructor.ARROW_SIZE * Math.cos(this.angle - this.constructor.ARROW_ANGLE)
+		this.y4 = this.y2 - this.constructor.ARROW_SIZE * Math.sin(this.angle - this.constructor.ARROW_ANGLE)
+		
+		let push = (shift ? 1 : -1) * (shift + this.constructor.WEIGHT_SEP_ANGLE)
+
+		this.xm = (
+			thisNode.x + thisNode.size * Math.cos(this.angle + push) +
+			thatNode.x - thatNode.size * Math.cos(this.angle - push)) / 2
+		this.ym = (
+			thisNode.y + thisNode.size * Math.sin(this.angle + push) +
+			thatNode.y - thatNode.size * Math.sin(this.angle - push)) / 2
+		
+		this.vx1 = this.graphGfx.viewport.convertX(this.x1)
+		this.vy1 = this.graphGfx.viewport.convertY(this.y1)
+		this.vx2 = this.graphGfx.viewport.convertX(this.x2)
+		this.vy2 = this.graphGfx.viewport.convertY(this.y2)
+		this.vx3 = this.graphGfx.viewport.convertX(this.x3)
+		this.vy3 = this.graphGfx.viewport.convertY(this.y3)
+		this.vx4 = this.graphGfx.viewport.convertX(this.x4)
+		this.vy4 = this.graphGfx.viewport.convertY(this.y4)
+		this.vxm = this.graphGfx.viewport.convertX(this.xm)
+		this.vym = this.graphGfx.viewport.convertY(this.ym)
+		
+		this.vsize = this.size * this.graphGfx.viewport.scale
+		this.varrowsize = this.constructor.ARROW_SIZE * this.graphGfx.viewport.scale
+		this.vdist = Math.hypot(this.vx2 - this.vx1, this.vy2 - this.vy1)
+	}
+	
+	drawPost() {
+		if (!this.graphGfx.config.showCxns) {
+			return
+		}
+		
+		this.ctx.strokeStyle = this.getColor()
+		this.ctx.fillStyle = this.getColor()
+		this.ctx.lineWidth = 1
+
+		this.ctx.beginPath()
+		this.ctx.moveTo(this.vx1, this.vy1)
+		this.ctx.lineTo(this.vx2, this.vy2)
+		this.ctx.stroke()
+
+		if (this.varrowsize > 3) {
+			this.ctx.beginPath()
+			this.ctx.moveTo(this.vx2, this.vy2)
+			this.ctx.lineTo(this.vx3, this.vy3)
+			this.ctx.lineTo(this.vx4, this.vy4)
+			this.ctx.closePath()
+			this.ctx.fill()
+		}
+
+		if (this.graphGfx.config.showWeights && this.vsize > 7) {
+			this.ctx.textAlign = "center"
+			this.ctx.textBaseline = "middle"
+			this.ctx.font = `${this.vsize}px monospace`
+			this.ctx.fillText(this.cxn.weight, this.vxm, this.vym)
+		}
+	}
+	
+	getColor() {
+		return this.hover ? this.constructor.HOVER_COLOR : this.getStrokeColor()
+	}
+}
+
+GraphicalNode = class GraphicalNode extends CanvasElement {
+	static FILL_COLOR = "rgba(0, 0, 0, 0)"
+	static HOVER_COLOR = "rgba(0, 0, 0, 0.1)"
+	static PRESS_COLOR = "rgba(0, 0, 0, 0.15)"
+
+	constructor(graphGfx, node, x, y, size) {
+		super()
+
+		this.graphGfx = graphGfx
+		this.node = node
+		this.x = x
+		this.y = y
+		this.size = size
+		
+		this.vx = 0
+		this.vy = 0
+		this.vsize = 0
+		
+		this.fx = 0
+		this.fy = 0
+
+		this.dragX = 0
+		this.dragY = 0
+		this.dragMouseX = 0
+		this.dragMouseY = 0
+		
+		for (let cxn of this.node.cxns.values()) {
+			this.addElement(cxn.gfx = new GraphicalCxn(this.graphGfx, cxn, this.size))
+		}
+	}
+	
+	remove() {
+		this.graphGfx.graph.deleteNode(this.node)
+		
+		for (let cxn of this.node.cxns.values()) {
+			cxn.gfx.remove()
+		}
+		
+		super.remove()
+	}
+
+	isIn(x, y) {
+		return Math.hypot(this.vx - x, this.vy - y) <= this.vsize
+	}
+
+	mouseUpdate(mouse) {
+		if (!this.graphGfx.pruning && this.press) {
+			this.targetX = this.dragX + (mouse.x - this.dragMouseX) / this.graphGfx.viewport.scale
+			this.targetY = this.dragY + (mouse.y - this.dragMouseY) / this.graphGfx.viewport.scale
+		}
+	}
+
+	mouseClick(mouse) {
+		if (!this.graphGfx.pruning) {
+			mouse.claimed = this
+			
+			this.dragX = this.x
+			this.dragY = this.y
+			this.dragMouseX = mouse.x
+			this.dragMouseY = mouse.y
+		}
+	}
+	
+	mouseRelease(mouse) {
+		if (this.graphGfx.pruning) {
+			if (this.isIn(mouse.x, mouse.y)) {
+				this.remove()
+			}
+		} else {		
+			if (this.graphGfx.seekingStart) {
+				this.graphGfx.seekingStart = false
+				this.graphGfx.dijkstraStart = this
+			}
+			
+			if (this.graphGfx.seekingEnd) {
+				this.graphGfx.seekingEnd = false
+				this.graphGfx.dijkstraEnd = this
+			}
+		}
+	}
+	
+	updatePre() {
+		this.highlight =
+			this == this.graphGfx.dijkstraStart ||
+			this == this.graphGfx.dijkstraEnd ||
+			this.graphGfx.dijkstraVisited.has(this.node)
+		
+		this.vx = this.graphGfx.viewport.convertX(this.x)
+		this.vy = this.graphGfx.viewport.convertY(this.y)
+		
+		this.vsize = this.size * this.graphGfx.viewport.scale
+	}
+
+	drawPost() {
+		this.ctx.strokeStyle = this.getStrokeColor()
+		this.ctx.fillStyle = this.getFillColor()
+		this.ctx.lineWidth = 1
+
+		this.ctx.beginPath()
+		this.ctx.arc(this.vx, this.vy, this.vsize, 0, 2 * Math.PI)
+		this.ctx.stroke()
+		this.ctx.fill()
+
+		if (this.vsize > 7) {
+			this.ctx.fillStyle = this.getTextColor()
+			this.ctx.textAlign = "center"
+			this.ctx.textBaseline = "middle"
+			this.ctx.font = `${this.vsize}px monospace`
+			this.ctx.fillText(this.node.name, this.vx, this.vy)
+		}
+		
+		if (!this.graphGfx.pruning && this.press) {
+			this.x = this.targetX
+			this.y = this.targetY
+		} else {
+			this.targetX = this.x
+			this.targetY = this.y
+		}
+	}
+}
+
+GraphicalGraphViewport = class GraphicalGraphViewport {
+	constructor(graphGfx) {
+		this.graphGfx = graphGfx
+		
+		this.reset()
+	}
+	
+	reset() {
+		this.x = 0
+		this.y = 0
+		this.scale = 1
+	}
+	
+	convertX(x) {
+		return (x - this.x) * this.scale
+	}
+	
+	revertX(x) {
+		return x / this.scale + this.x
+	}
+	
+	convertY(y) {
+		return (y - this.y) * this.scale
+	}
+	
+	revertY(y) {
+		return y / this.scale + this.y
+	}
+	
+	translate(x, y) {
+		this.x = this.revertX(x)
+		this.y = this.revertY(y)
+	}
+	
+	zoom(scale) {
+		let cx = this.graphGfx.ctx.canvas.width / 2
+		let cy = this.graphGfx.ctx.canvas.height / 2
+		
+		this.translate(cx, cy)
+		this.scale *= scale
+		this.translate(-cx, -cy)
+	}
+}
+
+GraphicalGraph = class GraphicalGraph extends CanvasElement {
+	static BH_SPRING = 10
+	static BH_LEN = 150
+	static BH_THRESHOLD = 0.5
+	
+	config = {
+		showCxns: true,
+		showWeights: false,
+		tangibleCxns: false,
+		dualCxnSep: false
+	}
+	
+	constructor(graph) {
+		super()
+		
+		this.graph = graph
+		this.assocMap = graph.getAssocMap()
+		
+		this.viewport = new GraphicalGraphViewport(this)
+		
+		this.seekingStart = false
+		this.seekingEnd = false
+		
+		this.pruning = false
+		
+		this.forcing = false
+		this.forcingTimer = 0
+		
+		this.resetDijkstra(true, true)
+	}
+	
+	updatePost() {
+		if (!this.children.has(this.dijkstraStart)) {
+			this.dijkstraStart = null
+		}
+		
+		if (!this.children.has(this.dijkstraEnd)) {
+			this.dijkstraEnd = null
+		}
+		
+		if (this.children.size == 0 && this.graph.size > 0) {
+			for (let node of this.graph.values()) {
+				node.gfx = new GraphicalNode(this, node, 0, 0, 20)
+				this.addElement(node.gfx)
+			}
+			
+			this.renderTree()
+		}
+		
+		this.forcingUpdate()
+	}
+
+	drawPost() {
+		this.ctx.fillStyle = GraphicalNode.HIGHLIGHT_COLOR
+		this.ctx.textAlign = "left"
+		this.ctx.textBaseline = "alphabetic"
+		this.ctx.font = "18px monospace"
+		this.ctx.fillText(this.dijkstraLabel, 5, 54)
+		
+		this.ctx.fillStyle = "rgb(0, 0, 0)"
+		this.ctx.textAlign = "right"
+		this.ctx.fillText(Math.floor(this.viewport.revertX(this.parent.parent.mouse.x)) + ", " + Math.floor(this.viewport.revertY(this.parent.parent.mouse.y)), 1195, 36)
+		this.ctx.fillText(this.viewport.scale.toFixed(2) + ", " + (1 / this.viewport.scale).toFixed(2), 1195, 54)
+	}
+	
+	center() {
+		let minx = Infinity
+		let maxx = -Infinity
+		let miny = Infinity
+		let maxy = -Infinity
+		
+		for (let gfx of this.children) {
+			minx = Math.min(minx, gfx.x)
+			maxx = Math.max(maxx, gfx.x)
+			miny = Math.min(miny, gfx.y)
+			maxy = Math.max(maxy, gfx.y)
+		}
+		
+		this.viewport.x = (minx + maxx) / 2
+		this.viewport.y = (miny + maxy) / 2
+		this.viewport.scale = Math.min(this.ctx.canvas.width / (maxx - minx), this.ctx.canvas.height / (maxy - miny))
+		this.viewport.translate(-this.ctx.canvas.width / 2, -this.ctx.canvas.height / 2)
+		this.viewport.zoom(0.8)
+	}
+	
+	renderTree() {
+		this.assocMap = this.graph.getAssocMap()
+		
+		let x = 0
+		let y = 0
+		
+		for (let component of this.graph.componentsDirected()) {
+			x = this.renderTreeComponent(component, x, y) + 100
+		}
+		
+		this.center()
+	}
+	
+	renderTreeComponent(component, x, y) {
+		let head = component.values().next().value
+		let layers = Array(head.furthestBfs().searchData.dist + 1).fill().map(() => [])
+		
+		for (let child of component.values()) {
+			layers[child.searchData.dist].push(child)
+		}
+		
+		let maxLen = Math.max.apply(null, layers.map((e) => e.length))
+		let max = x
+		
+		for (let layer of layers) {
+			for (let i = 0; i < layer.length; i++) {
+				let newX = x - 100 * ((layer.length - maxLen) / 2 - i)
+				max = Math.max(max, newX)
+				layer[i].gfx.x = newX
+				layer[i].gfx.y = y
+			}
+			
+			y += 100
+		}
+		
+		return max
+	}
+	
+	renderForce() {
+		this.assocMap = this.graph.getAssocMap()
+		
+		this.forcing = true
+		this.forcingUpdate()
+	}
+	
+	forcingUpdate() {
+		if (!this.forcing || this.pruning) {
+			this.forcing = false
+			this.forcingTimer = 0
+			return
+		}
+		
+		let time = performance.now()
+		
+		let minx = Infinity
+		let maxx = -Infinity
+		let miny = Infinity
+		let maxy = -Infinity
+		
+		for (let gfx of this.children) {
+			minx = Math.min(minx, gfx.x)
+			maxx = Math.max(maxx, gfx.x)
+			miny = Math.min(miny, gfx.y)
+			maxy = Math.max(maxy, gfx.y)
+		}
+		
+		while (performance.now() < time + 1000 / 15) {
+			let width = Math.max(maxx - minx, maxy - miny)
+			let quadtree = this.populateQuadtree(this.children, minx, minx + width, miny, miny + width)
+			
+			for (let gfx1 of this.children) {
+				gfx1.fx = 0
+				gfx1.fy = 0
+				
+				this.applyRepulsion(gfx1, quadtree)
+				
+				for (let dest of this.assocMap.get(gfx1.node)) {
+					let gfx2 = dest.gfx
+					
+					let dx = gfx2.x - gfx1.x
+					let dy = gfx2.y - gfx1.y
+					let sqdist = dx * dx + dy * dy
+					
+					let dist = Math.sqrt(sqdist)
+					let max = dist
+					
+					let f = Math.min(
+						this.constructor.BH_SPRING * Math.log(dist / this.constructor.BH_LEN) +
+						this.constructor.BH_LEN * this.constructor.BH_LEN / sqdist, max)
+					gfx1.fx += dx * f / dist
+					gfx1.fy += dy * f / dist
+				}
+			}
+			
+			let cool = 1
+			//let cool = 0.9999 ** this.forcingTimer
+			let maxf = 0
+			
+			minx = Infinity
+			maxx = -Infinity
+			miny = Infinity
+			maxy = -Infinity
+			
+			for (let gfx of this.children) {
+				gfx.x += gfx.fx * cool
+				gfx.y += gfx.fy * cool
+				
+				maxf = Math.max(maxf, gfx.fx * gfx.fx + gfx.fy * gfx.fy)
+				
+				minx = Math.min(minx, gfx.x)
+				maxx = Math.max(maxx, gfx.x)
+				miny = Math.min(miny, gfx.y)
+				maxy = Math.max(maxy, gfx.y)
+			}
+			
+			if (maxf < 0.1 / this.viewport.scale) {
+				this.forcing = false
+				break
+			}
+		}
+			
+		this.forcingTimer++
+		this.center()
+	}
+	
+	populateQuadtree(gfxNodes, minx, maxx, miny, maxy) {
+		if (gfxNodes.size < 2) {
+			let el = gfxNodes.values().next().value
+			return {
+				leaf: true,
+				x: el?.x,
+				y: el?.y,
+				count: gfxNodes.size,
+				node: el
+			}
+		}
+		
+		let subNodes = [new Set(), new Set(), new Set(), new Set()]
+		
+		let midx = (minx + maxx) / 2
+		let midy = (miny + maxy) / 2
+		
+		let i = 0
+		
+		for (let gfx of gfxNodes) {
+			if (maxx - minx < 1) {
+				gfx.x += i * 5
+				gfx.y += i * 5
+				subNodes[i % 4].add(gfx)
+			} else {
+				subNodes[
+					gfx.x <= midx && gfx.y <= midy ? 0 :
+					gfx.x >= midx && gfx.y <= midy ? 1 :
+					gfx.x <= midx && gfx.y >= midy ? 2 : 3].add(gfx)
+			}
+			
+			i++
+		}
+		
+		return {
+			leaf: false,
+			x: midx,
+			y: midy,
+			maxSqDist: (maxx - minx) * (maxx - minx) / this.constructor.BH_THRESHOLD,
+			count: gfxNodes.size,
+			nodes: [
+				this.populateQuadtree(subNodes[0], minx, midx, miny, midy),
+				this.populateQuadtree(subNodes[1], midx, maxx, miny, midy),
+				this.populateQuadtree(subNodes[2], minx, midx, midy, maxy),
+				this.populateQuadtree(subNodes[3], midx, maxx, midy, maxy)]
+		}
+	}
+	
+	applyRepulsion(gfx, tree) {
+		if (tree.leaf && (tree.count == 0 || tree.node == gfx)) {
+			return
+		}
+		
+		let dx = tree.x - gfx.x
+		let dy = tree.y - gfx.y
+		let sqdist = dx * dx + dy * dy
+		
+		if (tree.leaf || sqdist > tree.maxSqDist) {
+			let dist = Math.sqrt(sqdist)
+			let max = dist
+			
+			let f = -tree.count * Math.min(this.constructor.BH_LEN * this.constructor.BH_LEN / sqdist, max)
+			gfx.fx += dx * f / dist
+			gfx.fy += dy * f / dist
+		} else {
+			this.applyRepulsion(gfx, tree.nodes[0])
+			this.applyRepulsion(gfx, tree.nodes[1])
+			this.applyRepulsion(gfx, tree.nodes[2])
+			this.applyRepulsion(gfx, tree.nodes[3])
+		}
+	}
+	
+	renderBarycentric() {
+		this.assocMap = this.graph.getAssocMap()
+		
+		let cycleEnd = null
+		let cycleLen = 0
+		
+		let dists = new Map()
+		let lasts = new Map()
+		
+		let node
+		let i = Math.floor(Math.random() * this.graph.size)
+		
+		for (let cur of this.graph.values()) {
+			if (i-- < 0) {
+				break
+			}
+			
+			node = cur
+		}
+		
+		let id = Symbol()
+		
+		let queue = [node]
+		let visited = new Set()
+		
+		node.searchData.id = id
+		node.searchData.dist = 0
+		node.searchData.last = undefined
+		
+		while (queue.length) {
+			let cur = queue.pop()
+			let dist = cur.searchData.dist
+			let last = cur.searchData.last
+			
+			visited.add(cur)
+			
+			for (let dest of this.assocMap.get(cur)) {
+				if (last != node && dest == node && cycleLen < dist + 1) {
+					cycleEnd = cur
+					cycleLen = dist + 1
+				}
+				
+				if (!visited.has(dest)) {
+					dest.searchData.id = id
+					dest.searchData.dist = dist + 1
+					dest.searchData.last = cur
+					queue.push(dest)
+				}
+			}
+		}
+		
+		cycleEnd ??= node.furthestBfs()
+		
+		let cycle = cycleEnd.unwrap()
+		let r = 50 * cycle.length / Math.PI
+		
+		for (let i = 0; i < cycle.length; i++) {
+			let k = i + Math.random() / 2
+			cycle[i].gfx.x = r * Math.cos(2 * Math.PI * k / cycle.length)
+			cycle[i].gfx.y = r * Math.sin(2 * Math.PI * k / cycle.length)
+		}
+		
+		let cycleSet = new Set(cycle)
+		let delta = Infinity
+		
+		while (delta > 3) {
+			delta = 0
+			
+			for (let node of this.graph.values()) {
+				let dests = this.assocMap.get(node)
+				
+				if (dests.size == 0 || cycleSet.has(node)) {
+					continue
+				}
+				
+				let sumX = 0
+				let sumY = 0
+				
+				for (let dest of dests) {
+					sumX += dest.gfx.x
+					sumY += dest.gfx.y
+				}
+				
+				node.gfx.fx = sumX / dests.size
+				node.gfx.fy = sumY / dests.size
+			}
+			
+			for (let node of this.graph.values()) {
+				if (cycleSet.has(node)) {
+					continue
+				}
+				
+				delta = Math.max(delta, Math.hypot(node.gfx.fx - node.gfx.x, node.gfx.fy - node.gfx.y))
+				
+				node.gfx.x = node.gfx.fx
+				node.gfx.y = node.gfx.fy
+			}
+		}
+		
+		this.center()
+	}
+	
+	resetDijkstra(resetStart, resetEnd) {
+		this.pruning = false
+		
+		if (resetStart) {
+			this.dijkstraStart = null
+		}
+		
+		if (resetEnd) {
+			this.dijkstraEnd = null
+		}
+		
+		this.dijkstraVisited = new Set()
+		this.dijkstraCxns = new Set()
+		this.dijkstraLabel = "-"
+	}
+	
+	dijkstra() {
+		if (!this.dijkstraStart) {
+			return
+		}
+		
+		this.pruning = false
+		
+		if (this.dijkstraEnd) {
+			let res = this.dijkstraStart.node.dijkstra(this.dijkstraEnd.node)
+			this.dijkstraLabel = res?.searchData.dist.toString() ?? "N/A"
+			
+			if (res) {
+				this.dijkstraCxns.clear()
+				
+				for (let [src, dest] of res.unwrap().windowsGen(2)) {
+					this.dijkstraVisited.add(dest)
+					this.dijkstraCxns.add(src.getCxn(dest))
+				}
+			}
+		} else {
+			this.dijkstraStart.node.exploreDijkstra(undefined, this.dijkstraVisited)
+			this.dijkstraLabel = this.dijkstraVisited.size
+			this.dijkstraCxns.clear()
+			
+			for (let node of this.dijkstraVisited) {
+				if (node.searchData.last) {
+					this.dijkstraCxns.add(node.searchData.last.getCxn(node))
+				}
+			}
+		}
+	}
+}
+
+GraphicalGraphController = class GraphicalGraphController extends CanvasElement {
+	static BUTTONS_START_X = 75
+	static BUTTONS_START_Y = 10
+	
+	constructor(graph) {
+		super()
+		
+		this.graphGfx = new GraphicalGraph(graph)
+		
+		this.buttonX = this.constructor.BUTTONS_START_X
+		this.buttonY = this.constructor.BUTTONS_START_Y
+		
+		this
+			.addToggleButton("dual sep", this.graphGfx.config, "dualCxnSep")
+			.addToggleButton("cxns", this.graphGfx.config, "showCxns")
+			.addToggleButton("weights", this.graphGfx.config, "showWeights")
+			.addToggleButton("tangible cxns", this.graphGfx.config, "tangibleCxns")
+			.addToggleButton("sel start", this.graphGfx, "seekingStart", () => this.graphGfx.resetDijkstra(true, false))
+			.addToggleButton("sel end", this.graphGfx, "seekingEnd", () => this.graphGfx.resetDijkstra(false, true))
+			.addButton("dijkstra", () => this.graphGfx.dijkstra())
+			.addButton("reset dijkstra", () => this.graphGfx.resetDijkstra(true, true))
+			.addToggleButton("pruning mode", this.graphGfx, "pruning", () => this.graphGfx.resetDijkstra(false, false))
+			.addButton("focus", () => this.ctx.canvas.focus())
+			.addButton("<", () => this.left(50))
+			.addButton(">", () => this.right(50))
+			.addButton("^", () => this.up(50))
+			.addButton("v", () => this.down(50))
+			.addButton("+", () => this.zoomIn(1.2))
+			.addButton("-", () => this.zoomOut(1.2))
+			.addButton("center", () => this.graphGfx.center())
+			.addButton("tree", () => this.graphGfx.renderTree())
+			.addToggleButton("force", this.graphGfx, "forcing", (forcing) => forcing && this.graphGfx.renderForce())
+			.addButton("bary", () => this.graphGfx.renderBarycentric())
+			.addElement(this.graphGfx)
+	}
+	
+	keyboardUpdate(keyboard) {
+		let shift = keyboard.down.has("Shift")
+		
+		if (keyboard.down.has("ArrowLeft")) {
+			this.left(shift ? 10 : 50)
+		} else if (keyboard.down.has("ArrowRight")) {
+			this.right(shift ? 10 : 50)
+		} else if (keyboard.down.has("ArrowUp")) {
+			this.up(shift ? 10 : 50)
+		} else if (keyboard.down.has("ArrowDown")) {
+			this.down(shift ? 10 : 50)
+		} else if (keyboard.down.has("=") || keyboard.down.has("+")) {
+			this.zoomIn(shift ? 1.04 : 1.2)
+		} else if (keyboard.down.has("-") || keyboard.down.has("_")) {
+			this.zoomOut(shift ? 1.04 : 1.2)
+		}
+	}
+	
+	left(n) {
+		return this.graphGfx.viewport.translate(-n, 0)
+	}
+	
+	right(n) {
+		return this.graphGfx.viewport.translate(n, 0)
+	}
+	
+	up(n) {
+		return this.graphGfx.viewport.translate(0, -n)
+	}
+	
+	down(n) {
+		return this.graphGfx.viewport.translate(0, n)
+	}
+	
+	zoomIn(n) {
+		return this.graphGfx.viewport.zoom(n)
+	}
+	
+	zoomOut(n) {
+		return this.graphGfx.viewport.zoom(1 / n)
+	}
+	
+	addButton(label, callback) {
+		let w = label.length
+		
+		this.addElement(new Button(this.buttonX, this.buttonY, 10 * w + 10, 25, label, callback))
+		
+		this.buttonX += 10 * w + 20
+		
+		if (this.buttonX > 1000) {
+			this.buttonX = this.constructor.BUTTONS_START_X
+			this.buttonY += 30
+		}
+		
+		return this
+	}
+	
+	addToggleButton(label, obj, prop, callback) {
+		let w = label.length
+		
+		this.addElement(new ToggleButton(this.buttonX, this.buttonY, 10 * w + 10, 25, label, obj, prop, callback))
+		
+		this.buttonX += 10 * w + 20
+		
+		if (this.buttonX > 1000) {
+			this.buttonX = this.constructor.BUTTONS_START_X
+			this.buttonY += 30
+		}
+		
+		return this
 	}
 }
 
@@ -3712,6 +5199,24 @@ load = function load() {
 			},
 			configurable: true
 		},
+		unorderedPairGen: {
+			value: function* unorderedPairGen(that = this) {
+				let len = Math.min(this.length, that.length)
+				
+				for (let i = 0; i < len - 1; i++) {
+					for (let j = i + 1; j < len; j++) {
+						yield [this[i], that[j]]
+					}
+				}
+			},
+			configurable: true
+		},
+		unorderedPair: {
+			value: function unorderedPair(that) {
+				return [...this.unorderedPairGen(that)]
+			},
+			configurable: true
+		},
 		interleave: {
 			value: function interleave(that) {
 				return [this, that].transpose().flat()
@@ -4014,7 +5519,7 @@ load = function load() {
 			configurable: true
 		},
 		windowsGen: {
-			value: function *windowsGen(n, wrap = false) {
+			value: function* windowsGen(n, wrap = false) {
 				if (this.length < n) {
 					yield [...this]
 				}
@@ -4201,13 +5706,25 @@ load = function load() {
 		pair: {
 			value: function pair(that = this) {
 				let len = Math.min(this.length, that.length)
-				let res = new PointArray(len)
+				let res = new Array(len)
 				
 				for (let i = 0; i < len; i++) {
-					res[i] = [this[i], that[i]]
+					res[i] = new PointArray(this[i], that[i])
 				}
 				
 				return res
+			},
+			configurable: true
+		},
+		unorderedPairGen: {
+			value: function* unorderedPairGen(that = this) {
+				let len = Math.min(this.length, that.length)
+				
+				for (let i = 0; i < len - 1; i++) {
+					for (let j = i + 1; j < len; j++) {
+						yield new PointArray(this[i], that[j])
+					}
+				}
 			},
 			configurable: true
 		},
@@ -4276,7 +5793,7 @@ load = function load() {
 			configurable: true
 		},
 		windowsGen: {
-			value: function *windowsGen(n, wrap = false) {
+			value: function* windowsGen(n, wrap = false) {
 				if (this.length < n) {
 					yield PointArray.from(this)
 				}

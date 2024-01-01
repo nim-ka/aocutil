@@ -1,12 +1,30 @@
+Cxn = class Cxn {
+	constructor(src, dest, weight = 1) {
+		this.src = src
+		this.dest = dest
+		this.weight = weight
+		
+		this.deleted = false
+	}
+	
+	delete() {
+		this.src.removeCxn(this.dest)
+	}
+	
+	mirror() {
+		return this.dest.cxns.get(this.src)
+	}
+}
+
 SearchData = class SearchData {
-	constructor(id, dist = Infinity, last = undefined, custom = {}) {
+	constructor(id, dist = Infinity, last = undefined, custom = false) {
 		this.id = id
 		this.dist = dist
 		this.last = last
 		this.custom = custom
 	}
 
-	get(id, dist = Infinity, last = undefined, custom = {}) {
+	get(id, dist = Infinity, last = undefined, custom = false) {
 		if (this.id != id) {
 			this.id = id
 			this.dist = dist
@@ -17,7 +35,7 @@ SearchData = class SearchData {
 		return this
 	}
 
-	update(id, dist = Infinity, last = undefined, custom = {}) {
+	update(id, dist = Infinity, last = undefined, custom = false) {
 		if (this.id != id || this.dist > dist) {
 			this.id = id
 			this.dist = dist
@@ -43,17 +61,25 @@ Node = class Node {
 	}
 
 	addCxn(node, weight = 1) {
-		this.cxns.set(node, weight)
+		this.cxns.set(node, new Cxn(this, node, weight))
 		return this
 	}
 	
 	removeCxn(node) {
-		this.cxns.delete(node)
+		if (this.cxns.has(node)) {
+			this.cxns.get(node).deleted = true
+			this.cxns.delete(node)
+		}
+		
 		return this
 	}
 	
-	getWeightTo(node) {
+	getCxn(node) {
 		return this.cxns.get(node)
+	}
+	
+	getWeight(node) {
+		return this.getCxn(node).weight
 	}
 
 	unwrap() {
@@ -90,8 +116,7 @@ Node = class Node {
 			}
 
 			for (let [dest] of cur.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				if (!visited) {
+				if (!dest.searchData.get(id, Infinity, undefined, false).custom) {
 					dest.searchData.update(id, depth + 1, cur, true)
 					queue.push(dest)
 				}
@@ -101,7 +126,7 @@ Node = class Node {
 				console.log(i, queue.length)
 			}
 		}
-
+		
 		if (Node.DEBUG) {
 			console.timeEnd("exploreBfs")
 		}
@@ -138,12 +163,12 @@ Node = class Node {
 				addCxns(min)
 			}
 
-			for (let [dest, weight] of min.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				let dist = minDist + weight
+			for (let [dest, cxn] of min.cxns) {
+				let seen = dest.searchData.get(id, Infinity, undefined, false).custom
+				let dist = minDist + cxn.weight
 
 				if (dest.searchData.update(id, dist, min, true)) {
-					if (visited) {
+					if (seen) {
 						heap.up(heap.data.indexOf(dest))
 					} else {
 						heap.insert(dest)
@@ -187,8 +212,7 @@ Node = class Node {
 			}
 
 			for (let [dest] of cur.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				if (!visited) {
+				if (!dest.searchData.get(id, Infinity, undefined, false).custom) {
 					dest.searchData.update(id, depth + 1, cur, true)
 					queue.push(dest)
 				}
@@ -251,8 +275,7 @@ Node = class Node {
 			}
 
 			for (let [dest] of cur.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				if (!visited) {
+				if (!dest.searchData.get(id, Infinity, undefined, false).custom) {
 					dest.searchData.update(id, depth + 1, cur, true)
 					queue.push(dest)
 				}
@@ -319,12 +342,12 @@ Node = class Node {
 				addCxns(min)
 			}
 
-			for (let [dest, weight] of min.cxns) {
-				let visited = dest.searchData.get(id, Infinity, undefined, false).custom
-				let dist = minDist + weight
+			for (let [dest, cxn] of min.cxns) {
+				let seen = dest.searchData.get(id, Infinity, undefined, false).custom
+				let dist = minDist + cxn.weight
 
 				if (dest.searchData.update(id, dist, min, true)) {
-					if (visited) {
+					if (seen) {
 						heap.up(heap.data.indexOf(dest))
 					} else {
 						heap.insert(dest)
@@ -494,7 +517,7 @@ Graph = class Graph extends Map {
 		super()
 		
 		for (let node of nodes) {
-			let key = node.val
+			let key = node.name || node.val
 			
 			if (this.has(key)) {
 				console.error(this.get(key))
@@ -506,12 +529,53 @@ Graph = class Graph extends Map {
 		}
 	}
 	
+	copy() {
+		return new Graph(this)
+	}
+	
+	delete(key) {
+		let node = this.get(key)
+		
+		if (!node) {
+			return false
+		}
+		
+		for (let otherNode of this.values()) {
+			otherNode.removeCxn(node)
+		}
+		
+		return super.delete(key)
+	}
+	
+	deleteNode(node) {
+		return this.delete(node.name || node.val)
+	}
+	
 	getDef(key) {
 		if (!this.has(key)) {
-			this.set(key, new Node(key))
+			this.set(key, new Node(key, key))
 		}
 		
 		return this.get(key)
+	}
+	
+	getAssocMap() {
+		let assocMap = new Map()
+		
+		for (let cxn of this.cxns()) {
+			if (!assocMap.has(cxn.src)) {
+				assocMap.set(cxn.src, new Set())
+			}
+			
+			if (!assocMap.has(cxn.dest)) {
+				assocMap.set(cxn.dest, new Set())
+			}
+			
+			assocMap.get(cxn.src).add(cxn.dest)
+			assocMap.get(cxn.dest).add(cxn.src)
+		}
+		
+		return assocMap
 	}
 	
 	numCxns() {
@@ -526,7 +590,91 @@ Graph = class Graph extends Map {
 	
 	isConnected(key) {
 		let start = key ? this.get(key) : this.values().next().value
-		return this.size == start.explore().size
+		return this.size == start.exploreDfs().size
+	}
+	
+	isSymmetric() {
+		for (let cxn of this.cxns) {
+			if (cxn.mirror?.weight != cxn.weight) {
+				return false
+			}
+		}
+		
+		return true
+	}
+	
+	resetSearch() {
+		let id = Symbol()
+		
+		for (let node of this.values()) {
+			node.searchData.update(id)
+		}
+		
+		return this
+	}
+	
+	componentsUndirected() {
+		this.resetSearch()
+		
+		let res = []
+		
+		for (let node of this.values()) {
+			if (!node.searchData.custom) {
+				res.push(new Graph(node.exploreDfs()))
+			}
+		}
+		
+		return res
+	}
+	
+	componentsDirected() {
+		let components = this.componentsUndirected()
+		
+		for (let i = components.length - 1; i >= 0; i--) {
+			for (let node of components[i].values()) {
+				for (let j = i - 1; j >= 0; j--) {
+					Map.prototype.delete.call(components[j], node.name || node.val)
+				}
+			}
+		}
+		
+		return components.filter((e) => e.size)
+	}
+	
+	minimumSpanningTree() {
+		let id = Symbol()
+		
+		let heap = new BinHeap((p, c) => {
+			let pdist = p.searchData.get(id, Infinity, undefined, true).dist
+			let cdist = c.searchData.get(id, Infinity, undefined, true).dist
+			return pdist <= cdist
+		})
+		
+		for (let node of this.values()) {
+			heap.insert(node)
+		}
+		
+		let visited = new Set()
+		
+		while (heap.data.length) {
+			let node = heap.extract()
+			
+			visited.add(node)
+			
+			for (let [dest, cxn] of node.cxns) {
+				if (!visited.has(dest) && dest.searchData.update(id, cxn.weight, node, true)) {
+					heap.up(heap.data.indexOf(dest))
+				}
+			}
+		}
+		
+		return visited
+	}
+	
+	*cxns() {
+		for (let node of this.values()) {
+			yield* node.cxns.values()
+		}
 	}
 }
 
