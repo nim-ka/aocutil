@@ -17,6 +17,8 @@ GraphicalCxn = class GraphicalCxn extends CanvasElement {
 		this.size = size
 		
 		this.angle = 0
+		this.arrowsize = 0
+		this.dist = 0
 		
 		this.x1 = 0
 		this.y1 = 0
@@ -96,11 +98,14 @@ GraphicalCxn = class GraphicalCxn extends CanvasElement {
 		this.x2 = thatNode.x - thatNode.size * Math.cos(this.angle - shift)
 		this.y2 = thatNode.y - thatNode.size * Math.sin(this.angle - shift)
 		
-		this.x3 = this.x2 - this.constructor.ARROW_SIZE * Math.cos(this.angle + this.constructor.ARROW_ANGLE)
-		this.y3 = this.y2 - this.constructor.ARROW_SIZE * Math.sin(this.angle + this.constructor.ARROW_ANGLE)
+		this.dist = Math.hypot(thatNode.x - thisNode.x, thatNode.y - thisNode.y) - thisNode.size - thatNode.size
+		this.arrowsize = Math.sign(this.dist) * Math.min(this.constructor.ARROW_SIZE, Math.abs(this.dist / 3))
 		
-		this.x4 = this.x2 - this.constructor.ARROW_SIZE * Math.cos(this.angle - this.constructor.ARROW_ANGLE)
-		this.y4 = this.y2 - this.constructor.ARROW_SIZE * Math.sin(this.angle - this.constructor.ARROW_ANGLE)
+		this.x3 = this.x2 - this.arrowsize * Math.cos(this.angle + this.constructor.ARROW_ANGLE)
+		this.y3 = this.y2 - this.arrowsize * Math.sin(this.angle + this.constructor.ARROW_ANGLE)
+		
+		this.x4 = this.x2 - this.arrowsize * Math.cos(this.angle - this.constructor.ARROW_ANGLE)
+		this.y4 = this.y2 - this.arrowsize * Math.sin(this.angle - this.constructor.ARROW_ANGLE)
 		
 		let push = (shift ? 1 : -1) * (shift + this.constructor.WEIGHT_SEP_ANGLE)
 
@@ -123,25 +128,25 @@ GraphicalCxn = class GraphicalCxn extends CanvasElement {
 		this.vym = this.graphGfx.viewport.convertY(this.ym)
 		
 		this.vsize = this.size * this.graphGfx.viewport.scale
-		this.varrowsize = this.constructor.ARROW_SIZE * this.graphGfx.viewport.scale
-		this.vdist = Math.hypot(this.vx2 - this.vx1, this.vy2 - this.vy1)
+		this.varrowsize = Math.abs(this.arrowsize) * this.graphGfx.viewport.scale
+		this.vdist = Math.abs(this.dist) * this.graphGfx.viewport.scale
 	}
 	
 	drawPost() {
-		if (!this.graphGfx.config.showCxns) {
+		if (!this.graphGfx.config.showCxns || this.vdist < 2) {
 			return
 		}
 		
 		this.ctx.strokeStyle = this.getColor()
 		this.ctx.fillStyle = this.getColor()
 		this.ctx.lineWidth = 1
-
+		
 		this.ctx.beginPath()
 		this.ctx.moveTo(this.vx1, this.vy1)
 		this.ctx.lineTo(this.vx2, this.vy2)
 		this.ctx.stroke()
 
-		if (this.varrowsize > 3) {
+		if (this.varrowsize > 6) {
 			this.ctx.beginPath()
 			this.ctx.moveTo(this.vx2, this.vy2)
 			this.ctx.lineTo(this.vx3, this.vy3)
@@ -408,7 +413,7 @@ GraphicalGraph = class GraphicalGraph extends CanvasElement {
 		
 		this.viewport.x = (minx + maxx) / 2
 		this.viewport.y = (miny + maxy) / 2
-		this.viewport.scale = Math.min(this.ctx.canvas.width / (maxx - minx), this.ctx.canvas.height / (maxy - miny))
+		this.viewport.scale = Math.min(this.ctx.canvas.width / (maxx - minx), this.ctx.canvas.height / (maxy - miny), 4)
 		this.viewport.translate(-this.ctx.canvas.width / 2, -this.ctx.canvas.height / 2)
 		this.viewport.zoom(0.8)
 	}
@@ -452,6 +457,8 @@ GraphicalGraph = class GraphicalGraph extends CanvasElement {
 	}
 	
 	renderForce() {
+		this.center()
+		
 		this.assocMap = this.graph.getAssocMap()
 		
 		this.forcing = true
@@ -770,94 +777,87 @@ GraphicalGraphController = class GraphicalGraphController extends CanvasElement 
 		
 		this.graphGfx = new GraphicalGraph(graph)
 		
+		this.shift = false
+		
 		this.buttonX = this.constructor.BUTTONS_START_X
 		this.buttonY = this.constructor.BUTTONS_START_Y
 		
-		this
-			.addToggleButton("dual sep", this.graphGfx.config, "dualCxnSep")
-			.addToggleButton("cxns", this.graphGfx.config, "showCxns")
-			.addToggleButton("weights", this.graphGfx.config, "showWeights")
-			.addToggleButton("tangible cxns", this.graphGfx.config, "tangibleCxns")
-			.addToggleButton("sel start", this.graphGfx, "seekingStart", () => this.graphGfx.resetDijkstra(true, false))
-			.addToggleButton("sel end", this.graphGfx, "seekingEnd", () => this.graphGfx.resetDijkstra(false, true))
-			.addButton("dijkstra", () => this.graphGfx.dijkstra())
-			.addButton("reset dijkstra", () => this.graphGfx.resetDijkstra(true, true))
-			.addToggleButton("pruning mode", this.graphGfx, "pruning", () => this.graphGfx.resetDijkstra(false, false))
-			.addButton("focus", () => this.ctx.canvas.focus())
-			.addButton("<", () => this.left(50))
-			.addButton(">", () => this.right(50))
-			.addButton("^", () => this.up(50))
-			.addButton("v", () => this.down(50))
-			.addButton("+", () => this.zoomIn(1.2))
-			.addButton("-", () => this.zoomOut(1.2))
-			.addButton("center", () => this.graphGfx.center())
-			.addButton("tree", () => this.graphGfx.renderTree())
-			.addToggleButton("force", this.graphGfx, "forcing", (forcing) => forcing && this.graphGfx.renderForce())
-			.addButton("bary", () => this.graphGfx.renderBarycentric())
-			.addElement(this.graphGfx)
+		this.addButton(KeyButton, "dUal sep", ["u", "U"], "release",
+			() => {}, { obj: this.graphGfx.config, prop: "dualCxnSep" })
+		this.addButton(KeyButton, "Cxns", ["c", "C"], "release",
+			() => {}, { obj: this.graphGfx.config, prop: "showCxns" })
+		this.addButton(KeyButton, "Weights", ["w", "W"], "release",
+			() => {}, { obj: this.graphGfx.config, prop: "showWeights" })
+		this.addButton(KeyButton, "tanGible cxns", ["g", "G"], "release",
+			() => {}, { obj: this.graphGfx.config, prop: "tangibleCxns" })
+		this.addButton(KeyButton, "sel Start", ["s", "S"], "release",
+			() => this.graphGfx.resetDijkstra(true, false), { obj: this.graphGfx, prop: "seekingStart" })
+		this.addButton(KeyButton, "sel End", ["e", "E"], "release",
+			() => this.graphGfx.resetDijkstra(false, true), { obj: this.graphGfx, prop: "seekingEnd" })
+		this.addButton(KeyButton, "Dijkstra", ["d", "D"], "release",
+			() => this.graphGfx.dijkstra())
+		this.addButton(KeyButton, "Reset dijkstra", ["r", "R"], "release",
+			() => this.graphGfx.resetDijkstra(true, true))
+		this.addButton(KeyButton, "Pruning mode", ["p", "P"], "release",
+			() => this.graphGfx.resetDijkstra(false, false), { obj: this.graphGfx, prop: "pruning" })
+		this.addButton(KeyButton, "focus", [], "",
+			() => this.ctx.canvas.focus())
+		this.addButton(KeyButton, "\u2190", ["ArrowLeft"], "down",
+			() => this.left())
+		this.addButton(KeyButton, "\u2192", ["ArrowRight"], "down",
+			() => this.right())
+		this.addButton(KeyButton, "\u2191", ["ArrowUp"], "down",
+			() => this.up())
+		this.addButton(KeyButton, "\u2193", ["ArrowDown"], "down",
+			() => this.down())
+		this.addButton(KeyButton, "+", ["=", "+"], "down",
+			() => this.zoomIn())
+		this.addButton(KeyButton, "-", ["-", "_"], "down",
+			() => this.zoomOut())
+		this.addButton(KeyButton, "cENTER", ["Enter"], "release",
+			() => this.graphGfx.center())
+		this.addButton(KeyButton, "Tree", ["t", "T"], "release",
+			() => this.graphGfx.renderTree())
+		this.addButton(KeyButton, "Force", ["f", "F"], "release",
+			(forcing) => forcing && this.graphGfx.renderForce(), { obj: this.graphGfx, prop: "forcing" })
+		this.addButton(KeyButton, "Bary", ["b", "B"], "release",
+			() => this.graphGfx.renderBarycentric())
+		
+		this.addElement(this.graphGfx)
 	}
 	
 	keyboardUpdate(keyboard) {
-		let shift = keyboard.down.has("Shift")
+		this.shift = keyboard.down.has("Shift")
+	}
+	
+	left() {
+		return this.graphGfx.viewport.translate(this.shift ? -10 : -50, 0)
+	}
+	
+	right() {
+		return this.graphGfx.viewport.translate(this.shift ? 10 : 50, 0)
+	}
+	
+	up() {
+		return this.graphGfx.viewport.translate(0, this.shift ? -10 : -50)
+	}
+	
+	down() {
+		return this.graphGfx.viewport.translate(0, this.shift ? 10 : 50)
+	}
+	
+	zoomIn() {
+		return this.graphGfx.viewport.zoom(this.shift ? 1.04 : 1.2)
+	}
+	
+	zoomOut() {
+		return this.graphGfx.viewport.zoom(this.shift ? 1 / 1.04 : 1 / 1.2)
+	}
+	
+	addButton(cons, ...args) {
+		let w = args[0].length
 		
-		if (keyboard.down.has("ArrowLeft")) {
-			this.left(shift ? 10 : 50)
-		} else if (keyboard.down.has("ArrowRight")) {
-			this.right(shift ? 10 : 50)
-		} else if (keyboard.down.has("ArrowUp")) {
-			this.up(shift ? 10 : 50)
-		} else if (keyboard.down.has("ArrowDown")) {
-			this.down(shift ? 10 : 50)
-		} else if (keyboard.down.has("=") || keyboard.down.has("+")) {
-			this.zoomIn(shift ? 1.04 : 1.2)
-		} else if (keyboard.down.has("-") || keyboard.down.has("_")) {
-			this.zoomOut(shift ? 1.04 : 1.2)
-		}
-	}
-	
-	left(n) {
-		return this.graphGfx.viewport.translate(-n, 0)
-	}
-	
-	right(n) {
-		return this.graphGfx.viewport.translate(n, 0)
-	}
-	
-	up(n) {
-		return this.graphGfx.viewport.translate(0, -n)
-	}
-	
-	down(n) {
-		return this.graphGfx.viewport.translate(0, n)
-	}
-	
-	zoomIn(n) {
-		return this.graphGfx.viewport.zoom(n)
-	}
-	
-	zoomOut(n) {
-		return this.graphGfx.viewport.zoom(1 / n)
-	}
-	
-	addButton(label, callback) {
-		let w = label.length
-		
-		this.addElement(new Button(this.buttonX, this.buttonY, 10 * w + 10, 25, label, callback))
-		
-		this.buttonX += 10 * w + 20
-		
-		if (this.buttonX > 1000) {
-			this.buttonX = this.constructor.BUTTONS_START_X
-			this.buttonY += 30
-		}
-		
-		return this
-	}
-	
-	addToggleButton(label, obj, prop, callback) {
-		let w = label.length
-		
-		this.addElement(new ToggleButton(this.buttonX, this.buttonY, 10 * w + 10, 25, label, obj, prop, callback))
+		this.addElement(new cons(this.buttonX, this.buttonY, 10 * w + 10, 25, ...args))
 		
 		this.buttonX += 10 * w + 20
 		

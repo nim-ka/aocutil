@@ -671,6 +671,12 @@ Graph = class Graph extends Map {
 		return visited
 	}
 	
+	visualize() {
+		return new CanvasController(1200, 800)
+			.addElement(new GraphicalGraphController(this))
+			.start()
+	}
+	
 	*cxns() {
 		for (let node of this.values()) {
 			yield* node.cxns.values()

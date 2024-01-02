@@ -23,21 +23,37 @@ Keyboard = class Keyboard extends EventHandler {
 		super(el)
 		
 		this.down = new Set()
+		
+		this.lastDown = new Set()
 		this.press = new Set()
+		this.release = new Set()
 	}
 	
 	resetFrame() {
 		this.press.clear()
+		this.release.clear()
+		
+		for (let key of this.down) {
+			if (!this.lastDown.has(key)) {
+				this.press.add(key)
+			}
+		}
+		
+		for (let key of this.lastDown) {
+			if (!this.down.has(key)) {
+				this.release.add(key)
+			}
+		}
+		
+		this.lastDown = new Set(this.down)
 	}
 	
 	keydown(evt) {
 		this.down.add(evt.key)
-		this.press.add(evt.key)
 	}
 	
 	keyup(evt) {
 		this.down.delete(evt.key)
-		this.press.delete(evt.key)
 	}
 }
 
@@ -341,9 +357,6 @@ CanvasController = class CanvasController extends CanvasElement {
 			this.fps = Math.max(this.fps + change, 0)
 			this.fpsSlope += 0.1 * (change - this.fpsSlope)
 		}
-		
-		this.keyboard.resetFrame()
-		this.mouse.resetFrame()
 	}
 
 	updatePost() {
@@ -374,6 +387,9 @@ CanvasController = class CanvasController extends CanvasElement {
 	}
 
 	tick() {
+		this.keyboard.resetFrame()
+		this.mouse.resetFrame()
+		
 		this.update(this.keyboard, this.mouse)
 	}
 	
@@ -391,7 +407,13 @@ CanvasController = class CanvasController extends CanvasElement {
 }
 
 Button = class Button extends CanvasElement {
-	constructor(x, y, width, height, label, callback) {
+	static ACTIVE_COLOR = "rgb(215, 215, 255)"
+	
+	static DEPRESSION_PRESS = 2
+	static DEPRESSION_PRESS_TOGGLE = 3
+	static DEPRESSION_ACTIVE = 2
+	
+	constructor(x, y, width, height, label, callback, toggle = null) {
 		super()
 
 		this.x = x
@@ -400,6 +422,18 @@ Button = class Button extends CanvasElement {
 		this.height = height
 		this.label = label
 		this.callback = callback.bind(this)
+		this.toggle = toggle
+		
+		if (this.toggle) {
+			this.callback = function() {
+				let orig = this.toggle.obj[this.toggle.prop]
+				callback.call(this, orig)
+				this.toggle.obj[this.toggle.prop] = !orig
+			}
+		}
+		
+		this.depression = 0
+		this.active = false
 	}
 
 	isIn(x, y) {
@@ -413,6 +447,18 @@ Button = class Button extends CanvasElement {
 
 	mouseRelease(mouse) {
 		this.callback()
+	}
+	
+	updatePost() {
+		this.active = this.toggle?.obj[this.toggle.prop]
+		
+		if (this.depression) {
+			this.press = true
+		} else if (this.press) {
+			this.depression = this.toggle ? this.constructor.DEPRESSION_PRESS_TOGGLE : this.constructor.DEPRESSION_PRESS
+		} else if (this.active) {
+			this.depression = this.constructor.DEPRESSION_ACTIVE
+		}
 	}
 
 	drawTopPost() {
@@ -428,44 +474,43 @@ Button = class Button extends CanvasElement {
 		this.ctx.fill()
 		this.ctx.stroke()
 
-		let depression = this.getDepression()
-
 		this.ctx.fillStyle = this.getFillColor()
 		this.ctx.beginPath()
-		this.ctx.roundRect(this.x + depression, this.y + depression, this.width, this.height, 5)
+		this.ctx.roundRect(this.x + this.depression, this.y + this.depression, this.width, this.height, 5)
 		this.ctx.fill()
 		this.ctx.stroke()
 
 		this.ctx.fillStyle = this.getTextColor()
-		this.ctx.fillText(this.label, this.x + this.width / 2 + depression, this.y + this.height / 2 + depression)
-	}
-	
-	// :(
-	getDepression() {
-		return this.press ? 2 : 0
-	}
-}
-
-ToggleButton = class ToggleButton extends Button {
-	static ACTIVE_COLOR = "rgb(215, 215, 255)"
-	
-	constructor(x, y, width, height, label, obj, prop, callback = () => {}) {
-		super(x, y, width, height, label, function() {
-			let orig = obj[prop]
-			callback.call(this, orig)
-			obj[prop] = !orig
-		})
+		this.ctx.fillText(this.label, this.x + this.width / 2 + this.depression, this.y + this.height / 2 + this.depression)
 		
-		this.obj = obj
-		this.prop = prop
+		this.depression = 0
 	}
 	
 	getFillColor() {
-		return this.obj[this.prop] ? this.constructor.ACTIVE_COLOR : super.getFillColor()
+		return this.active ? this.constructor.ACTIVE_COLOR : super.getFillColor()
+	}
+}
+
+KeyButton = class KeyButton extends Button {
+	constructor(x, y, width, height, label, triggers, type, callback, toggle) {
+		super(x, y, width, height, label, callback, toggle)
+		
+		this.triggers = triggers
+		this.type = type
 	}
 	
-	getDepression() {
-		return this.press ? 3 : this.obj[this.prop] ? 2 : 0
+	keyboardUpdate(keyboard) {
+		this.depression = 0
+		
+		for (let key of this.triggers) {
+			if (keyboard.down.has(key)) {
+				this.depression = this.constructor.DEPRESSION_PRESS_TOGGLE
+			}
+			
+			if (keyboard[this.type].has(key)) {
+				this.callback()
+			}
+		}
 	}
 }
 
