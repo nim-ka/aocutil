@@ -432,7 +432,7 @@ Node = class Node {
 	furthestBfs(addCxns) {
 		let max = this
 		
-		for (let node of this.exploreBfs()) {
+		for (let node of this.exploreBfs(addCxns)) {
 			if (max.searchData.dist < node.searchData.dist) {
 				max = node
 			}
@@ -444,7 +444,7 @@ Node = class Node {
 	furthestDijkstra(addCxns) {
 		let max = this
 		
-		for (let node of this.exploreDijkstra()) {
+		for (let node of this.exploreDijkstra(addCxns)) {
 			if (max.searchData.dist < node.searchData.dist) {
 				max = node
 			}
@@ -456,7 +456,7 @@ Node = class Node {
 	furthestsBfs(addCxns) {
 		let max = [this]
 		
-		for (let node of this.exploreBfs()) {
+		for (let node of this.exploreBfs(addCxns)) {
 			let maxDist = max[0].searchData.dist
 			let dist = node.searchData.dist
 			
@@ -475,7 +475,7 @@ Node = class Node {
 	furthestsDijkstra(addCxns) {
 		let max = [this]
 		
-		for (let node of this.exploreDijkstra()) {
+		for (let node of this.exploreDijkstra(addCxns)) {
 			let maxDist = max[0].searchData.dist
 			let dist = node.searchData.dist
 			
@@ -671,8 +671,8 @@ Graph = class Graph extends Map {
 		return visited
 	}
 	
-	visualize() {
-		return new CanvasController(1200, 800)
+	visualize(width = 1200, height = 800) {
+		return new CanvasController(width, height)
 			.addElement(new GraphicalGraphController(this))
 			.start()
 	}

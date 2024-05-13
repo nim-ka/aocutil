@@ -171,6 +171,37 @@ utils = {
 		}
 		
 		return sum
+	},
+	rectIntersects: (a1, a2, b1, b2) => {
+		let aminx = Math.min(a1.x, a2.x)
+		let amaxx = Math.max(a1.x, a2.x)
+		let aminy = Math.min(a1.y, a2.y)
+		let amaxy = Math.max(a1.y, a2.y)
+		let bminx = Math.min(b1.x, b2.x)
+		let bmaxx = Math.max(b1.x, b2.x)
+		let bminy = Math.min(b1.y, b2.y)
+		let bmaxy = Math.max(b1.y, b2.y)
+		
+		return aminx <= bmaxx && bminx <= amaxx &&
+			aminy <= bmaxy && bminy <= amaxy
+	},
+	cuboidIntersects: (a1, a2, b1, b2) => {
+		let aminx = Math.min(a1.x, a2.x)
+		let amaxx = Math.max(a1.x, a2.x)
+		let aminy = Math.min(a1.y, a2.y)
+		let amaxy = Math.max(a1.y, a2.y)
+		let aminz = Math.min(a1.z, a2.z)
+		let amaxz = Math.max(a1.z, a2.z)
+		let bminx = Math.min(b1.x, b2.x)
+		let bmaxx = Math.max(b1.x, b2.x)
+		let bminy = Math.min(b1.y, b2.y)
+		let bmaxy = Math.max(b1.y, b2.y)
+		let bminz = Math.min(b1.z, b2.z)
+		let bmaxz = Math.max(b1.z, b2.z)
+		
+		return aminx <= bmaxx && bminx <= amaxx &&
+			aminy <= bmaxy && bminy <= amaxy &&
+			aminz <= bmaxz && bminz <= amaxz
 	}
 }
 

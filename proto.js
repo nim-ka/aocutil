@@ -79,7 +79,7 @@ load = function load() {
 	Object.defineProperties(globalThis, {
 		input: {
 			get: function input() {
-				let res = document.body.innerText.trimEnd()
+				let res = document.body?.innerText.trimEnd() ?? ""
 				globalThis.inputLength = res.length
 				return res
 			},
@@ -242,6 +242,19 @@ load = function load() {
 					s += this[i]
 				}
 				
+				return s
+			},
+			configurable: true
+		},
+		tr: {
+			value: function tr(inset, outset) {
+				let s = ""
+
+				for (let c of this) {
+					let x = inset.indexOf(c)
+					s += x < 0 ? c : outset[x]
+				}
+
 				return s
 			},
 			configurable: true
@@ -905,6 +918,22 @@ load = function load() {
 			},
 			configurable: true
 		},
+		groupBy: {
+			value: function groupBy(func) {
+				let res = []
+				
+				for (let i = 0; i < this.length; i++) {
+					let el = this[i]
+					let key = +func(el, i, this)
+
+					res[key] ??= []
+					res[key].push(this[i])
+				}
+				
+				return res
+			},
+			configurable: true
+		},
 		windowsGen: {
 			value: function* windowsGen(n, wrap = false) {
 				if (this.length < n) {
@@ -1535,9 +1564,9 @@ load()
 
 if (typeof window != "undefined") {
 	a = input
-	cb = a.split("\n")
+	b = a.split("\n")
 
-	if (cb.every((e) => e.length == cb.length)) {
+	if (b.every((e) => e.length == b.length)) {
 		g = Grid.fromStr(a)
 
 		if (g.every((e) => !Number.isNaN(+e))) {

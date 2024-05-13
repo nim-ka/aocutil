@@ -49,6 +49,11 @@ GraphicalCxn = class GraphicalCxn extends CanvasElement {
 	
 	remove() {
 		this.cxn.delete()
+		
+		if (this.graphGfx.config.symmetric) {
+			this.cxn.mirror()?.gfx.remove()
+		}
+		
 		super.remove()
 	}
 	
@@ -90,7 +95,7 @@ GraphicalCxn = class GraphicalCxn extends CanvasElement {
 		
 		this.angle = Math.atan2(thatNode.y - thisNode.y, thatNode.x - thisNode.x)
 		
-		let shift = this.graphGfx.config.dualCxnSep && this.cxn.dest.cxns.has(this.cxn.src) ? this.constructor.DUAL_CXN_SEP_ANGLE : 0
+		let shift = !this.graphGfx.config.symmetric && this.cxn.dest.cxns.has(this.cxn.src) ? this.constructor.DUAL_CXN_SEP_ANGLE : 0
 
 		this.x1 = thisNode.x + thisNode.size * Math.cos(this.angle + shift)
 		this.y1 = thisNode.y + thisNode.size * Math.sin(this.angle + shift)
@@ -194,9 +199,7 @@ GraphicalNode = class GraphicalNode extends CanvasElement {
 		this.dragMouseX = 0
 		this.dragMouseY = 0
 		
-		for (let cxn of this.node.cxns.values()) {
-			this.addElement(cxn.gfx = new GraphicalCxn(this.graphGfx, cxn, this.size))
-		}
+		this.updateCxnGfxes()
 	}
 	
 	remove() {
@@ -287,6 +290,14 @@ GraphicalNode = class GraphicalNode extends CanvasElement {
 			this.targetY = this.y
 		}
 	}
+	
+	updateCxnGfxes() {
+		for (let cxn of this.node.cxns.values()) {
+			if (!cxn.gfx) {
+				this.addElement(cxn.gfx = new GraphicalCxn(this.graphGfx, cxn, this.size))
+			}
+		}
+	}
 }
 
 GraphicalGraphViewport = class GraphicalGraphViewport {
@@ -342,7 +353,7 @@ GraphicalGraph = class GraphicalGraph extends CanvasElement {
 		showCxns: true,
 		showWeights: false,
 		tangibleCxns: false,
-		dualCxnSep: false
+		symmetric: true
 	}
 	
 	constructor(graph) {
@@ -374,11 +385,7 @@ GraphicalGraph = class GraphicalGraph extends CanvasElement {
 		}
 		
 		if (this.children.size == 0 && this.graph.size > 0) {
-			for (let node of this.graph.values()) {
-				node.gfx = new GraphicalNode(this, node, 0, 0, 20)
-				this.addElement(node.gfx)
-			}
-			
+			this.updateNodeGfxes()
 			this.renderTree()
 		}
 		
@@ -396,6 +403,14 @@ GraphicalGraph = class GraphicalGraph extends CanvasElement {
 		this.ctx.textAlign = "right"
 		this.ctx.fillText(Math.floor(this.viewport.revertX(this.parent.parent.mouse.x)) + ", " + Math.floor(this.viewport.revertY(this.parent.parent.mouse.y)), 1195, 36)
 		this.ctx.fillText(this.viewport.scale.toFixed(2) + ", " + (1 / this.viewport.scale).toFixed(2), 1195, 54)
+	}
+	
+	updateNodeGfxes() {
+		for (let node of this.graph.values()) {
+			if (!node.gfx) {
+				this.addElement(node.gfx = new GraphicalNode(this, node, 0, 0, 20))
+			}
+		}
 	}
 	
 	center() {
@@ -766,6 +781,24 @@ GraphicalGraph = class GraphicalGraph extends CanvasElement {
 			}
 		}
 	}
+	
+	addNode() {
+		
+	}
+	
+	addCxn() {
+		if (!this.dijkstraStart || !this.dijkstraEnd) {
+			return
+		}
+		
+		this.dijkstraStart.node.addCxn(this.dijkstraEnd.node)
+		this.dijkstraStart.updateCxnGfxes()
+		
+		if (this.config.symmetric) {
+			this.dijkstraEnd.node.addCxn(this.dijkstraStart.node)
+			this.dijkstraEnd.updateCxnGfxes()
+		}
+	}
 }
 
 GraphicalGraphController = class GraphicalGraphController extends CanvasElement {
@@ -782,8 +815,8 @@ GraphicalGraphController = class GraphicalGraphController extends CanvasElement 
 		this.buttonX = this.constructor.BUTTONS_START_X
 		this.buttonY = this.constructor.BUTTONS_START_Y
 		
-		this.addButton(KeyButton, "dUal sep", ["u", "U"], "release",
-			() => {}, { obj: this.graphGfx.config, prop: "dualCxnSep" })
+		this.addButton(KeyButton, "sYmmetric", ["y", "Y"], "release",
+			() => {}, { obj: this.graphGfx.config, prop: "symmetric" })
 		this.addButton(KeyButton, "Cxns", ["c", "C"], "release",
 			() => {}, { obj: this.graphGfx.config, prop: "showCxns" })
 		this.addButton(KeyButton, "Weights", ["w", "W"], "release",
@@ -798,10 +831,11 @@ GraphicalGraphController = class GraphicalGraphController extends CanvasElement 
 			() => this.graphGfx.dijkstra())
 		this.addButton(KeyButton, "Reset dijkstra", ["r", "R"], "release",
 			() => this.graphGfx.resetDijkstra(true, true))
+		this.addButton(KeyButton, "Add cxn", ["a", "A"], "release",
+			() => this.graphGfx.addCxn())
 		this.addButton(KeyButton, "Pruning mode", ["p", "P"], "release",
 			() => this.graphGfx.resetDijkstra(false, false), { obj: this.graphGfx, prop: "pruning" })
-		this.addButton(KeyButton, "focus", [], "",
-			() => this.ctx.canvas.focus())
+		this.addButton(Button, "focus", () => this.ctx.canvas.focus())
 		this.addButton(KeyButton, "\u2190", ["ArrowLeft"], "down",
 			() => this.left())
 		this.addButton(KeyButton, "\u2192", ["ArrowRight"], "down",
@@ -822,6 +856,8 @@ GraphicalGraphController = class GraphicalGraphController extends CanvasElement 
 			(forcing) => forcing && this.graphGfx.renderForce(), { obj: this.graphGfx, prop: "forcing" })
 		this.addButton(KeyButton, "Bary", ["b", "B"], "release",
 			() => this.graphGfx.renderBarycentric())
+		this.addButton(KeyButton, "add Node", ["n", "N"], "release",
+			() => this.graphGfx.addNode())
 		
 		this.addElement(this.graphGfx)
 	}

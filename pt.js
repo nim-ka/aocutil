@@ -136,6 +136,9 @@ Pt = Point = class Point {
 	ur(n) { return this.upright(n) }
 	dl(n) { return this.downleft(n) }
 	dr(n) { return this.downright(n) }
+	a(n) { return this.above(n) }
+	b(n) { return this.below(n) }
+	c() { return this.copy() }
 
 	n(n) { return this.up(n) }
 	s(n) { return this.down(n) }
@@ -151,18 +154,18 @@ Pt = Point = class Point {
 			return new PointArray(
 				this.u(),
 				this.l(),
-				this.copy(),
+				this.c(),
 				this.r(),
 				this.d())
 		} else {
 			return new PointArray(
-				this.above(),
+				this.a(),
 				this.u(),
 				this.l(),
-				this.copy(),
+				this.c(),
 				this.r(),
 				this.d(),
-				this.below())
+				this.b())
 		}
 	}
 
@@ -172,19 +175,19 @@ Pt = Point = class Point {
 		}
 
 		return new PointArray(
-			this.u().above(),
-			this.l().above(),
-			this.r().above(),
-			this.d().above(),
+			this.u().a(),
+			this.l().a(),
+			this.r().a(),
+			this.d().a(),
 			this.ul(),
 			this.ur(),
-			this.copy(),
+			this.c(),
 			this.dl(),
 			this.dr(),
-			this.u().below(),
-			this.l().below(),
-			this.r().below(),
-			this.d().below())
+			this.u().b(),
+			this.l().b(),
+			this.r().b(),
+			this.d().b())
 	}
 
 	getUnfilteredDiagNeighborsIncSelf() {
@@ -192,20 +195,20 @@ Pt = Point = class Point {
 			return new PointArray(
 				this.ul(),
 				this.ur(),
-				this.copy(),
+				this.c(),
 				this.dl(),
 				this.dr())
 		} else {
 			return new PointArray(
-				this.ul().above(),
-				this.ur().above(),
-				this.dl().above(),
-				this.dr().above(),
-				this.copy(),
-				this.ul().below(),
-				this.ur().below(),
-				this.dl().below(),
-				this.dr().below())
+				this.ul().a(),
+				this.ur().a(),
+				this.dl().a(),
+				this.dr().a(),
+				this.c(),
+				this.ul().b(),
+				this.ur().b(),
+				this.dl().b(),
+				this.dr().b())
 		}
 	}
 
@@ -216,40 +219,40 @@ Pt = Point = class Point {
 				this.u(),
 				this.ur(),
 				this.l(),
-				this.copy(),
+				this.c(),
 				this.r(),
 				this.dl(),
 				this.d(),
 				this.dr())
 		} else {
 			return new PointArray(
-				this.ul().above(),
-				this.u().above(),
-				this.ur().above(),
-				this.l().above(),
-				this.above(),
-				this.r().above(),
-				this.dl().above(),
-				this.d().above(),
-				this.dr().above(),
+				this.ul().a(),
+				this.u().a(),
+				this.ur().a(),
+				this.l().a(),
+				this.a(),
+				this.r().a(),
+				this.dl().a(),
+				this.d().a(),
+				this.dr().a(),
 				this.ul(),
 				this.u(),
 				this.ur(),
 				this.l(),
-				this.copy(),
+				this.c(),
 				this.r(),
 				this.dl(),
 				this.d(),
 				this.dr(),
-				this.ul().below(),
-				this.u().below(),
-				this.ur().below(),
-				this.l().below(),
-				this.below(),
-				this.r().below(),
-				this.dl().below(),
-				this.d().below(),
-				this.dr().below())
+				this.ul().b(),
+				this.u().b(),
+				this.ur().b(),
+				this.l().b(),
+				this.b(),
+				this.r().b(),
+				this.dl().b(),
+				this.d().b(),
+				this.dr().b())
 		}
 	}
 
