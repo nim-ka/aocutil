@@ -84,6 +84,10 @@ load = function load() {
 				return res
 			},
 			configurable: true
+		},
+		copy: {
+			value: globalThis.copy,
+			configurable: true
 		}
 	})
 
@@ -930,6 +934,12 @@ load = function load() {
 					res[key].push(this[i])
 				}
 				
+				for (let i = 0; i < res.length; i++) {
+					if (!res[i]) {
+						res[i] = []
+					}
+				}
+				
 				return res
 			},
 			configurable: true
@@ -1205,6 +1215,28 @@ load = function load() {
 		int: {
 			value: function int(that) {
 				return this.filter(e => e.isIn(that))
+			},
+			configurable: true
+		},
+		groupBy: {
+			value: function groupBy(func) {
+				let res = []
+				
+				for (let i = 0; i < this.length; i++) {
+					let el = this[i]
+					let key = +func(el, i, this)
+
+					res[key] ??= new PointArray()
+					res[key].push(this[i])
+				}
+				
+				for (let i = 0; i < res.length; i++) {
+					if (!res[i]) {
+						res[i] = new PointArray()
+					}
+				}
+				
+				return res
 			},
 			configurable: true
 		},
