@@ -293,6 +293,13 @@ B = function B(ans, part = 2) {
 	return A(ans, part)
 }
 
+T = async function T(num) {
+	let url = location.href.match(/^(.+)\/day/)[1] + "/day/" + num
+	
+	let text = await utils.fetchText(url)
+	pre = [...text.matchAll(/<pre><code>([\s\S]+?)<\/code><\/pre>/g).map((e) => e[1].trim())]
+}
+
 I = async function I(num) {
 	let url = location.href.match(/^(.+)\/day/)[1] + "/day/" + num + "/input"
 	history.pushState({}, "", url)
@@ -300,6 +307,8 @@ I = async function I(num) {
 	let text = await utils.fetchText(url)
 	a = (document.body.children[0] ?? document.body).innerText = text.trimEnd()
 	defaultPartNum = 1
+	
+	T(num)
 }
 
 II = async function II(num) {

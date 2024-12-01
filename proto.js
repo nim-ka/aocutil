@@ -1612,6 +1612,7 @@ load()
 if (typeof window != "undefined") {
 	a = input
 	b = a.split("\n")
+	pre = null
 
 	if (b.every((e) => e.length == b.length)) {
 		g = Grid.fromStr(a)

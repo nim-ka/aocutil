@@ -45,7 +45,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		return true
 	}
 
-	const year = "2023"
+	const year = "2024"
 
 	for (let i = +process.argv[3] || 1; i <= 25; i++) {
 		let jsPath = `./${year}/${i}.js`

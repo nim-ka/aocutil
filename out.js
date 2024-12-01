@@ -4818,6 +4818,13 @@ B = function B(ans, part = 2) {
 	return A(ans, part)
 }
 
+T = async function T(num) {
+	let url = location.href.match(/^(.+)\/day/)[1] + "/day/" + num
+	
+	let text = await utils.fetchText(url)
+	pre = [...text.matchAll(/<pre><code>([\s\S]+?)<\/code><\/pre>/g).map((e) => e[1].trim())]
+}
+
 I = async function I(num) {
 	let url = location.href.match(/^(.+)\/day/)[1] + "/day/" + num + "/input"
 	history.pushState({}, "", url)
@@ -4825,6 +4832,8 @@ I = async function I(num) {
 	let text = await utils.fetchText(url)
 	a = (document.body.children[0] ?? document.body).innerText = text.trimEnd()
 	defaultPartNum = 1
+	
+	T(num)
 }
 
 II = async function II(num) {
@@ -6449,6 +6458,7 @@ load()
 if (typeof window != "undefined") {
 	a = input
 	b = a.split("\n")
+	pre = null
 
 	if (b.every((e) => e.length == b.length)) {
 		g = Grid.fromStr(a)
@@ -6506,7 +6516,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		return true
 	}
 
-	const year = "2023"
+	const year = "2024"
 
 	for (let i = +process.argv[3] || 1; i <= 25; i++) {
 		let jsPath = `./${year}/${i}.js`
