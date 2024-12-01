@@ -1024,6 +1024,21 @@ load = function load() {
 			},
 			configurable: true
 		},
+		permutations: {
+			value: function permutations() {
+				if (this.length > 10) {
+					console.error("Tried to get all permutations of large array");
+					return;
+				}
+				
+				if (this.length < 2) {
+					return [[...this]]
+				}
+				
+				return this.flatMap((e, i) => [...this.slice(0, i), ...this.slice(i + 1)].permutations().map((f) => (f.push(e), f)))
+			},
+			configurable: true
+		},
 	})
 
 	Object.defineProperties(PointArray.prototype, {

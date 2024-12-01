@@ -2206,19 +2206,28 @@ Node = class Node {
 }
 
 Graph = class Graph extends Map {
-	static fromStr(str, sep1 = " => ", sep2 = ", ", symmetric = false) {
+	static fromStr(str, sep1 = " => ", sep2 = ", ", sep3 = " = ", symmetric = false) {
 		let graph = new Graph()
 		
 		for (let line of str.split("\n")) {
-			let [src, dests] = line.split(sep1)
+			if (!line) {
+				continue
+			}
+			
+			let [src, rest] = line.split(sep1)
+			let [dests, weight] = rest.split(sep3)
+			
+			if (!weight) {
+				weight = 1
+			}
 			
 			for (let dest of dests.split(sep2)) {
 				let srcNode = graph.getDef(src)
 				let destNode = graph.getDef(dest)
 				
-				srcNode.addCxn(destNode)
+				srcNode.addCxn(destNode, weight)
 				if (symmetric) {
-					destNode.addCxn(srcNode)
+					destNode.addCxn(srcNode, weight)
 				}
 			}
 		}
@@ -2228,6 +2237,8 @@ Graph = class Graph extends Map {
 	
 	constructor(nodes = []) {
 		super()
+		
+		this.gfx = null
 		
 		for (let node of nodes) {
 			let key = node.name || node.val
@@ -2354,7 +2365,7 @@ Graph = class Graph extends Map {
 		return components.filter((e) => e.size)
 	}
 	
-	minimumSpanningTree() {
+	spanningTree() {
 		let id = Symbol()
 		
 		let heap = new BinHeap((p, c) => {
@@ -2386,7 +2397,7 @@ Graph = class Graph extends Map {
 	
 	visualize(width = 1200, height = 800) {
 		return new CanvasController(width, height)
-			.addElement(new GraphicalGraphController(this))
+			.addElement(this.gfx = new GraphicalGraphController(this))
 			.start()
 	}
 	
@@ -5847,6 +5858,21 @@ load = function load() {
 		manhattanPerimeter: {
 			value: function manhattanPerimeter() {
 				return utils.manhattanPerimeter(this)
+			},
+			configurable: true
+		},
+		permutations: {
+			value: function permutations() {
+				if (this.length > 10) {
+					console.error("Tried to get all permutations of large array");
+					return;
+				}
+				
+				if (this.length < 2) {
+					return [[...this]]
+				}
+				
+				return this.flatMap((e, i) => [...this.slice(0, i), ...this.slice(i + 1)].permutations().map((f) => (f.push(e), f)))
 			},
 			configurable: true
 		},
