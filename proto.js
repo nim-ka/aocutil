@@ -368,6 +368,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		cat: {
+			value: function cat(that) {
+				return [...this, ...that]
+			},
+			configurable: true
+		},
 		startsWith: {
 			value: function startsWith(that) {
 				for (let i = 0; i < that.length; i++) {
@@ -643,7 +649,8 @@ load = function load() {
 		},
 		sub: {
 			value: function sub(that) {
-				return this.filter(e => !that.includes(e))
+				let set = new Set(that)
+				return this.filter(e => !set.has(e))
 			},
 			configurable: true
 		},
@@ -679,7 +686,8 @@ load = function load() {
 		},
 		int: {
 			value: function int(that) {
-				return this.filter(e => that.includes(e))
+				let set = new Set(that)
+				return this.filter(e => set.has(e))
 			},
 			configurable: true
 		},
@@ -1045,6 +1053,12 @@ load = function load() {
 		arr: {
 			value: function arr() {
 				return PointArray.revert(this)
+			},
+			configurable: true
+		},
+		cat: {
+			value: function cat(that) {
+				return new PointArray(...this, ...that)
 			},
 			configurable: true
 		},

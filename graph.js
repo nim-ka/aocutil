@@ -528,20 +528,32 @@ Graph = class Graph extends Map {
 		this.gfx = null
 		
 		for (let node of nodes) {
-			let key = node.name || node.val
-			
-			if (this.has(key)) {
-				console.error(this.get(key))
-				console.error(node)
-				throw "Graph.Graph: two nodes with same value"
-			}
-			
-			this.set(key, node)
+			this.addNode(node)
 		}
 	}
 	
 	copy() {
-		return new Graph(this)
+		return new Graph(this.values())
+	}
+	
+	add(key) {
+		this.addNode(new Node(key, key))
+	}
+	
+	addNode(node) {
+		let key = node.name || node.val
+		
+		if (this.has(key)) {
+			console.error(this.get(key))
+			console.error(node)
+			throw "Graph.Graph: two nodes with same value"
+		}
+		
+		this.set(key, node)
+	}
+	
+	connect(key1, key2, weight) {
+		this.get(key1).addCxn(this.get(key2), weight)
 	}
 	
 	delete(key) {
@@ -564,7 +576,7 @@ Graph = class Graph extends Map {
 	
 	getDef(key) {
 		if (!this.has(key)) {
-			this.set(key, new Node(key, key))
+			this.add(key)
 		}
 		
 		return this.get(key)
