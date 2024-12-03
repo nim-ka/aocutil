@@ -82,7 +82,7 @@ utils = {
 			}
 		}
 
-		return [...arr, ...arr2]
+		return arr.concat(arr2)
 	},
 	lock: (obj, val) => {
 		let proxy
@@ -138,6 +138,15 @@ utils = {
 		}
 
 		return lastYes
+	},
+	manhattanDist: (arr1, arr2) => {
+		let dist = 0
+		
+		for (let i = 0; i < arr1.length; i++) {
+			dist += Math.abs(arr1[i] - arr2[i])
+		}
+		
+		return dist
 	},
 	shoelaceArea: (arr) => {
 		let area = 0

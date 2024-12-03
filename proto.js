@@ -368,12 +368,6 @@ load = function load() {
 			},
 			configurable: true
 		},
-		cat: {
-			value: function cat(that) {
-				return [...this, ...that]
-			},
-			configurable: true
-		},
 		startsWith: {
 			value: function startsWith(that) {
 				for (let i = 0; i < that.length; i++) {
@@ -636,14 +630,14 @@ load = function load() {
 		rotateLeft: {
 			value: function rotateLeft(n) {
 				let k = (this.length + n) % this.length
-				return [...this.slice(k), ...this.slice(0, k)]
+				return this.slice(k).concat(this.slice(0, k))
 			},
 			configurable: true
 		},
 		rotateRight: {
 			value: function rotateRight(n) {
 				let k = (this.length - n) % this.length
-				return [...this.slice(k), ...this.slice(0, k)]
+				return this.slice(k).concat(this.slice(0, k))
 			},
 			configurable: true
 		},
@@ -1014,6 +1008,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		manhattanDist: {
+			value: function manhattanDist(that) {
+				return utils.manhattanDist(this, that)
+			},
+			configurable: true
+		},
 		shoelaceArea: {
 			value: function shoelaceArea() {
 				return utils.shoelaceArea(this)
@@ -1043,7 +1043,7 @@ load = function load() {
 					return [[...this]]
 				}
 				
-				return this.flatMap((e, i) => [...this.slice(0, i), ...this.slice(i + 1)].permutations().map((f) => (f.push(e), f)))
+				return this.flatMap((e, i) => this.toSpliced(i, 1).permutations().map((f) => (f.push(e), f)))
 			},
 			configurable: true
 		},
@@ -1053,12 +1053,6 @@ load = function load() {
 		arr: {
 			value: function arr() {
 				return PointArray.revert(this)
-			},
-			configurable: true
-		},
-		cat: {
-			value: function cat(that) {
-				return new PointArray(...this, ...that)
 			},
 			configurable: true
 		},
@@ -1501,6 +1495,7 @@ load = function load() {
 
 	alias(Array.prototype, "am", "antimode")
 	alias(Array.prototype, "cart", "cartProduct")
+	alias(Array.prototype, "cat", "concat")
 	alias(Array.prototype, "c", "count")
 	alias(Array.prototype, "ew", "endsWith")
 	alias(String.prototype, "ew", "endsWith")
@@ -1574,6 +1569,7 @@ load = function load() {
 	alias(String.prototype, "so", "splitOn")
 	alias(Array.prototype, "sw", "startsWith")
 	alias(String.prototype, "sw", "startsWith")
+	alias(Array.prototype, "tspl", "toSpliced")
 	alias(Array.prototype, "t", "transpose")
 	alias(Array.prototype, "ft", "truthy")
 	alias(Array.prototype, "u", "uniq")
