@@ -6,7 +6,7 @@ function day4(input, part2) {
 	let offset = part2 * 2
 
 	for (let x = 0; x < grid.width; x++) {
-		for (let y = 0; y < grid.width; y++) {
+		for (let y = 0; y < grid.height; y++) {
 			let pt = new Point(x, y)
 			if (grid.get(pt) != str[offset]) {
 				continue
