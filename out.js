@@ -1058,8 +1058,9 @@ Pt = Point = class Point {
 			Math.sign(that.x - this.x),
 			Math.sign(that.y - this.y),
 			this.is3D ? Math.sign(that.z - this.z) : undefined)
-
-		if (!that.sub(this).normMut().equals(dir)) {
+		
+		let vec = that.sub(this)
+		if (!vec.mult(1 / Math.abs(vec.x || vec.y)).equals(dir)) {
 			throw `Point.lineTo: Line not straight: ${this.toString()}; ${that.toString()}`
 		}
 
@@ -5206,6 +5207,12 @@ load = function load() {
 				return s
 			},
 			configurable: true
+		},
+		capture: {
+			value: function capture(regex, func = (...groups) => groups) {
+				return [...this.matchAll(regex).map(([_, ...groups]) => func(...groups))]
+			},
+			configurable: true
 		}
 	})
 
@@ -6598,7 +6605,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		let avgTime = 0
 		let i
 
-		for (i = -1; i < 1000; i++) {
+		for (i = -1; i < 300; i++) {
 			let startTime = performance.now()
 			let newRes = func(...args)
 			let endTime = performance.now()

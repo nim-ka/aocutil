@@ -262,6 +262,12 @@ load = function load() {
 				return s
 			},
 			configurable: true
+		},
+		capture: {
+			value: function capture(regex, func = (...groups) => groups) {
+				return [...this.matchAll(regex).map(([_, ...groups]) => func(...groups))]
+			},
+			configurable: true
 		}
 	})
 
