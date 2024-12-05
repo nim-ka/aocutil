@@ -5319,6 +5319,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		equals: {
+			value: function equals(that) {
+				return this.every((e, i) => e == that[i])
+			},
+			configurable: true
+		},
 		startsWith: {
 			value: function startsWith(that) {
 				for (let i = 0; i < that.length; i++) {
@@ -6004,6 +6010,12 @@ load = function load() {
 		arr: {
 			value: function arr() {
 				return PointArray.revert(this)
+			},
+			configurable: true
+		},
+		equals: {
+			value: function equals(that) {
+				return this.every((e, i) => e.equals(that[i]))
 			},
 			configurable: true
 		},
