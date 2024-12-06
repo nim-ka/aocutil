@@ -1384,13 +1384,13 @@ Grid = class Grid {
 	}
 
 	count(func) {
-		let func = functify(el)
+		let crit = functify(el)
 		let count = 0
 		
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
 				let pt = new Point(x, y)
-				if (func(this.get(pt), pt, this)) {
+				if (crit(this.get(pt), pt, this)) {
 					count++
 				}
 			}
