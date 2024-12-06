@@ -1384,7 +1384,19 @@ Grid = class Grid {
 	}
 
 	count(func) {
-		return this.findIndices(func).length
+		let func = functify(el)
+		let count = 0
+		
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				if (func(this.get(pt), pt, this)) {
+					count++
+				}
+			}
+		}
+
+		return count
 	}
 
 	indexOf(val) {
