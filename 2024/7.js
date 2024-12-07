@@ -16,17 +16,17 @@ function day7(input, part2) {
 					next.push(val)
 				}
 
-				val = num2 - num1
-				next.push(val)
+				num2 -= num1
+				next.push(num2)
 
 				if (part2) {
 					let power = 1
 
-					while ((val /= 10) == Math.floor(val)) {
+					while ((num2 /= 10) == Math.floor(num2)) {
 						power *= 10
 
 						if (power > num1) {
-							next.push(val)
+							next.push(num2)
 							break
 						}
 					}
