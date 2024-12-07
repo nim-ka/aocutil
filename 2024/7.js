@@ -17,9 +17,7 @@ function day7(input, part2) {
 				}
 
 				val = num2 - num1
-				if (val > 0) {
-					next.push(val)
-				}
+				next.push(val)
 
 				if (part2) {
 					let power = 1
