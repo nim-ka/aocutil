@@ -226,14 +226,14 @@ Grid = class Grid {
 		return this.findAll(func)
 	}
 
-	count(func) {
-		let crit = functify(el)
+	count(el) {
+		let func = functify(el)
 		let count = 0
 		
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
 				let pt = new Point(x, y)
-				if (crit(this.get(pt), pt, this)) {
+				if (func(this.get(pt), pt, this)) {
 					count++
 				}
 			}

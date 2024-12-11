@@ -1383,14 +1383,14 @@ Grid = class Grid {
 		return this.findAll(func)
 	}
 
-	count(func) {
-		let crit = functify(el)
+	count(el) {
+		let func = functify(el)
 		let count = 0
 		
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
 				let pt = new Point(x, y)
-				if (crit(this.get(pt), pt, this)) {
+				if (func(this.get(pt), pt, this)) {
 					count++
 				}
 			}
@@ -6665,8 +6665,8 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		}
 
 		const func = require(jsPath)
-		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8")
-		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").split("\n-----\n")
+		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8").trim()
+		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").trim().split("\n-----\n")
 
 		if (i != 25) {
 			if (!test(`${year} day ${i} part 1`, answers[0], func, input, false)) {
