@@ -73,5 +73,13 @@ UnionFind = class UnionFind {
 		
 		return this.numSets
 	}
+	
+	sets() {
+		return Map.groupBy(this.nodes.keys(), (key) => this.getRoot(key).val)
+	}
+	
+	[Symbol.iterator]() {
+		return this.sets().values()
+	}
 }
 
