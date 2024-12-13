@@ -1,7 +1,5 @@
 function day13(input, part2) {
-	return input.split("\n\n").sum((lines) => {
-		let [ax, ay, bx, by, px, py] = lines.posints()
-
+	return input.posints().splitEvery(6).sum(([ax, ay, bx, by, px, py]) => {
 		if (part2) {
 			px += 10000000000000
 			py += 10000000000000
