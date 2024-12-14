@@ -8,7 +8,7 @@ function day14(input, part2) {
 		robot[3] = robot[3] < 0 ? robot[3] + height : robot[3]
 	}
 
-	let regions = Array(64)
+	let regions = Array(256)
 
 	for (let time = 1; time < width * height; time++) {
 		regions.fill(0)
