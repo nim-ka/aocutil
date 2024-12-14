@@ -1,5 +1,7 @@
 function day12(input, part2) {
 	let grid = Grid.fromStr(input)
+
+/*
 	let regions = new UnionFind()
 
 	grid.forEach((e, pt) => {
@@ -13,12 +15,46 @@ function day12(input, part2) {
 			}
 		}
 	})
+*/
+
+	let regions = []
+	let nexts = new NumericPointSet([Point.ZERO])
+	let visited = new NumericPointSet()
+
+	while (nexts.size) {
+		let next = nexts.values().next().value
+		nexts.delete(next)
+
+		let key = grid.get(next)
+		let region = []
+
+		let toVisit = new NumericPointSet([next])
+		while (toVisit.size) {
+			let next = toVisit.values().next().value
+			toVisit.delete(next)
+			nexts.delete(next)
+
+			if (visited.has(next)) {
+				continue
+			}
+
+			let cur = grid.get(next)
+
+			if (cur == key) {
+				visited.add(next)
+				region.push(next)
+				grid.getAdjNeighbors(next).forEach((pt) => toVisit.add(pt))
+			} else {
+				nexts.add(next)
+			}
+		}
+
+		regions.push(region)
+	}
 
 	let sum = 0
 
 	for (let region of regions) {
-		region = region.map((n) => Point.decode(n))
-
 		let key = grid.get(region[0])
 		let neighbors = region.flatMap((pt) =>
 			Point.DIRS.map((dir) => [dir, pt.add(dir)]).filter(([_, pt]) => grid.getDef(pt) != key))

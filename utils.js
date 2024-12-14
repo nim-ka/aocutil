@@ -14,6 +14,10 @@ utils = {
 		})
 	},
 	// num utils because numbers are weird
+	mod: (a, b) => {
+		let n = a % b
+		return n < 0 ? n + b : n
+	},
 	divmod: (a, b) => {
 		return [Math.floor(a / b), a % b]
 	},

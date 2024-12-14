@@ -1027,8 +1027,49 @@ Pt = Point = class Point {
 		return this
 	}
 
-	neg(n) { return this.mult(-1) }
-	negMut(n) { return this.multMut(-1) }
+	neg(n) { return new Point(-this.x, -this.y, this.is3D ? -this.z : undefined) }
+	negMut(n) {
+		this.x = -this.x
+		this.y = -this.y
+		
+		if (this.is3D) {
+			this.z = -this.z
+		}
+		
+		return this
+	}
+	
+	wrap(w, h, d) {
+		let x = this.x % w
+		x = x < 0 ? x + w : x
+		
+		let y = this.y % h
+		y = y < 0 ? y + h : y
+		
+		let z = undefined
+		
+		if (this.is3D) {
+			z = this.z % d
+			z = z < 0 ? z + d : z
+		}
+		
+		return new Point(x, y, z)
+	}
+	
+	wrapMut(w, h, d) {
+		this.x %= w
+		this.x = this.x < 0 ? this.x + w : this.x
+		
+		this.y %= h
+		this.y = this.y < 0 ? this.y + h : this.y
+		
+		if (this.is3D) {
+			this.z %= d
+			this.z = this.z < 0 ? this.z + d : this.z
+		}
+		
+		return this
+	}
 
 	squaredMag() { return this.x * this.x + this.y * this.y + (this.is3D ? this.z * this.z : 0) }
 	mag() { return Math.sqrt(this.squaredMag()) }
@@ -4660,6 +4701,10 @@ utils = {
 		})
 	},
 	// num utils because numbers are weird
+	mod: (a, b) => {
+		let n = a % b
+		return n < 0 ? n + b : n
+	},
 	divmod: (a, b) => {
 		return [Math.floor(a / b), a % b]
 	},
@@ -5080,6 +5125,12 @@ load = function load() {
 		chr: {
 			value: function chr() {
 				return String.fromCharCode(this)
+			},
+			configurable: true
+		},
+		mod: {
+			value: function mod(that) {
+				return utils.mod(+this, that)
 			},
 			configurable: true
 		},
@@ -6477,6 +6528,24 @@ load = function load() {
 		isProperSubsetOf: {
 			value: function isProperSubsetOf(that) {
 				return this.isSubsetOf(that) && !this.isSupersetOf(that)
+			},
+			configurable: true
+		},
+		count: {
+			value: function count(el) {
+				let func = functify(el)
+
+				let count = 0
+				let i = 0
+
+				for (let val of this) {
+					if (func(val, i, this)) {
+						count++
+					}
+					i++
+				}
+
+				return count
 			},
 			configurable: true
 		}

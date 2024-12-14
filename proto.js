@@ -107,6 +107,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		mod: {
+			value: function mod(that) {
+				return utils.mod(+this, that)
+			},
+			configurable: true
+		},
 		divmod: {
 			value: function divmod(that) {
 				return utils.divmod(+this, that)
@@ -1501,6 +1507,24 @@ load = function load() {
 		isProperSubsetOf: {
 			value: function isProperSubsetOf(that) {
 				return this.isSubsetOf(that) && !this.isSupersetOf(that)
+			},
+			configurable: true
+		},
+		count: {
+			value: function count(el) {
+				let func = functify(el)
+
+				let count = 0
+				let i = 0
+
+				for (let val of this) {
+					if (func(val, i, this)) {
+						count++
+					}
+					i++
+				}
+
+				return count
 			},
 			configurable: true
 		}

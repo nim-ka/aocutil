@@ -15,7 +15,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 			return true
 		}
 
-		let killTime = performance.now() + 30 * 1000
+		let killTime = performance.now() + 10 * 1000
 		let avgTime = 0
 		let i
 

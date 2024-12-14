@@ -8,12 +8,12 @@ function day13(input, part2) {
 		let det = ax*by - bx*ay
 
 		let na = (by*px - bx*py) / det
-		if (na != Math.floor(na)) {
+		if (!Number.isInteger(na)) {
 			return 0
 		}
 
 		let nb = (ax*py - ay*px) / det
-		if (nb != Math.floor(nb)) {
+		if (!Number.isInteger(nb)) {
 			return 0
 		}
 

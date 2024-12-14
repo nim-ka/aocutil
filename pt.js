@@ -339,8 +339,49 @@ Pt = Point = class Point {
 		return this
 	}
 
-	neg(n) { return this.mult(-1) }
-	negMut(n) { return this.multMut(-1) }
+	neg(n) { return new Point(-this.x, -this.y, this.is3D ? -this.z : undefined) }
+	negMut(n) {
+		this.x = -this.x
+		this.y = -this.y
+		
+		if (this.is3D) {
+			this.z = -this.z
+		}
+		
+		return this
+	}
+	
+	wrap(w, h, d) {
+		let x = this.x % w
+		x = x < 0 ? x + w : x
+		
+		let y = this.y % h
+		y = y < 0 ? y + h : y
+		
+		let z = undefined
+		
+		if (this.is3D) {
+			z = this.z % d
+			z = z < 0 ? z + d : z
+		}
+		
+		return new Point(x, y, z)
+	}
+	
+	wrapMut(w, h, d) {
+		this.x %= w
+		this.x = this.x < 0 ? this.x + w : this.x
+		
+		this.y %= h
+		this.y = this.y < 0 ? this.y + h : this.y
+		
+		if (this.is3D) {
+			this.z %= d
+			this.z = this.z < 0 ? this.z + d : this.z
+		}
+		
+		return this
+	}
 
 	squaredMag() { return this.x * this.x + this.y * this.y + (this.is3D ? this.z * this.z : 0) }
 	mag() { return Math.sqrt(this.squaredMag()) }
@@ -353,6 +394,17 @@ Pt = Point = class Point {
 
 	manhattanMag() { return Math.abs(this.x) + Math.abs(this.y) + (this.is3D ? Math.abs(this.z) : 0) }
 	manhattanDist(pt) { return Math.abs(this.x - pt.x) + Math.abs(this.y - pt.y) + (this.is3D ? Math.abs(this.z - pt.z) : 0) }
+	
+	isAdjacent(pt) {
+		if (this.is3D) {
+			return this.x == pt.x && this.y == pt.y && Math.abs(this.z - pt.z) == 1 ||
+				this.y == pt.y && this.z == pt.z && Math.abs(this.x - pt.x) == 1 ||
+				this.z == pt.z && this.x == pt.x && Math.abs(this.y - pt.y) == 1
+		} else {
+			return this.x == pt.x && Math.abs(this.y - pt.y) == 1 ||
+				this.y == pt.y && Math.abs(this.x - pt.x) == 1
+		}
+	}
 	
 	dot(pt) { return this.x * pt.x + this.y * pt.y + (this.is3D ? this.z * pt.z : 0) }
 
