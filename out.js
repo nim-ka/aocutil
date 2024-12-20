@@ -1244,6 +1244,8 @@ Grid = class Grid {
 	}
 
 	fill(n) { return this.mapMut(() => n) }
+	
+	mutate(that) { return this.mapMut((_, pt) => that.get(pt)) }
 
 	fillFromArr(arr) {
 		if (arr.length != this.height) {
@@ -1500,12 +1502,12 @@ Grid = class Grid {
 	getAllNeighbors(pt) { return pt.getUnfilteredAllNeighbors().filter((pt) => this.contains(pt)) }
 	getAllNeighborsIncSelf(pt) { return pt.getUnfilteredAllNeighborsIncSelf().filter((pt) => this.contains(pt)) }
 
-	getAdjNeighborsThat(pt, func) { return pt.getUnfilteredAdjNeighbors().filter((pt) => this.contains(pt) && func(pt)) }
-	getAdjNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredAdjNeighborsIncSelf().filter((pt) => this.contains(pt) && func(pt)) }
-	getDiagNeighborsThat(pt, func) { return pt.getUnfilteredDiagNeighbors().filter((pt) => this.contains(pt) && func(pt)) }
-	getDiagNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredDiagNeighborsIncSelf().filter((pt) => this.contains(pt) && func(pt)) }
-	getAllNeighborsThat(pt, func) { return pt.getUnfilteredAllNeighbors().filter((pt) => this.contains(pt) && func(pt)) }
-	getAllNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredAllNeighborsIncSelf().filter((pt) => this.contains(pt) && func(pt)) }
+	getAdjNeighborsThat(pt, func) { return pt.getUnfilteredAdjNeighbors().filter((pt) => this.contains(pt) && func(this.get(pt), pt, this)) }
+	getAdjNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredAdjNeighborsIncSelf().filter((pt) => this.contains(pt) && func(this.get(pt), pt, this)) }
+	getDiagNeighborsThat(pt, func) { return pt.getUnfilteredDiagNeighbors().filter((pt) => this.contains(pt) && func(this.get(pt), pt, this)) }
+	getDiagNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredDiagNeighborsIncSelf().filter((pt) => this.contains(pt) && func(this.get(pt), pt, this)) }
+	getAllNeighborsThat(pt, func) { return pt.getUnfilteredAllNeighbors().filter((pt) => this.contains(pt) && func(this.get(pt), pt, this)) }
+	getAllNeighborsIncSelfThat(pt, func) { return pt.getUnfilteredAllNeighborsIncSelf().filter((pt) => this.contains(pt) && func(this.get(pt), pt, this)) }
 
 	getAdjNeighborsWrap(pt) { return pt.getUnfilteredAdjNeighbors().map((pt) => this.wrap(pt)) }
 	getAdjNeighborsWrapIncSelf(pt) { return pt.getUnfilteredAdjNeighborsIncSelf().map((pt) => this.wrap(pt)) }
@@ -1514,12 +1516,12 @@ Grid = class Grid {
 	getAllNeighborsWrap(pt) { return pt.getUnfilteredAllNeighbors().map((pt) => this.wrap(pt)) }
 	getAllNeighborsWrapIncSelf(pt) { return pt.getUnfilteredAllNeighborsIncSelf().map((pt) => this.wrap(pt)) }
 
-	getAdjNeighborsWrapThat(pt, func) { return pt.getUnfilteredAdjNeighbors().map((pt) => this.wrap(pt)).filter(func) }
-	getAdjNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredAdjNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
-	getDiagNeighborsWrapThat(pt, func) { return pt.getUnfilteredDiagNeighbors().map((pt) => this.wrap(pt)).filter(func) }
-	getDiagNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredDiagNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
-	getAllNeighborsWrapThat(pt, func) { return pt.getUnfilteredAllNeighbors().map((pt) => this.wrap(pt)).filter(func) }
-	getAllNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredAllNeighborsIncSelf().map((pt) => this.wrap(pt)).filter(func) }
+	getAdjNeighborsWrapThat(pt, func) { return pt.getUnfilteredAdjNeighbors().map((pt) => this.wrap(pt)).filter((pt) => func(this.get(pt), pt, this)) }
+	getAdjNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredAdjNeighborsIncSelf().map((pt) => this.wrap(pt)).filter((pt) => func(this.get(pt), pt, this)) }
+	getDiagNeighborsWrapThat(pt, func) { return pt.getUnfilteredDiagNeighbors().map((pt) => this.wrap(pt)).filter((pt) => func(this.get(pt), pt, this)) }
+	getDiagNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredDiagNeighborsIncSelf().map((pt) => this.wrap(pt)).filter((pt) => func(this.get(pt), pt, this)) }
+	getAllNeighborsWrapThat(pt, func) { return pt.getUnfilteredAllNeighbors().map((pt) => this.wrap(pt)).filter((pt) => func(this.get(pt), pt, this)) }
+	getAllNeighborsWrapIncSelfThat(pt, func) { return pt.getUnfilteredAllNeighborsIncSelf().map((pt) => this.wrap(pt)).filter((pt) => func(this.get(pt), pt, this)) }
 
 	static BFS_CONTINUE = 0
 	static BFS_STOP = 1
@@ -1576,6 +1578,19 @@ Grid = class Grid {
 		this.bfs(pt, (e, pt) => e != newVal ? (this.set(pt, newVal), Grid.BFS_CONTINUE) : Grid.BFS_STOP, neighbors, limit)
 		return this
 	}
+	
+	evolve(func) {
+		let copy = this.copy()
+		
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				let pt = new Point(x, y)
+				this.set(pt, func(copy.get(pt), pt.copy(), copy))
+			}
+		}
+		
+		return this
+	}
 
 	transpose() {
 		this.data = this.data.transpose()
@@ -1622,9 +1637,15 @@ Grid = class Grid {
 		]
 	}
 
-	graphify(neighbors = "getAdjNeighbors", cxn = (node, cxnNode) => node.addCxn(cxnNode, cxnNode.val)) {
-		this.mapMut((e) => new Node(e))
+	graphify(cxn = (node1, node2, pt1, pt2) => node1.addCxn(node2, node2.val), neighbors = "getAdjNeighbors") {
+		this.mapMut((e, pt) => {
+			let node = new Node(e)
+			node.pos = pt
+			return node
+		})
+
 		this.forEach((e, pt) => this[neighbors](pt).forEach((pt2) => cxn(e, this.get(pt2), pt, pt2)))
+
 		return this
 	}
 
@@ -4921,6 +4942,10 @@ LC = utils.logCopy
 KL = utils.condLog
 KLC = utils.condLogCopy
 
+bar = function bar() {
+	console.log("----------")
+}
+
 R = utils.range = utils.signAgnosticInclusiveRange
 
 U = function U(n) {
@@ -4939,18 +4964,20 @@ for (let i of Object.getOwnPropertyNames(Math)) {
 
 defaultPartNum = 1
 
-A = function A(ans, part = 0, k) {
-	if (k) {
+A = function A(ans, part, k) {
+	if (k != undefined) {
 		throw "Third argument in submission function."
 	}
 	
-	if (part < 1000 && typeof ans != "number") {
-		console.warn("Tried to submit non-number; cancelled. To override, add 1000 to part number.")
+	if (typeof ans != "number") {
+		console.warn("Tried to submit non-number; cancelled. To override, use AA.")
 		return
 	}
 	
-	part %= 1000
-	
+	AA(ans, part)
+}
+
+AA = function AA(ans, part = 0) {
 	let day = +location.href.match(/(\d+)\/input/)[1]
 
 	if (part != 1 && part != 2) {
@@ -4997,7 +5024,7 @@ T = async function T(num) {
 	let url = location.href.match(/^(.+)\/day/)[1] + "/day/" + num
 	
 	let text = await utils.fetchText(url)
-	pre = [...text.matchAll(/<pre><code>([\s\S]+?)<\/code><\/pre>/g).map((e) => e[1].trim())]
+	localStorage.setItem("pre:" + location.href, JSON.stringify([...text.matchAll(/<pre><code>([\s\S]+?)<\/code><\/pre>/g).map((e) => e[1].replace(/<\/?em>/g, "").trim())]))
 }
 
 I = async function I(num) {
@@ -5016,7 +5043,7 @@ II = async function II(num) {
 		clearTimeout(window.aocTimeout)
 	}
 
-	window.aocTimeout = setTimeout(() => I(num), new Date().setHours(21, 0, 2, 0) - new Date().getTime())
+	window.aocTimeout = setTimeout(() => I(num), new Date().setHours(21, 0, 10, 0) - new Date().getTime())
 }
 
 PtArray = PointArray = class PointArray extends Array {
@@ -5103,6 +5130,12 @@ load = function load() {
 				let res = document.body?.innerText.trimEnd() ?? ""
 				globalThis.inputLength = res.length
 				return res
+			},
+			configurable: true
+		},
+		pre: {
+			get: function pre() {
+				return JSON.parse(localStorage.getItem("pre:" + location.href) ?? [])
 			},
 			configurable: true
 		},
@@ -6685,7 +6718,6 @@ load()
 if (typeof window != "undefined") {
 	a = input
 	b = a.split("\n")
-	pre = null
 
 	if (b.every((e) => e.length == b.length)) {
 		g = Grid.fromStr(a)
@@ -6717,7 +6749,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		let avgTime = 0
 		let i
 
-		for (i = -1; i < 300; i++) {
+		for (i = -1; i < 100; i++) {
 			let startTime = performance.now()
 			let newRes = func(...args)
 			let endTime = performance.now()

@@ -19,7 +19,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		let avgTime = 0
 		let i
 
-		for (i = -1; i < 300; i++) {
+		for (i = -1; i < 100; i++) {
 			let startTime = performance.now()
 			let newRes = func(...args)
 			let endTime = performance.now()

@@ -234,6 +234,10 @@ LC = utils.logCopy
 KL = utils.condLog
 KLC = utils.condLogCopy
 
+bar = function bar() {
+	console.log("----------")
+}
+
 R = utils.range = utils.signAgnosticInclusiveRange
 
 U = function U(n) {
@@ -252,18 +256,20 @@ for (let i of Object.getOwnPropertyNames(Math)) {
 
 defaultPartNum = 1
 
-A = function A(ans, part = 0, k) {
-	if (k) {
+A = function A(ans, part, k) {
+	if (k != undefined) {
 		throw "Third argument in submission function."
 	}
 	
-	if (part < 1000 && typeof ans != "number") {
-		console.warn("Tried to submit non-number; cancelled. To override, add 1000 to part number.")
+	if (typeof ans != "number") {
+		console.warn("Tried to submit non-number; cancelled. To override, use AA.")
 		return
 	}
 	
-	part %= 1000
-	
+	AA(ans, part)
+}
+
+AA = function AA(ans, part = 0) {
 	let day = +location.href.match(/(\d+)\/input/)[1]
 
 	if (part != 1 && part != 2) {
@@ -310,7 +316,7 @@ T = async function T(num) {
 	let url = location.href.match(/^(.+)\/day/)[1] + "/day/" + num
 	
 	let text = await utils.fetchText(url)
-	pre = [...text.matchAll(/<pre><code>([\s\S]+?)<\/code><\/pre>/g).map((e) => e[1].trim())]
+	localStorage.setItem("pre:" + location.href, JSON.stringify([...text.matchAll(/<pre><code>([\s\S]+?)<\/code><\/pre>/g).map((e) => e[1].replace(/<\/?em>/g, "").trim())]))
 }
 
 I = async function I(num) {
@@ -329,6 +335,6 @@ II = async function II(num) {
 		clearTimeout(window.aocTimeout)
 	}
 
-	window.aocTimeout = setTimeout(() => I(num), new Date().setHours(21, 0, 2, 0) - new Date().getTime())
+	window.aocTimeout = setTimeout(() => I(num), new Date().setHours(21, 0, 10, 0) - new Date().getTime())
 }
 

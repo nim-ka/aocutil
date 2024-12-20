@@ -85,6 +85,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		pre: {
+			get: function pre() {
+				return JSON.parse(localStorage.getItem("pre:" + location.href) ?? [])
+			},
+			configurable: true
+		},
 		copy: {
 			value: globalThis.copy,
 			configurable: true
@@ -1664,7 +1670,6 @@ load()
 if (typeof window != "undefined") {
 	a = input
 	b = a.split("\n")
-	pre = null
 
 	if (b.every((e) => e.length == b.length)) {
 		g = Grid.fromStr(a)
