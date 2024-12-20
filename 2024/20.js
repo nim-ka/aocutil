@@ -2,12 +2,14 @@ function day20(input, part2) {
 	let grid = Grid.fromStr(input)
 
 	let cur = grid.indexOf("S")
-	let end = grid.indexOf("E")
 
-	let path = [cur]
-	while (!cur.equals(end)) {
-		grid.set(cur, "#")
-		path.push(cur = grid.getAdjNeighbors(cur).find((pt) => grid.get(pt) != "#"))
+	let path = []
+	let dir = Point.DIRS.find((dir) => grid.get(cur.add(dir)) == ".")
+
+	while (dir) {
+		let last = cur
+		path.push(last)
+		dir = [dir, dir.cwConst, dir.ccwConst].find((dir2) => grid.get(cur = last.add(dir2)) != "#")
 	}
 
 	let count = 0
@@ -19,7 +21,7 @@ function day20(input, part2) {
 
 			if (cheatLength > limit) {
 				j += cheatLength - limit - 1
-			} else if (j - i - cheatLength >= 100) {
+			} else if (cheatLength <= j - i - 100) {
 				count++
 			}
 		}
