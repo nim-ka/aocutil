@@ -137,6 +137,8 @@ CanvasElement = class CanvasElement {
 	static TEXT_SIZE = 18
 
 	constructor() {
+		this.paused = false
+		
 		this.pauseTimer = false
 		this.timer = 0
 
@@ -188,6 +190,17 @@ CanvasElement = class CanvasElement {
 	isIn(x, y) {
 		return false
 	}
+	
+	pause() {
+		this.reset()
+		this.paused = true
+		return this
+	}
+	
+	unpause() {
+		this.paused = false
+		return this
+	}
 
 	reset() {
 		this.resetPre()
@@ -207,6 +220,10 @@ CanvasElement = class CanvasElement {
 	resetPost() {}
 
 	update(keyboard, mouse) {
+		if (this.paused) {
+			return
+		}
+		
 		this.totalChildren = 0
 		
 		this.keyboardUpdate(keyboard)
@@ -255,6 +272,10 @@ CanvasElement = class CanvasElement {
 	mouseRelease(mouse) {}
 
 	draw() {
+		if (this.paused) {
+			return
+		}
+		
 		this.drawPre()
 
 		for (let el of this.children) {

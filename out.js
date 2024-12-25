@@ -1873,6 +1873,10 @@ Node = class Node {
 		return this
 	}
 	
+	hasCxn(node) {
+		return this.cxns.has(node)
+	}
+	
 	getCxn(node) {
 		return this.cxns.get(node)
 	}
@@ -2494,9 +2498,11 @@ Graph = class Graph extends Map {
 	}
 	
 	visualize(width = 1200, height = 800) {
-		return new CanvasController(width, height)
-			.addElement(this.gfx = new GraphicalGraphController(this))
-			.start()
+		this.canvasController = new CanvasController(width, height)
+		this.graphController = new GraphicalGraphController(this)
+		this.gfx = this.graphController.graphGfx
+		
+		return this.canvasController.addElement(this.graphController).start()
 	}
 	
 	*cxns() {
@@ -3329,6 +3335,8 @@ CanvasElement = class CanvasElement {
 	static TEXT_SIZE = 18
 
 	constructor() {
+		this.paused = false
+		
 		this.pauseTimer = false
 		this.timer = 0
 
@@ -3380,6 +3388,17 @@ CanvasElement = class CanvasElement {
 	isIn(x, y) {
 		return false
 	}
+	
+	pause() {
+		this.reset()
+		this.paused = true
+		return this
+	}
+	
+	unpause() {
+		this.paused = false
+		return this
+	}
 
 	reset() {
 		this.resetPre()
@@ -3399,6 +3418,10 @@ CanvasElement = class CanvasElement {
 	resetPost() {}
 
 	update(keyboard, mouse) {
+		if (this.paused) {
+			return
+		}
+		
 		this.totalChildren = 0
 		
 		this.keyboardUpdate(keyboard)
@@ -3447,6 +3470,10 @@ CanvasElement = class CanvasElement {
 	mouseRelease(mouse) {}
 
 	draw() {
+		if (this.paused) {
+			return
+		}
+		
 		this.drawPre()
 
 		for (let el of this.children) {
@@ -3987,7 +4014,7 @@ GraphicalNode = class GraphicalNode extends CanvasElement {
 			this.ctx.textAlign = "center"
 			this.ctx.textBaseline = "middle"
 			this.ctx.font = `${this.vsize}px monospace`
-			this.ctx.fillText(this.node.name, this.vx, this.vy)
+			this.ctx.fillText(this.node.name || this.node.val, this.vx, this.vy)
 		}
 		
 		if (!this.graphGfx.pruning && this.press) {
@@ -4541,6 +4568,8 @@ GraphicalGraphController = class GraphicalGraphController extends CanvasElement 
 			() => this.graphGfx.resetDijkstra(true, true))
 		this.addButton(KeyButton, "Add cxn", ["a", "A"], "release",
 			() => this.graphGfx.addCxn())
+		this.addButton(KeyButton, "Visible", ["v", "V"], "release",
+			() => this.graphGfx.reset(), { obj: this.graphGfx, prop: "paused" })
 		this.addButton(KeyButton, "Pruning mode", ["p", "P"], "release",
 			() => this.graphGfx.resetDijkstra(false, false), { obj: this.graphGfx, prop: "pruning" })
 		this.addButton(Button, "focus", () => this.ctx.canvas.focus())

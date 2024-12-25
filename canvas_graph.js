@@ -279,7 +279,7 @@ GraphicalNode = class GraphicalNode extends CanvasElement {
 			this.ctx.textAlign = "center"
 			this.ctx.textBaseline = "middle"
 			this.ctx.font = `${this.vsize}px monospace`
-			this.ctx.fillText(this.node.name, this.vx, this.vy)
+			this.ctx.fillText(this.node.name || this.node.val, this.vx, this.vy)
 		}
 		
 		if (!this.graphGfx.pruning && this.press) {
@@ -833,6 +833,8 @@ GraphicalGraphController = class GraphicalGraphController extends CanvasElement 
 			() => this.graphGfx.resetDijkstra(true, true))
 		this.addButton(KeyButton, "Add cxn", ["a", "A"], "release",
 			() => this.graphGfx.addCxn())
+		this.addButton(KeyButton, "Visible", ["v", "V"], "release",
+			() => this.graphGfx.reset(), { obj: this.graphGfx, prop: "paused" })
 		this.addButton(KeyButton, "Pruning mode", ["p", "P"], "release",
 			() => this.graphGfx.resetDijkstra(false, false), { obj: this.graphGfx, prop: "pruning" })
 		this.addButton(Button, "focus", () => this.ctx.canvas.focus())

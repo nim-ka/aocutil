@@ -262,7 +262,7 @@ A = function A(ans, part, k) {
 	}
 	
 	if (typeof ans != "number") {
-		console.warn("Tried to submit non-number; cancelled. To override, use AA.")
+		console.warn("Tried to submit non-number; cancelled. To override, use AA or BB.")
 		return
 	}
 	
@@ -310,6 +310,10 @@ AA = function AA(ans, part = 0) {
 
 B = function B(ans, part = 2) {
 	return A(ans, part)
+}
+
+BB = function B(ans, part = 2) {
+	return AA(ans, part)
 }
 
 T = async function T(num) {
