@@ -49,12 +49,12 @@ function day24(input, part2) {
 			let newCarry = gatesMap.get(x).get("AND").out
 
 			if (bit > 0) {
-				let low = gatesMap.get(x).get("XOR").out
-				({ in0: carry, in1: low } = expect(carry, "XOR", low));
+				let low = gatesMap.get(x).get("XOR").out;
+				({ in0: carry, in1: low } = expect(carry, "XOR", low))
 
 				let cont
 				({ in0: carry, in1: low, out: cont } = expect(carry, "AND", low));
-				({ in0: newCarry, in1: cont, out: newCarry } = expect(newCarry, "OR", cont));
+				({ in0: newCarry, in1: cont, out: newCarry } = expect(newCarry, "OR", cont))
 			}
 
 			carry = newCarry
