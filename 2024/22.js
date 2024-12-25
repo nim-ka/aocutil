@@ -1,46 +1,46 @@
-function evolve(n) {
-	n = (n ^ (n << 6)) & 0xffffff
-	n = (n ^ (n >> 5))
-	n = (n ^ (n << 11)) & 0xffffff
-	return n
-}
-
 function day22(input, part2) {
-	let scores = {}
+	let scores = new Uint32Array(0x100000)
 	let score = 0
 
-	for (let num of input.split("\n").num()) {
+	let i = 0
+
+	for (let num of input.split("\n").map((e) => +e)) {
+		i++
+
 		let digit = 0
 		let delta = 0
 
-		let done = new Set()
-
 		for (let j = 0; j < 2000; j++) {
-			num = evolve(num)
+			num ^= num << 6
+			num &= 0xFFFFFF
+			num ^= num >> 5
+			num ^= num << 11
+			num &= 0xFFFFFF
 
-			if (!part2) {
-				continue
+			if (part2) {
+				let oldDigit = digit
+				digit = num % 10
+
+				delta <<= 5
+				delta &= 0xFFFFF
+				delta |= (digit - oldDigit) + 10
+
+				if (j < 4) {
+					continue
+				}
+
+				let key = i << 16
+				let low = scores[delta] & 0xFFFF
+
+				if (scores[delta] == (key | low)) {
+					continue
+				}
+
+				low += digit
+
+				scores[delta] = key | low
+				score = Math.max(score, low)
 			}
-
-			let oldDigit = digit
-			digit = num % 10
-
-			// 32-bit ints, automatically clears out 4th oldest delta
-			delta <<= 8
-			delta |= (digit - oldDigit) + 10
-
-			if (j < 4) {
-				continue
-			}
-
-			if (done.has(delta)) {
-				continue
-			}
-			done.add(delta)
-
-			scores[delta] ??= 0
-			scores[delta] += digit
-			score = Math.max(score, scores[delta])
 		}
 
 		if (!part2) {
