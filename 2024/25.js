@@ -7,9 +7,7 @@ function day25(input) {
 		obj[key].push(grid.getColumns().map((c) => c.count(key)))
 	})
 
-	return locks.cartProductGen(keys).count(([lock, key]) => {
-		return lock.every((n, i) => n <= key[i])
-	})
+	return locks.cartProductGen(keys).count(([lock, key]) => lock.every((n, i) => n <= key[i]))
 }
 
 if (typeof window == "undefined") {
