@@ -4999,7 +4999,7 @@ A = function A(ans, part, k) {
 	}
 	
 	if (typeof ans != "number") {
-		console.warn("Tried to submit non-number; cancelled. To override, use AA.")
+		console.warn("Tried to submit non-number; cancelled. To override, use AA or BB.")
 		return
 	}
 	
@@ -5047,6 +5047,10 @@ AA = function AA(ans, part = 0) {
 
 B = function B(ans, part = 2) {
 	return A(ans, part)
+}
+
+BB = function B(ans, part = 2) {
+	return AA(ans, part)
 }
 
 T = async function T(num) {
@@ -5673,6 +5677,16 @@ load = function load() {
 			},
 			configurable: true
 		},
+		cartProductGen: {
+			value: function* cartProductGen(that = this) {
+				for (let i = 0; i < this.length; i++) {
+					for (let j = 0; j < that.length; j++) {
+						yield [this[i], that[j]]
+					}
+				}
+			},
+			configurable: true
+		},
 		pairsExcl: {
 			value: function pairsExcl() {
 				return this.flatMap((e, i) => this.filter((_, j) => i != j).map((f) => [e, f]))
@@ -5701,6 +5715,16 @@ load = function load() {
 				}
 				
 				return res
+			},
+			configurable: true
+		},
+		pairGen: {
+			value: function* pairGen(that = this) {
+				let len = Math.min(this.length, that.length)
+				
+				for (let i = 0; i < len; i++) {
+					yield [this[i], that[i]]
+				}
 			},
 			configurable: true
 		},
@@ -6253,6 +6277,16 @@ load = function load() {
 			},
 			configurable: true
 		},
+		cartProductGen: {
+			value: function* cartProductGen(that = this) {
+				for (let i = 0; i < this.length; i++) {
+					for (let j = 0; j < that.length; j++) {
+						yield new PointArray(this[i], that[j])
+					}
+				}
+			},
+			configurable: true
+		},
 		pairsExcl: {
 			value: function pairsExcl() {
 				return this.mapArr((e, i) => this.filter((_, j) => i != j).map((f) => new PointArray(e, f))).flat()
@@ -6269,6 +6303,16 @@ load = function load() {
 				}
 				
 				return res
+			},
+			configurable: true
+		},
+		pairGen: {
+			value: function* pairGen(that = this) {
+				let len = Math.min(this.length, that.length)
+				
+				for (let i = 0; i < len; i++) {
+					yield new PointArray(this[i], that[i])
+				}
 			},
 			configurable: true
 		},
@@ -6404,6 +6448,41 @@ load = function load() {
 			},
 			configurable: true
 		},
+	})
+
+	Object.defineProperties(Iterator.prototype, {
+		count: {
+			value: function count(el) {
+				let func = functify(el)
+
+				let count = 0
+				let i = 0
+
+				for (let val of this) {
+					if (func(val, i, this)) {
+						count++
+					}
+					i++
+				}
+
+				return count
+			},
+			configurable: true
+		},
+		sum: {
+			value: function sum(func = (e) => +e) {
+				let sum = 0
+				let i = 0
+				
+				for (let val of this) {
+					sum += func(val, i, this)
+					i++
+				}
+				
+				return sum
+			},
+			configurable: true
+		}
 	})
 
 	Object.defineProperties(Set.prototype, {
@@ -6595,19 +6674,13 @@ load = function load() {
 		},
 		count: {
 			value: function count(el) {
-				let func = functify(el)
-
-				let count = 0
-				let i = 0
-
-				for (let val of this) {
-					if (func(val, i, this)) {
-						count++
-					}
-					i++
-				}
-
-				return count
+				return this.values().count(el)
+			},
+			configurable: true
+		},
+		sum: {
+			value: function sum(el) {
+				return this.values().sum(el)
 			},
 			configurable: true
 		}
