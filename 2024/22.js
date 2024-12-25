@@ -23,12 +23,11 @@ function day22(input, part2) {
 			}
 
 			let oldDigit = digit
-			let newDigit = num % 10
-			digit = newDigit
+			digit = num % 10
 
+			// 32-bit ints, automatically clears out 4th oldest delta
 			delta <<= 8
-			delta &= 0xffffffff
-			delta |= (newDigit - oldDigit) + 10
+			delta |= (digit - oldDigit) + 10
 
 			if (j < 4) {
 				continue
@@ -40,7 +39,7 @@ function day22(input, part2) {
 			done.add(delta)
 
 			scores[delta] ??= 0
-			scores[delta] += newDigit
+			scores[delta] += digit
 			score = Math.max(score, scores[delta])
 		}
 
