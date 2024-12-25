@@ -4,7 +4,7 @@ function day25(input) {
 		let key = grid.get(Point.ZERO)
 
 		obj[key] ??= []
-		obj[key].push(grid.getColumns().map((c) => c.count(key)))
+		obj[key].push(grid.getColumns().map((c) => c.lastIndexOf(key)))
 	})
 
 	return locks.cartProductGen(keys).count(([lock, key]) => lock.every((n, i) => n <= key[i]))
