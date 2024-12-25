@@ -47,15 +47,14 @@ function day24(input, part2) {
 			let y = "y" + bit.toString().padStart(2, "0")
 
 			let newCarry
-			let z
-			let low
-			let cont
-
 			({ in0: x, in1: y, out: newCarry } = expect(x, "AND", y));
 
 			if (bit > 0) {
+				let low
+				let cont
+
 				({ in0: x, in1: y, out: low } = expect(x, "XOR", y));
-				({ in0: carry, in1: low, out: z } = expect(low, "XOR", carry));
+				({ in0: carry, in1: low, out: _ } = expect(low, "XOR", carry));
 				({ in0: carry, in1: low, out: cont } = expect(low, "AND", carry));
 				({ in0: newCarry, in1: cont, out: newCarry } = expect(newCarry, "OR", cont));
 			}
