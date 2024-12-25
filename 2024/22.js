@@ -17,30 +17,32 @@ function day22(input, part2) {
 			num ^= num << 11
 			num &= 0xFFFFFF
 
-			if (part2) {
-				let oldDigit = digit
-				digit = num % 10
-
-				delta <<= 5
-				delta &= 0xFFFFF
-				delta |= (digit - oldDigit) + 10
-
-				if (j < 4) {
-					continue
-				}
-
-				let key = i << 16
-				let low = scores[delta] & 0xFFFF
-
-				if (scores[delta] == (key | low)) {
-					continue
-				}
-
-				low += digit
-
-				scores[delta] = key | low
-				score = Math.max(score, low)
+			if (!part2) {
+				continue
 			}
+
+			let oldDigit = digit
+			digit = num % 10
+
+			delta <<= 5
+			delta &= 0xFFFFF
+			delta |= (digit - oldDigit) + 10
+
+			if (j < 4) {
+				continue
+			}
+
+			let key = i << 16
+			let low = scores[delta] & 0xFFFF
+
+			if (scores[delta] == (key | low)) {
+				continue
+			}
+
+			low += digit
+
+			scores[delta] = key | low
+			score = Math.max(score, low)
 		}
 
 		if (!part2) {
