@@ -7,7 +7,15 @@ function day25(input) {
 		obj[key].push(grid.getColumns().map((c) => c.lastIndexOf(key)))
 	})
 
-	return locks.cartProductGen(keys).count(([lock, key]) => lock.every((n, i) => n <= key[i]))
+	let count = 0
+
+	for (let lock of locks) {
+		for (let key of keys) {
+			count += lock.every((n, i) => n <= key[i])
+		}
+	}
+
+	return count
 }
 
 if (typeof window == "undefined") {
