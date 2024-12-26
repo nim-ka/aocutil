@@ -33,16 +33,11 @@ function day22(input, part2) {
 			}
 
 			let key = i << 16
-			let low = scores[delta] & 0xFFFF
-
-			if (scores[delta] == (key | low)) {
-				continue
+			if (scores[delta] < key) {
+				let low = (scores[delta] & 0xFFFF) + digit
+				scores[delta] = key | low
+				score = Math.max(score, low)
 			}
-
-			low += digit
-
-			scores[delta] = key | low
-			score = Math.max(score, low)
 		}
 
 		if (!part2) {
