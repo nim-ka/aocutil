@@ -1604,7 +1604,22 @@ load = function load() {
 			configurable: true
 		}
 	})
-
+	
+	Object.defineProperties(Function.prototype, {
+		repeated: {
+			value: function repeated(n) {
+				return (first, ...args) => {
+					for (let i = 0; i < n; i++) {
+						first = this(first, ...args)
+					}
+					
+					return first
+				}
+			},
+			configurable: true
+		}
+	})
+	
 	alias(Object.prototype, "ea", "entriesArr")
 	alias(Object.prototype, "en", "entriesArr")
 	alias(Object.prototype, "ie", "entriesArr")

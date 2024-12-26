@@ -513,6 +513,12 @@ Point.RIGHT.cwConst = Point.DOWN
 Point.RIGHT.negConst = Point.LEFT
 
 Point.DIRS = [Point.UP, Point.LEFT, Point.DOWN, Point.RIGHT]
+Point.ARROWS = {
+	"^": Point.UP,
+	"<": Point.LEFT,
+	"v": Point.DOWN,
+	">": Point.RIGHT
+}
 
 P = function P(...args) {
 	return new Point(...args)

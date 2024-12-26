@@ -74,6 +74,10 @@ Node = class Node {
 		return this
 	}
 	
+	hasCxn(node) {
+		return this.cxns.has(node)
+	}
+	
 	getCxn(node) {
 		return this.cxns.get(node)
 	}
@@ -695,9 +699,11 @@ Graph = class Graph extends Map {
 	}
 	
 	visualize(width = 1200, height = 800) {
-		return new CanvasController(width, height)
-			.addElement(this.gfx = new GraphicalGraphController(this))
-			.start()
+		this.canvasController = new CanvasController(width, height)
+		this.graphController = new GraphicalGraphController(this)
+		this.gfx = this.graphController.graphGfx
+		
+		return this.canvasController.addElement(this.graphController).start()
 	}
 	
 	*cxns() {
