@@ -16,7 +16,6 @@ function day21(input, part2) {
 			let block = locs[" "]
 
 			for (let [segment, count] of segments) {
-				let children = []
 				let src = start
 
 				for (let chr of segment) {
