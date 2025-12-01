@@ -70,12 +70,11 @@ function day24(input, part2) {
 		if (bit > 0) {
 			({ in0: carry, in1: low } = expect(carry, "XOR", low))
 
-			let cont
-			({ in0: carry, in1: low, out: cont } = expect(carry, "AND", low));
-			({ in0: newCarry, in1: cont, out: newCarry } = expect(newCarry, "OR", cont))
+			let cont = expect(carry, "AND", low).out
+			carry = expect(newCarry, "OR", cont).out
+		} else {
+			carry = newCarry
 		}
-
-		carry = newCarry
 	}
 
 	return part2 ? [...swaps].sort().join(",") : z.reduce((a, b) => a * 2 + b)

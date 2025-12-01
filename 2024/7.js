@@ -2,7 +2,7 @@ function day7(input, part2) {
 	let sum = 0
 
 	for (let line of input.split("\n")) {
-		let [target, start, ...nums] = line.ints()
+		let [target, start, ...nums] = line.posints()
 
 		let cur = [target]
 

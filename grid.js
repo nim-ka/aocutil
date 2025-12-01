@@ -439,6 +439,10 @@ Grid = class Grid {
 
 		return this
 	}
+	
+	asPointMap() {
+		return new PointMap(this.entries())
+	}
 
 	copy() { return this.map((e) => e) }
 	
@@ -467,6 +471,30 @@ Grid = class Grid {
 	}
 	
 	print(sep, pts, ptkey) { console.log(this.toString(sep, pts, ptkey)) }
+	
+	*keys() {
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				yield new Point(x, y)
+			}
+		}
+	}
+	
+	*values() {
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				yield this.data[y][x]
+			}
+		}
+	}
+	
+	*entries() {
+		for (let y = 0; y < this.height; y++) {
+			for (let x = 0; x < this.width; x++) {
+				yield [new Point(x, y), this.data[y][x]]
+			}
+		}
+	}
 	
 	*[Symbol.iterator]() {
 		for (let y = 0; y < this.height; y++) {
