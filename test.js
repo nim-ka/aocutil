@@ -45,9 +45,10 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		return true
 	}
 
-	const year = "2024"
+	const year = 2015
+	const last = year < 2025 ? 25 : 12
 
-	for (let i = +process.argv[3] || 1; i <= 25; i++) {
+	for (let i = +process.argv[3] || 1; i <= last; i++) {
 		let jsPath = `./${year}/${i}.js`
 
 		if (!fs.existsSync(jsPath)) {
@@ -58,7 +59,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8").trim()
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").trim().split("\n-----\n")
 
-		if (i != 25) {
+		if (i != last) {
 			if (!test(`${year} day ${i} part 1`, answers[0], func, input, false)) {
 				break
 			}

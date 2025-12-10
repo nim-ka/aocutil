@@ -50,7 +50,7 @@ SearchData = class SearchData {
 
 Node = class Node {
 	static GLOBAL_ID = 0
-	static DEBUG = false
+	static DEBUG = true
 
 	constructor(val, name = "") {
 		this.id = Node.GLOBAL_ID++
@@ -83,7 +83,7 @@ Node = class Node {
 	}
 	
 	getWeight(node) {
-		return this.getCxn(node).weight
+		return this.getCxn(node)?.weight ?? Infinity
 	}
 
 	unwrap() {
@@ -91,6 +91,10 @@ Node = class Node {
 
 		while (path[0].searchData.last) {
 			path.unshift(path[0].searchData.last)
+			
+			if (path[0] == this) {
+				break
+			}
 		}
 
 		return path
@@ -516,9 +520,9 @@ Graph = class Graph extends Map {
 				let srcNode = graph.getDef(src)
 				let destNode = graph.getDef(dest)
 				
-				srcNode.addCxn(destNode, weight)
+				srcNode.addCxn(destNode, +weight)
 				if (symmetric) {
-					destNode.addCxn(srcNode, weight)
+					destNode.addCxn(srcNode, +weight)
 				}
 			}
 		}
@@ -696,6 +700,99 @@ Graph = class Graph extends Map {
 		}
 		
 		return visited
+	}
+	
+	tsp(start = undefined) {
+		let id = Symbol()
+		
+		let nodes = [...this.values()]
+		let numSubsets = 1 << (nodes.length - 1)
+		
+		let i = nodes.indexOf(start)
+		if (i > -1) {
+			nodes.splice(i, 1)
+			nodes.unshift(start)
+		}
+		
+		let distsThrough = Array(numSubsets).fill().map(() => Array(nodes.length).fill(Infinity))
+		let lasts = Array(numSubsets).fill().map(() => Array(nodes.length).fill(-1))
+		
+		distsThrough[0][0] = 0
+		
+		let subset
+		
+		for (subset = 0; subset < numSubsets; subset++) {
+			for (let end = 1; end < nodes.length; end++) {
+				let flag = 1 << (end - 1)
+				if (!(subset & flag)) {
+					continue
+				}
+				
+				let lastSubset = subset & ~flag
+				
+				for (let end2 = 0; end2 < nodes.length; end2++) {
+					let flag2 = 1 << (end2 - 1)
+					if (end2 > 0 && !(lastSubset & flag2)) {
+						continue
+					}
+					
+					let dist = distsThrough[lastSubset][end2] + nodes[end2].getWeight(nodes[end])
+					if (distsThrough[subset][end] > dist) {
+						distsThrough[subset][end] = dist
+						lasts[subset][end] = end2
+					}
+				}
+			}
+		}
+		
+		subset = numSubsets - 1
+		
+		let dists
+		let last
+		
+		for (let end = 1; end < nodes.length; end++) {
+			let dist = distsThrough[subset][end] + nodes[end].getWeight(nodes[0])
+			if (nodes[0].searchData.update(id, dist, nodes[end])) {
+				last = end
+			}
+		}
+		
+		let path = []
+		
+		while (last != 0) {
+			let flag = 1 << (last - 1)
+			
+			let last2 = lasts[subset][last]
+			nodes[last].searchData.update(id, distsThrough[subset][last], nodes[last2])
+			
+			subset &= ~flag
+			last = last2
+		}
+		
+		return nodes[0]
+	}
+	
+	tspPath() {
+		let start = new Node(Symbol())
+
+		this.addNode(start)
+		
+		for (let node of this.values()) {
+			start.addCxn(node, 0)
+			node.addCxn(start, 0)
+		}
+		
+		let res = this.tsp(start).searchData.last
+		
+		this.deleteNode(start)
+		
+		for (let node of this.values()) {
+			if (node.searchData.last == start) {
+				node.searchData.last = undefined
+			}
+		}
+		
+		return res
 	}
 	
 	visualize(width = 1200, height = 800) {

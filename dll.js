@@ -197,8 +197,8 @@ DLL = class DLL {
 
 	removeIdxRange(startIdx, endIdx) { return this.removeNodeRange(this.getNode(startIdx), this.getNode(endIdx)) }
 
-	getNode(idx) { return this.h.adv(idx) }
-	get(idx) { return this.getNode(idx).val }
+	getNode(idx) { return this.h?.adv(idx) }
+	get(idx) { return this.getNode(idx)?.val }
 
 	reverse() {
 		if (!this.h) {
@@ -219,12 +219,12 @@ DLL = class DLL {
 	}
 
 	rotateForward(rot) {
-		this.h = this.h.adv(rot)
+		this.h = this.h?.adv(rot)
 		return this
 	}
 
 	rotateBackward(rot) {
-		this.h = this.h.adv(-rot)
+		this.h = this.h?.adv(-rot)
 		return this
 	}
 

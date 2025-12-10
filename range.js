@@ -1,7 +1,25 @@
 Range = class Range {
 	constructor(x, y) {
+		if (x instanceof Array && x.length == 2) {
+			[x, y] = x
+		}
+		
+		if (typeof x != "number" || typeof y != "number") {
+			throw `Invalid range [${x}, ${y})`
+		}
+		
 		this.x = x
 		this.y = y
+	}
+	
+	static fromStr(str, inclusive = true) {
+		let nums = str.match(/\d+/g)
+		
+		if (nums?.length != 2) {
+			throw `Could not get range bounds from string "${str}"`
+		}
+		
+		return new Range(+nums[0], +nums[1] + inclusive)
 	}
 	
 	get l() {
@@ -65,15 +83,40 @@ Range = class Range {
 
 RangeSet = class RangeSet {
 	constructor(ranges = []) {
-		this.ranges = DLL.from(ranges)
+		this.ranges = new DLL()
+		this.reduced = false
+		
+		for (let range of ranges) {
+			if (typeof range == "string") {
+				range = Range.fromStr(range)
+			} else if (range instanceof Array) {
+				range = new Range(range)
+			}
+			
+			this.addRangeMut(range)
+		}
+	}
+	
+	static fromStr(str, sep = "\n", inclusive = true) {
+		let res = new RangeSet()
+		
+		for (let s of str.split(sep)) {
+			res.addRangeMut(Range.fromStr(s, inclusive))
+		}
+		
+		return res
+	}
+	
+	isEmpty() {
+		return this.ranges.length == 0
 	}
 	
 	get x() {
-		return this.ranges.get(0).x
+		return this.ranges.get(0)?.x ?? null
 	}
 	
 	get y() {
-		return this.ranges.get(-1).y
+		return this.ranges.get(-1)?.y ?? null
 	}
 	
 	copy() {
@@ -87,7 +130,7 @@ RangeSet = class RangeSet {
 	}
 	
 	bounds() {
-		return new Range(this.x, this.y - this.x)
+		return this.isEmpty() ? null : new Range(this.x, this.y - this.x)
 	}
 	
 	equals(that) {
@@ -95,7 +138,7 @@ RangeSet = class RangeSet {
 			return false
 		}
 		
-		if (this.ranges.length == 0 || that.ranges.length == 0) {
+		if (this.isEmpty() || that.isEmpty()) {
 			return this.ranges.length == that.ranges.length
 		}
 		
@@ -125,7 +168,7 @@ RangeSet = class RangeSet {
 	}
 	
 	intersects(that) {
-		if (!this.ranges.length) {
+		if (this.isEmpty()) {
 			return false
 		}
 		
@@ -157,16 +200,17 @@ RangeSet = class RangeSet {
 		return this.sub(this.sub(that))
 	}
 	
-	isSubset(that) {
-		throw new Error(`lol fuck you`)
+	isSubsetOf(that) {
+		return this.sub(that).isEmpty()
 	}
 	
-	isSuperset(that) {
-		throw new Error(`lol fuck you`)
+	isSupersetOf(that) {
+		return that.sub(this).isEmpty()
 	}
 	
 	reduceMut() {
 		if (this.ranges.length < 2) {
+			this.reduced = true
 			return this
 		}
 		
@@ -182,12 +226,15 @@ RangeSet = class RangeSet {
 			}
 		}
 		
+		this.reduced = true
 		return this
 	}
 	
 	reduce() {
 		if (this.ranges.length < 2) {
-			return this.copy()
+			let res = this.copy()
+			res.reduced = true
+			return res
 		}
 		
 		let res = new RangeSet()
@@ -201,6 +248,7 @@ RangeSet = class RangeSet {
 			}
 		}
 		
+		res.reduced = true
 		return res
 	}
 	
@@ -208,6 +256,8 @@ RangeSet = class RangeSet {
 		if (!range.isValid()) {
 			return this
 		}
+		
+		this.reduced = false
 		
 		for (let node of this.ranges.nodes()) {
 			if (range.x < node.val.x) {
@@ -253,7 +303,7 @@ RangeSet = class RangeSet {
 	}
 	
 	add(that) {
-		if (this.ranges.length == 0) {
+		if (this.isEmpty()) {
 			return that.copy()
 		}
 		
@@ -285,10 +335,14 @@ RangeSet = class RangeSet {
 	}
 	
 	subRangeMut(range) {
-		let cur
+		this.reduced = false
 		
-		while (this.ranges.length) {
+		let cur
+		let checkExit
+		
+		while (!this.isEmpty()) {
 			cur = (cur ?? this.ranges.getNode(0)).prev
+			checkExit = true
 			
 			if (range.intersects(cur.val)) {
 				let left = new Range(cur.val.x, range.x)
@@ -304,10 +358,11 @@ RangeSet = class RangeSet {
 					let next = cur.next
 					this.ranges.removeNode(cur)
 					cur = next
+					checkExit = false
 				}
 			}
 			
-			if (this.ranges.length && cur == this.ranges.getNode(0)) {
+			if (checkExit && !this.isEmpty() && cur == this.ranges.getNode(0)) {
 				break
 			}
 		}
@@ -319,7 +374,7 @@ RangeSet = class RangeSet {
 		let res = new RangeSet()
 		let cur
 		
-		while (this.ranges.length) {
+		while (!this.isEmpty()) {
 			cur = (cur ?? this.ranges.getNode(0)).prev
 			
 			if (range.intersects(cur.val)) {
@@ -337,9 +392,13 @@ RangeSet = class RangeSet {
 				res.ranges.insValStart(cur.val)
 			}
 			
-			if (this.ranges.length && cur == this.ranges.getNode(0)) {
+			if (!this.isEmpty() && cur == this.ranges.getNode(0)) {
 				break
 			}
+		}
+		
+		if (this.ranges.length < 2) {
+			this.reduced = true
 		}
 		
 		return res
@@ -366,7 +425,7 @@ RangeSet = class RangeSet {
 	count() {
 		let sum = 0
 		
-		for (let range of this.reduce().ranges) {
+		for (let range of (this.reduced ? this : this.reduce()).ranges) {
 			sum += range.l
 		}
 		
@@ -374,7 +433,7 @@ RangeSet = class RangeSet {
 	}
 	
 	*[Symbol.iterator]() {
-		for (let range of this.reduce().ranges) {
+		for (let range of (this.reduced ? this : this.reduce()).ranges) {
 			yield* range
 		}
 	}

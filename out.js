@@ -197,8 +197,8 @@ DLL = class DLL {
 
 	removeIdxRange(startIdx, endIdx) { return this.removeNodeRange(this.getNode(startIdx), this.getNode(endIdx)) }
 
-	getNode(idx) { return this.h.adv(idx) }
-	get(idx) { return this.getNode(idx).val }
+	getNode(idx) { return this.h?.adv(idx) }
+	get(idx) { return this.getNode(idx)?.val }
 
 	reverse() {
 		if (!this.h) {
@@ -219,12 +219,12 @@ DLL = class DLL {
 	}
 
 	rotateForward(rot) {
-		this.h = this.h.adv(rot)
+		this.h = this.h?.adv(rot)
 		return this
 	}
 
 	rotateBackward(rot) {
-		this.h = this.h.adv(-rot)
+		this.h = this.h?.adv(-rot)
 		return this
 	}
 
@@ -292,8 +292,26 @@ DLL = class DLL {
 
 Range = class Range {
 	constructor(x, y) {
+		if (x instanceof Array && x.length == 2) {
+			[x, y] = x
+		}
+		
+		if (typeof x != "number" || typeof y != "number") {
+			throw `Invalid range [${x}, ${y})`
+		}
+		
 		this.x = x
 		this.y = y
+	}
+	
+	static fromStr(str, inclusive = true) {
+		let nums = str.match(/\d+/g)
+		
+		if (nums?.length != 2) {
+			throw `Could not get range bounds from string "${str}"`
+		}
+		
+		return new Range(+nums[0], +nums[1] + inclusive)
 	}
 	
 	get l() {
@@ -357,15 +375,40 @@ Range = class Range {
 
 RangeSet = class RangeSet {
 	constructor(ranges = []) {
-		this.ranges = DLL.from(ranges)
+		this.ranges = new DLL()
+		this.reduced = false
+		
+		for (let range of ranges) {
+			if (typeof range == "string") {
+				range = Range.fromStr(range)
+			} else if (range instanceof Array) {
+				range = new Range(range)
+			}
+			
+			this.addRangeMut(range)
+		}
+	}
+	
+	static fromStr(str, sep = "\n", inclusive = true) {
+		let res = new RangeSet()
+		
+		for (let s of str.split(sep)) {
+			res.addRangeMut(Range.fromStr(s, inclusive))
+		}
+		
+		return res
+	}
+	
+	isEmpty() {
+		return this.ranges.length == 0
 	}
 	
 	get x() {
-		return this.ranges.get(0).x
+		return this.ranges.get(0)?.x ?? null
 	}
 	
 	get y() {
-		return this.ranges.get(-1).y
+		return this.ranges.get(-1)?.y ?? null
 	}
 	
 	copy() {
@@ -379,7 +422,7 @@ RangeSet = class RangeSet {
 	}
 	
 	bounds() {
-		return new Range(this.x, this.y - this.x)
+		return this.isEmpty() ? null : new Range(this.x, this.y - this.x)
 	}
 	
 	equals(that) {
@@ -387,7 +430,7 @@ RangeSet = class RangeSet {
 			return false
 		}
 		
-		if (this.ranges.length == 0 || that.ranges.length == 0) {
+		if (this.isEmpty() || that.isEmpty()) {
 			return this.ranges.length == that.ranges.length
 		}
 		
@@ -417,7 +460,7 @@ RangeSet = class RangeSet {
 	}
 	
 	intersects(that) {
-		if (!this.ranges.length) {
+		if (this.isEmpty()) {
 			return false
 		}
 		
@@ -449,16 +492,17 @@ RangeSet = class RangeSet {
 		return this.sub(this.sub(that))
 	}
 	
-	isSubset(that) {
-		throw new Error(`lol fuck you`)
+	isSubsetOf(that) {
+		return this.sub(that).isEmpty()
 	}
 	
-	isSuperset(that) {
-		throw new Error(`lol fuck you`)
+	isSupersetOf(that) {
+		return that.sub(this).isEmpty()
 	}
 	
 	reduceMut() {
 		if (this.ranges.length < 2) {
+			this.reduced = true
 			return this
 		}
 		
@@ -474,12 +518,15 @@ RangeSet = class RangeSet {
 			}
 		}
 		
+		this.reduced = true
 		return this
 	}
 	
 	reduce() {
 		if (this.ranges.length < 2) {
-			return this.copy()
+			let res = this.copy()
+			res.reduced = true
+			return res
 		}
 		
 		let res = new RangeSet()
@@ -493,6 +540,7 @@ RangeSet = class RangeSet {
 			}
 		}
 		
+		res.reduced = true
 		return res
 	}
 	
@@ -500,6 +548,8 @@ RangeSet = class RangeSet {
 		if (!range.isValid()) {
 			return this
 		}
+		
+		this.reduced = false
 		
 		for (let node of this.ranges.nodes()) {
 			if (range.x < node.val.x) {
@@ -545,7 +595,7 @@ RangeSet = class RangeSet {
 	}
 	
 	add(that) {
-		if (this.ranges.length == 0) {
+		if (this.isEmpty()) {
 			return that.copy()
 		}
 		
@@ -577,10 +627,14 @@ RangeSet = class RangeSet {
 	}
 	
 	subRangeMut(range) {
-		let cur
+		this.reduced = false
 		
-		while (this.ranges.length) {
+		let cur
+		let checkExit
+		
+		while (!this.isEmpty()) {
 			cur = (cur ?? this.ranges.getNode(0)).prev
+			checkExit = true
 			
 			if (range.intersects(cur.val)) {
 				let left = new Range(cur.val.x, range.x)
@@ -596,10 +650,11 @@ RangeSet = class RangeSet {
 					let next = cur.next
 					this.ranges.removeNode(cur)
 					cur = next
+					checkExit = false
 				}
 			}
 			
-			if (this.ranges.length && cur == this.ranges.getNode(0)) {
+			if (checkExit && !this.isEmpty() && cur == this.ranges.getNode(0)) {
 				break
 			}
 		}
@@ -611,7 +666,7 @@ RangeSet = class RangeSet {
 		let res = new RangeSet()
 		let cur
 		
-		while (this.ranges.length) {
+		while (!this.isEmpty()) {
 			cur = (cur ?? this.ranges.getNode(0)).prev
 			
 			if (range.intersects(cur.val)) {
@@ -629,9 +684,13 @@ RangeSet = class RangeSet {
 				res.ranges.insValStart(cur.val)
 			}
 			
-			if (this.ranges.length && cur == this.ranges.getNode(0)) {
+			if (!this.isEmpty() && cur == this.ranges.getNode(0)) {
 				break
 			}
+		}
+		
+		if (this.ranges.length < 2) {
+			this.reduced = true
 		}
 		
 		return res
@@ -658,7 +717,7 @@ RangeSet = class RangeSet {
 	count() {
 		let sum = 0
 		
-		for (let range of this.reduce().ranges) {
+		for (let range of (this.reduced ? this : this.reduce()).ranges) {
 			sum += range.l
 		}
 		
@@ -666,7 +725,7 @@ RangeSet = class RangeSet {
 	}
 	
 	*[Symbol.iterator]() {
-		for (let range of this.reduce().ranges) {
+		for (let range of (this.reduced ? this : this.reduce()).ranges) {
 			yield* range
 		}
 	}
@@ -944,9 +1003,105 @@ Pt = Point = class Point {
 		}
 	}
 
-	getUnfilteredAdjNeighbors() { return this.getUnfilteredAdjNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
-	getUnfilteredDiagNeighbors() { return this.getUnfilteredDiagNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
-	getUnfilteredAllNeighbors() { return this.getUnfilteredAllNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
+	getUnfilteredAdjNeighbors() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.u(),
+				this.l(),
+				this.r(),
+				this.d())
+		} else {
+			return new PointArray(
+				this.a(),
+				this.u(),
+				this.l(),
+				this.r(),
+				this.d(),
+				this.b())
+		}
+	}
+
+	getUnfilteredWingNeighbors() {
+		if (!this.is3D) {
+			throw "Can't get wing neighbors of 2D point"
+		}
+
+		return new PointArray(
+			this.u().a(),
+			this.l().a(),
+			this.r().a(),
+			this.d().a(),
+			this.ul(),
+			this.ur(),
+			this.dl(),
+			this.dr(),
+			this.u().b(),
+			this.l().b(),
+			this.r().b(),
+			this.d().b())
+	}
+
+	getUnfilteredDiagNeighbors() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.ul(),
+				this.ur(),
+				this.dl(),
+				this.dr())
+		} else {
+			return new PointArray(
+				this.ul().a(),
+				this.ur().a(),
+				this.dl().a(),
+				this.dr().a(),
+				this.ul().b(),
+				this.ur().b(),
+				this.dl().b(),
+				this.dr().b())
+		}
+	}
+
+	getUnfilteredAllNeighbors() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.ul(),
+				this.u(),
+				this.ur(),
+				this.l(),
+				this.r(),
+				this.dl(),
+				this.d(),
+				this.dr())
+		} else {
+			return new PointArray(
+				this.ul().a(),
+				this.u().a(),
+				this.ur().a(),
+				this.l().a(),
+				this.a(),
+				this.r().a(),
+				this.dl().a(),
+				this.d().a(),
+				this.dr().a(),
+				this.ul(),
+				this.u(),
+				this.ur(),
+				this.l(),
+				this.r(),
+				this.dl(),
+				this.d(),
+				this.dr(),
+				this.ul().b(),
+				this.u().b(),
+				this.ur().b(),
+				this.l().b(),
+				this.b(),
+				this.r().b(),
+				this.dl().b(),
+				this.d().b(),
+				this.dr().b())
+		}
+	}
 
 	cw90() {
 		if (this.is3D) {
@@ -1420,7 +1575,7 @@ Grid = class Grid {
 	}
 
 	findAll(func) {
-		let vals = new PointArray()
+		let vals = []
 		
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
@@ -1587,15 +1742,23 @@ Grid = class Grid {
 	
 	evolve(func) {
 		let copy = this.copy()
+		let changed = false
 		
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
 				let pt = new Point(x, y)
-				this.set(pt, func(copy.get(pt), pt.copy(), copy))
+				
+				let oldval = copy.get(pt)
+				let newval = func(copy.get(pt), pt.copy(), copy)
+				
+				if (oldval != newval) {
+					changed = true
+					this.set(pt, newval)
+				}
 			}
 		}
 		
-		return this
+		return changed
 	}
 
 	transpose() {
@@ -1883,7 +2046,7 @@ SearchData = class SearchData {
 
 Node = class Node {
 	static GLOBAL_ID = 0
-	static DEBUG = false
+	static DEBUG = true
 
 	constructor(val, name = "") {
 		this.id = Node.GLOBAL_ID++
@@ -1916,7 +2079,7 @@ Node = class Node {
 	}
 	
 	getWeight(node) {
-		return this.getCxn(node).weight
+		return this.getCxn(node)?.weight ?? Infinity
 	}
 
 	unwrap() {
@@ -1924,6 +2087,10 @@ Node = class Node {
 
 		while (path[0].searchData.last) {
 			path.unshift(path[0].searchData.last)
+			
+			if (path[0] == this) {
+				break
+			}
 		}
 
 		return path
@@ -2349,9 +2516,9 @@ Graph = class Graph extends Map {
 				let srcNode = graph.getDef(src)
 				let destNode = graph.getDef(dest)
 				
-				srcNode.addCxn(destNode, weight)
+				srcNode.addCxn(destNode, +weight)
 				if (symmetric) {
-					destNode.addCxn(srcNode, weight)
+					destNode.addCxn(srcNode, +weight)
 				}
 			}
 		}
@@ -2529,6 +2696,99 @@ Graph = class Graph extends Map {
 		}
 		
 		return visited
+	}
+	
+	tsp(start = undefined) {
+		let id = Symbol()
+		
+		let nodes = [...this.values()]
+		let numSubsets = 1 << (nodes.length - 1)
+		
+		let i = nodes.indexOf(start)
+		if (i > -1) {
+			nodes.splice(i, 1)
+			nodes.unshift(start)
+		}
+		
+		let distsThrough = Array(numSubsets).fill().map(() => Array(nodes.length).fill(Infinity))
+		let lasts = Array(numSubsets).fill().map(() => Array(nodes.length).fill(-1))
+		
+		distsThrough[0][0] = 0
+		
+		let subset
+		
+		for (subset = 0; subset < numSubsets; subset++) {
+			for (let end = 1; end < nodes.length; end++) {
+				let flag = 1 << (end - 1)
+				if (!(subset & flag)) {
+					continue
+				}
+				
+				let lastSubset = subset & ~flag
+				
+				for (let end2 = 0; end2 < nodes.length; end2++) {
+					let flag2 = 1 << (end2 - 1)
+					if (end2 > 0 && !(lastSubset & flag2)) {
+						continue
+					}
+					
+					let dist = distsThrough[lastSubset][end2] + nodes[end2].getWeight(nodes[end])
+					if (distsThrough[subset][end] > dist) {
+						distsThrough[subset][end] = dist
+						lasts[subset][end] = end2
+					}
+				}
+			}
+		}
+		
+		subset = numSubsets - 1
+		
+		let dists
+		let last
+		
+		for (let end = 1; end < nodes.length; end++) {
+			let dist = distsThrough[subset][end] + nodes[end].getWeight(nodes[0])
+			if (nodes[0].searchData.update(id, dist, nodes[end])) {
+				last = end
+			}
+		}
+		
+		let path = []
+		
+		while (last != 0) {
+			let flag = 1 << (last - 1)
+			
+			let last2 = lasts[subset][last]
+			nodes[last].searchData.update(id, distsThrough[subset][last], nodes[last2])
+			
+			subset &= ~flag
+			last = last2
+		}
+		
+		return nodes[0]
+	}
+	
+	tspPath() {
+		let start = new Node(Symbol())
+
+		this.addNode(start)
+		
+		for (let node of this.values()) {
+			start.addCxn(node, 0)
+			node.addCxn(start, 0)
+		}
+		
+		let res = this.tsp(start).searchData.last
+		
+		this.deleteNode(start)
+		
+		for (let node of this.values()) {
+			if (node.searchData.last == start) {
+				node.searchData.last = undefined
+			}
+		}
+		
+		return res
 	}
 	
 	visualize(width = 1200, height = 800) {
@@ -2797,6 +3057,8 @@ Instruction = class Instruction {
 // }
 
 VM = class VM {
+	static DEBUG = true
+	
 	static evalNum(val) {
 		return isNaN(val) ? this.regs[val] : Number(val)
 	}
@@ -2838,7 +3100,7 @@ VM = class VM {
 	}
 
 	parseLine(line) {
-		let words = line.split(/\s+/)
+		let words = line.split(/,?\s+/)
 
 		if (!words.length) {
 			return
@@ -2850,7 +3112,7 @@ VM = class VM {
 			console.error(`VM.parseLine: Unrecognized command: ${command}`)
 		}
 
-		return new Instruction(command, this.commands[command].types.map((e) => e.bind(this)) ?? [], words, this.commands[command].varargs)
+		return new Instruction(command, this.commands[command].types?.map((e) => e.bind(this)) ?? [], words, this.commands[command].varargs)
 	}
 
 	executeInstruction(instr) {
@@ -2879,7 +3141,10 @@ VM = class VM {
 		let instr = this.program[this.regs.pc]
 
 		if (!instr) {
-			console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
+			if (VM.DEBUG) {
+				console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
+			}
+			
 			this.halt()
 			return
 		}
@@ -4852,12 +5117,16 @@ utils = {
 				arr.push(i)
 
 				if (i != n / i) {
-					arr2.unshift(n / i)
+					arr2.push(n / i)
 				}
 			}
 		}
+		
+		for (let i = arr2.length - 1; i >= 0; i--) {
+			arr.push(arr2[i])
+		}
 
-		return arr.concat(arr2)
+		return arr
 	},
 	lock: (obj, val) => {
 		let proxy
@@ -5067,7 +5336,7 @@ AA = function AA(ans, part = 0) {
 		if (text.includes("That's the right answer!")) {
 			defaultPartNum = 2
 
-			if (day == 25) {
+			if (day == 12) {
 				A(0, 2)
 				setTimeout(() => A(0, 2), 1000)
 			}
@@ -5415,6 +5684,7 @@ load = function load() {
 			value: function copy() {
 				return Object.assign({}, this)
 			},
+			writable: true, // lol
 			configurable: true
 		},
 		copyDeep: {
@@ -5595,6 +5865,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		chunk: {
+			value: function chunk(n) {
+				return this.splitEvery(Math.ceil(this.length / n))
+			},
+			configurable: true
+		},
 		splitOn: {
 			value: function splitOn(sep) {
 				let func = functify(sep)
@@ -5628,6 +5904,26 @@ load = function load() {
 				}
 
 				return mapped
+			},
+			configurable: true
+		},
+		subsets: {
+			value: function subsets() {
+				let res = new Array(1 << this.length)
+				
+				for (let i = 0; i < res.length; i++) {
+					let subset = []
+					
+					for (let j = 0; j < this.length; j++) {
+						if (i & (1 << j)) {
+							subset.push(this[j])
+						}
+					}
+					
+					res[i] = subset
+				}
+				
+				return res
 			},
 			configurable: true
 		},
@@ -5688,8 +5984,14 @@ load = function load() {
 			configurable: true
 		},
 		mult: {
-			value: function mult(val = 1) {
-				return this.reduce((a, b) => a * b, val)
+			value: function mult(func = (e) => +e) {
+				let prod = 1
+				
+				for (let i = 0; i < this.length; i++) {
+					prod *= func(this[i], i, this)
+				}
+				
+				return prod
 			},
 			configurable: true
 		},
@@ -5736,6 +6038,19 @@ load = function load() {
 		transpose: {
 			value: function transpose() {
 				return this[0].map((_, i) => this.map(e => e[i]))
+			},
+			configurable: true
+		},
+		dot: {
+			value: function dot(that = this) {
+				let len = Math.min(this.length, that.length)
+				let res = 0
+				
+				for (let i = 0; i < len; i++) {
+					res += this[i] * that[i]
+				}
+				
+				return res
 			},
 			configurable: true
 		},
@@ -6719,6 +7034,15 @@ load = function load() {
 			configurable: true
 		}
 	})
+
+	Object.defineProperties(Map.prototype, {
+		increment: {
+			value: function increment(key, val) {
+				this.set(key, (this.get(key) ?? 0) + val)
+			},
+			configurable: true
+		}
+	})
 	
 	Object.defineProperties(Function.prototype, {
 		repeated: {
@@ -6834,6 +7158,8 @@ load = function load() {
 	alias(Set.prototype, "empty", "clear")
 	alias(Set.prototype, "remove", "delete")
 	alias(Set.prototype, "includes", "has")
+	
+	alias(Map.prototype, "increment", "inc")
 
 	alias(Grid.prototype, "p", "print")
 
@@ -6926,9 +7252,10 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		return true
 	}
 
-	const year = "2024"
+	const year = 2015
+	const last = year < 2025 ? 25 : 12
 
-	for (let i = +process.argv[3] || 1; i <= 25; i++) {
+	for (let i = +process.argv[3] || 1; i <= last; i++) {
 		let jsPath = `./${year}/${i}.js`
 
 		if (!fs.existsSync(jsPath)) {
@@ -6939,7 +7266,7 @@ if (typeof window == "undefined" && process.argv[2] == "test") {
 		const input = fs.readFileSync(`./${year}/inputs/${i}`, "utf8").trim()
 		const answers = fs.readFileSync(`./${year}/answers/${i}`, "utf8").trim().split("\n-----\n")
 
-		if (i != 25) {
+		if (i != last) {
 			if (!test(`${year} day ${i} part 1`, answers[0], func, input, false)) {
 				break
 			}

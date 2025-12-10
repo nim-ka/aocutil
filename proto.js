@@ -300,6 +300,7 @@ load = function load() {
 			value: function copy() {
 				return Object.assign({}, this)
 			},
+			writable: true, // lol
 			configurable: true
 		},
 		copyDeep: {
@@ -480,6 +481,12 @@ load = function load() {
 			},
 			configurable: true
 		},
+		chunk: {
+			value: function chunk(n) {
+				return this.splitEvery(Math.ceil(this.length / n))
+			},
+			configurable: true
+		},
 		splitOn: {
 			value: function splitOn(sep) {
 				let func = functify(sep)
@@ -513,6 +520,26 @@ load = function load() {
 				}
 
 				return mapped
+			},
+			configurable: true
+		},
+		subsets: {
+			value: function subsets() {
+				let res = new Array(1 << this.length)
+				
+				for (let i = 0; i < res.length; i++) {
+					let subset = []
+					
+					for (let j = 0; j < this.length; j++) {
+						if (i & (1 << j)) {
+							subset.push(this[j])
+						}
+					}
+					
+					res[i] = subset
+				}
+				
+				return res
 			},
 			configurable: true
 		},
@@ -573,8 +600,14 @@ load = function load() {
 			configurable: true
 		},
 		mult: {
-			value: function mult(val = 1) {
-				return this.reduce((a, b) => a * b, val)
+			value: function mult(func = (e) => +e) {
+				let prod = 1
+				
+				for (let i = 0; i < this.length; i++) {
+					prod *= func(this[i], i, this)
+				}
+				
+				return prod
 			},
 			configurable: true
 		},
@@ -621,6 +654,19 @@ load = function load() {
 		transpose: {
 			value: function transpose() {
 				return this[0].map((_, i) => this.map(e => e[i]))
+			},
+			configurable: true
+		},
+		dot: {
+			value: function dot(that = this) {
+				let len = Math.min(this.length, that.length)
+				let res = 0
+				
+				for (let i = 0; i < len; i++) {
+					res += this[i] * that[i]
+				}
+				
+				return res
 			},
 			configurable: true
 		},
@@ -1604,6 +1650,15 @@ load = function load() {
 			configurable: true
 		}
 	})
+
+	Object.defineProperties(Map.prototype, {
+		increment: {
+			value: function increment(key, val) {
+				this.set(key, (this.get(key) ?? 0) + val)
+			},
+			configurable: true
+		}
+	})
 	
 	Object.defineProperties(Function.prototype, {
 		repeated: {
@@ -1719,6 +1774,8 @@ load = function load() {
 	alias(Set.prototype, "empty", "clear")
 	alias(Set.prototype, "remove", "delete")
 	alias(Set.prototype, "includes", "has")
+	
+	alias(Map.prototype, "increment", "inc")
 
 	alias(Grid.prototype, "p", "print")
 

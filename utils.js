@@ -81,12 +81,16 @@ utils = {
 				arr.push(i)
 
 				if (i != n / i) {
-					arr2.unshift(n / i)
+					arr2.push(n / i)
 				}
 			}
 		}
+		
+		for (let i = arr2.length - 1; i >= 0; i--) {
+			arr.push(arr2[i])
+		}
 
-		return arr.concat(arr2)
+		return arr
 	},
 	lock: (obj, val) => {
 		let proxy
@@ -296,7 +300,7 @@ AA = function AA(ans, part = 0) {
 		if (text.includes("That's the right answer!")) {
 			defaultPartNum = 2
 
-			if (day == 25) {
+			if (day == 12) {
 				A(0, 2)
 				setTimeout(() => A(0, 2), 1000)
 			}

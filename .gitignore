@@ -2,3 +2,5 @@ node_modules/*
 package*json
 20*/inputs/*
 20*/answers/*
+input.sh
+answer.sh

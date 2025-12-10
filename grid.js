@@ -205,7 +205,7 @@ Grid = class Grid {
 	}
 
 	findAll(func) {
-		let vals = new PointArray()
+		let vals = []
 		
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
@@ -372,15 +372,23 @@ Grid = class Grid {
 	
 	evolve(func) {
 		let copy = this.copy()
+		let changed = false
 		
 		for (let y = 0; y < this.height; y++) {
 			for (let x = 0; x < this.width; x++) {
 				let pt = new Point(x, y)
-				this.set(pt, func(copy.get(pt), pt.copy(), copy))
+				
+				let oldval = copy.get(pt)
+				let newval = func(copy.get(pt), pt.copy(), copy)
+				
+				if (oldval != newval) {
+					changed = true
+					this.set(pt, newval)
+				}
 			}
 		}
 		
-		return this
+		return changed
 	}
 
 	transpose() {

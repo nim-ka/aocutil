@@ -21,6 +21,8 @@ Instruction = class Instruction {
 // }
 
 VM = class VM {
+	static DEBUG = true
+	
 	static evalNum(val) {
 		return isNaN(val) ? this.regs[val] : Number(val)
 	}
@@ -62,7 +64,7 @@ VM = class VM {
 	}
 
 	parseLine(line) {
-		let words = line.split(/\s+/)
+		let words = line.split(/,?\s+/)
 
 		if (!words.length) {
 			return
@@ -74,7 +76,7 @@ VM = class VM {
 			console.error(`VM.parseLine: Unrecognized command: ${command}`)
 		}
 
-		return new Instruction(command, this.commands[command].types.map((e) => e.bind(this)) ?? [], words, this.commands[command].varargs)
+		return new Instruction(command, this.commands[command].types?.map((e) => e.bind(this)) ?? [], words, this.commands[command].varargs)
 	}
 
 	executeInstruction(instr) {
@@ -103,7 +105,10 @@ VM = class VM {
 		let instr = this.program[this.regs.pc]
 
 		if (!instr) {
-			console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
+			if (VM.DEBUG) {
+				console.warn(`VM.run: No instruction found at PC ${this.regs.pc}; stopping`)
+			}
+			
 			this.halt()
 			return
 		}

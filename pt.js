@@ -256,9 +256,105 @@ Pt = Point = class Point {
 		}
 	}
 
-	getUnfilteredAdjNeighbors() { return this.getUnfilteredAdjNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
-	getUnfilteredDiagNeighbors() { return this.getUnfilteredDiagNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
-	getUnfilteredAllNeighbors() { return this.getUnfilteredAllNeighborsIncSelf().filter((pt) => !this.equals(pt)) }
+	getUnfilteredAdjNeighbors() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.u(),
+				this.l(),
+				this.r(),
+				this.d())
+		} else {
+			return new PointArray(
+				this.a(),
+				this.u(),
+				this.l(),
+				this.r(),
+				this.d(),
+				this.b())
+		}
+	}
+
+	getUnfilteredWingNeighbors() {
+		if (!this.is3D) {
+			throw "Can't get wing neighbors of 2D point"
+		}
+
+		return new PointArray(
+			this.u().a(),
+			this.l().a(),
+			this.r().a(),
+			this.d().a(),
+			this.ul(),
+			this.ur(),
+			this.dl(),
+			this.dr(),
+			this.u().b(),
+			this.l().b(),
+			this.r().b(),
+			this.d().b())
+	}
+
+	getUnfilteredDiagNeighbors() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.ul(),
+				this.ur(),
+				this.dl(),
+				this.dr())
+		} else {
+			return new PointArray(
+				this.ul().a(),
+				this.ur().a(),
+				this.dl().a(),
+				this.dr().a(),
+				this.ul().b(),
+				this.ur().b(),
+				this.dl().b(),
+				this.dr().b())
+		}
+	}
+
+	getUnfilteredAllNeighbors() {
+		if (!this.is3D) {
+			return new PointArray(
+				this.ul(),
+				this.u(),
+				this.ur(),
+				this.l(),
+				this.r(),
+				this.dl(),
+				this.d(),
+				this.dr())
+		} else {
+			return new PointArray(
+				this.ul().a(),
+				this.u().a(),
+				this.ur().a(),
+				this.l().a(),
+				this.a(),
+				this.r().a(),
+				this.dl().a(),
+				this.d().a(),
+				this.dr().a(),
+				this.ul(),
+				this.u(),
+				this.ur(),
+				this.l(),
+				this.r(),
+				this.dl(),
+				this.d(),
+				this.dr(),
+				this.ul().b(),
+				this.u().b(),
+				this.ur().b(),
+				this.l().b(),
+				this.b(),
+				this.r().b(),
+				this.dl().b(),
+				this.d().b(),
+				this.dr().b())
+		}
+	}
 
 	cw90() {
 		if (this.is3D) {
